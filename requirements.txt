@@ -1,0 +1,4 @@
+# These versions are what is used to build this application initially but there's no hard requirements on versions
+# So, this application can be used by using different versions of the following packages based on need
+
+python==3.10.4
