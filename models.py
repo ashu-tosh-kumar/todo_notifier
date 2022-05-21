@@ -6,9 +6,13 @@
 # Only one todo item is allowed per line. If more than one is in one line, the first one is considered as todo item and the rest are considered as message
 # No. of spaces between todo, date, user, message is NOT important
 
+from collections.abc import Callable
 from datetime import datetime
+from typing import TypeVar
 
 from exceptions import InvalidDateFormatException
+
+T = TypeVar("T")
 
 
 class USER:
@@ -144,3 +148,44 @@ class TODO:
             str: String representation of the respective todo object
         """
         return f"TODO: {self.msg} ASSIGNED TO: {self.user.user_name} COMPLETE BY {self.completion_date}"
+
+
+class SUMMARY_GENERATOR:
+    def __init__(self, callable: Callable[[TODO, T], None], container: T, name: str) -> None:
+        """ Represents a summary genereting function to easily add more kind of summaries to be generated
+
+        Args:
+            callable (C): A callable function that should accept a todo object
+            container (T): A container in which `callable` would add info of the current todo object
+            name (str): Name of the summary generator
+        """
+        self._callable = callable
+        self._container = container
+        self._name = name
+
+    @property
+    def callable(self) -> Callable[[TODO, T], None]:
+        """ Getter for `callable`
+
+        Returns:
+            Callable[[TODO, T], None]: Callable function that takes a todo_obj and container
+        """
+        return self._callable
+
+    @property
+    def container(self) -> T:
+        """ Getter for `container`
+
+        Returns:
+            T: Container in which data for current todo obj can be stored
+        """
+        return self._container
+
+    @property
+    def name(self) -> str:
+        """ Getter for `name`
+
+        Returns:
+            str: Name of the respecytive summary generator
+        """
+        return self._name

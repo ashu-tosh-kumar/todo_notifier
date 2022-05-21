@@ -13,3 +13,5 @@ DEFAULT_EXCLUDE_FILES = {
     "NAME": [],
     "ABS_PATH": []
 }
+
+UNKNOWN_USER_NAME = "JANE_DOE"
