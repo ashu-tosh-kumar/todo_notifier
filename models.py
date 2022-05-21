@@ -49,33 +49,22 @@ class USER:
 
 
 class POSITION:
-    def __init__(self, line: int, pos: int) -> None:
+    def __init__(self, line_no: int) -> None:
         """ Initializer for position of a text in file
 
         Args:
-            line (int): Shows line no. of the text
-            pos (int): Shows position of the start of the text
+            line_no (int): Shows line_no no. of the text
         """
-        self._line = line
-        self._pos = pos
+        self._line_no = line_no
 
     @property
-    def line(self) -> int:
-        """ Getter for `line`
+    def line_no(self) -> int:
+        """ Getter for `line_no`
 
         Returns:
-            int: Integer representing the line no. in respective module
+            int: Integer representing the line_no no. in respective module
         """
-        return self._line
-
-    @property
-    def pos(self) -> int:
-        """ Getter for `pos`
-
-        Returns:
-            int: Integer representing start position of respective piece of code in respective module
-        """
-        return self._pos
+        return self._line_no
 
 
 class TODO:
