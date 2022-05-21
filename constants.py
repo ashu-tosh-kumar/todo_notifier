@@ -1,3 +1,6 @@
+from summary_generators import (ExpiredTodosByUser, SummaryByModule,
+                                UpcomingWeekTodosByUser)
+
 DEFAULT_EXCLUDE_DIRS = {
     "PATTERN": [
         ".*"
@@ -15,3 +18,9 @@ DEFAULT_EXCLUDE_FILES = {
 }
 
 UNKNOWN_USER_NAME = "JANE_DOE"
+
+DEFAULT_SUMMARY_GENERATORS = [
+    ExpiredTodosByUser("Expired TODO Items"),
+    SummaryByModule("Module-wise Summary"),
+    UpcomingWeekTodosByUser("Upcoming Week TODO Items")
+]
