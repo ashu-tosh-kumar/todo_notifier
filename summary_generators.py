@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import TypeVar
 
-from constants import UNKNOWN_USER_NAME
+from constants import DEFAULT_SUMMARY_GENERATORS_ENUM, UNKNOWN_USER_NAME
 from models import TODO
 
 T = TypeVar("T")
@@ -230,3 +230,11 @@ class UpcomingWeekTodosByUser(BaseSummaryGenerator):
             </p>
             """
         return tables
+
+
+DEFAULT_SUMMARY_GENERATORS = [
+    ExpiredTodosByUser(DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER),
+    SummaryByModule(DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE),
+    UpcomingWeekTodosByUser(
+        DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER)
+]
