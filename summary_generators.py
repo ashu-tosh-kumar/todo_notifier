@@ -101,7 +101,7 @@ class SummaryByModule(BaseSummaryGenerator):
             <h2>{module}</h2>
             <p>
                 {table}
-            </p>
+            </p><br>
             """
 
         return tables

@@ -19,8 +19,15 @@ DEFAULT_EXCLUDE_FILES = {
 
 UNKNOWN_USER_NAME = "JANE_DOE"
 
+
+class DEFAULT_SUMMARY_GENERATORS_ENUM:
+    EXPIRED_TODO_BY_USER = "Expired TODO Items"
+    TODO_BY_MODULE = "Module-wise Summary"
+    UPCOMING_TODO_BY_USER = "Upcoming Week TODO Items"
+
+
 DEFAULT_SUMMARY_GENERATORS = [
-    ExpiredTodosByUser("Expired TODO Items"),
-    SummaryByModule("Module-wise Summary"),
-    UpcomingWeekTodosByUser("Upcoming Week TODO Items")
+    ExpiredTodosByUser(DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER),
+    SummaryByModule(DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE),
+    UpcomingWeekTodosByUser(DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER)
 ]
