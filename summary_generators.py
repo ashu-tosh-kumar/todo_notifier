@@ -14,14 +14,14 @@ class BaseSummaryGenerator(ABC):
 
         Args:
             name (str): Name of the respective Summary Generator
-            container (T): A container in which `generate` would add info of the current todo object, It could be a list or dict or sth else
+            container (T): A container in which `generate_summary` would add info of the current todo object, It could be a list or dict or sth else
         """
         self._name = name
         self._container = container
 
     @abstractmethod
-    def generate(self, todo_obj: TODO) -> None:
-        """ Abstract function to generate summary
+    def generate_summary(self, todo_obj: TODO) -> None:
+        """ Abstract function to generate_summary summary
 
         Args:
             todo_obj (TODO): todo object
@@ -34,7 +34,7 @@ class BaseSummaryGenerator(ABC):
 
 
 class SummaryByModule(BaseSummaryGenerator):
-    def generate(self, todo_obj: TODO) -> None:
+    def generate_summary(self, todo_obj: TODO) -> None:
         """ Generates summary for each module
 
         Args:
@@ -56,7 +56,7 @@ class SummaryByModule(BaseSummaryGenerator):
 
 
 class ExpiredTodosByUser(BaseSummaryGenerator):
-    def generate(self, todo_obj: TODO) -> None:
+    def generate_summary(self, todo_obj: TODO) -> None:
         """ Generates summary for all expired todo items by user
 
         Args:
@@ -81,7 +81,7 @@ class ExpiredTodosByUser(BaseSummaryGenerator):
 
 
 class UpcomingWeekTodosByUser(BaseSummaryGenerator):
-    def generate(self, todo_obj: TODO) -> None:
+    def generate_summary(self, todo_obj: TODO) -> None:
         """ Generates summary for all upcoming todo items by user
 
         Args:

@@ -131,5 +131,5 @@ def generate_summary(all_todos_objs: Dict[str, List[TODO]], summary_generators: 
         summary_generators (List[BaseSummaryGenerator]): List of summary generators objects
     """
     for todo_obj in all_todos_objs:
-        for summary_generator in summary_generators:
-            summary_generator.callable(todo_obj, summary_generator.container)
+        for summary_generator_class_instance in summary_generators:
+            summary_generator_class_instance.generate_summary(todo_obj)
