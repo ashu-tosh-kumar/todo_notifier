@@ -1,8 +1,8 @@
 import os
 import re
-from typing import List, Dict
+from typing import Dict, List
 
-from models import TODO, USER, POSITION
+from models import POSITION, TODO, USER
 from utils import compute_line_and_pos_given_span
 
 

@@ -3,7 +3,8 @@ import re
 from typing import Dict, List
 
 from exceptions import InCompatibleTypesException
-from models import SUMMARY_GENERATOR, TODO
+from models import TODO
+from summary_generators import BaseSummaryGenerator
 
 
 def _ignore_dir_or_file(dir_or_file_path: str, exclude_dirs_or_files: dict) -> bool:
@@ -118,7 +119,7 @@ def compute_line_and_pos_given_span(line_no_to_chars_map: dict, start_idx: int) 
     return todo_line_no
 
 
-def generate_summary(all_todos_objs: Dict[str, List[TODO]], summary_generators: List[SUMMARY_GENERATOR]) -> None:
+def generate_summary(all_todos_objs: Dict[str, List[TODO]], summary_generators: List[BaseSummaryGenerator]) -> None:
     """ Function to generate multiple kind of summaries from givel list of todo items
 
     It allows users to pass a function/callable and a container. For each todo object in `all_todos_objs`, it will
@@ -127,8 +128,8 @@ def generate_summary(all_todos_objs: Dict[str, List[TODO]], summary_generators: 
 
     Args:
         all_todos_objs (Dict[str, List[TODO]]): Key-value pair where key is relative path of file parsed and value is list of todo objects in that file
-        summary_generators (List[SUMMARY_GENERATOR]): List of summary generators objects
+        summary_generators (List[BaseSummaryGenerator]): List of summary generators objects
     """
     for todo_obj in all_todos_objs:
-        for summary_generator in summary_generators:
-            summary_generator.callable(todo_obj, summary_generator.container)
+        for summary_generator_class_instance in summary_generators:
+            summary_generator_class_instance.generate_summary(todo_obj)
