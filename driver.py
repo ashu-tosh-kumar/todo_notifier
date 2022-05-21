@@ -19,9 +19,9 @@ def run(parent_dir_name: str, config: BaseConfig = default_config) -> None:
     all_files_in_parent_dir = get_files_in_dir(
         parent_dir, "py", config.EXCLUDE_DIRS, config.EXCLUDE_FILES)
 
-    all_todos_objs = parse_files_for_todo_items(
+    all_todos_items = parse_files_for_todo_items(
         parent_dir_name, all_files_in_parent_dir)
 
-    generate_summary(all_todos_objs, config.SUMMARY_GENERATORS)
+    generate_summary(all_todos_items, config.SUMMARY_GENERATORS)
 
-    send_notifications(all_todos_objs, config.SUMMARY_GENERATORS)
+    send_notifications(config.SUMMARY_GENERATORS)
