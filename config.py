@@ -1,9 +1,8 @@
 # Configuration for custom application of todo_notifier
 from typing import List
 
-from constants import (DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES,
-                       DEFAULT_SUMMARY_GENERATORS)
-from summary_generators import BaseSummaryGenerator
+from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
+from summary_generators import DEFAULT_SUMMARY_GENERATORS, BaseSummaryGenerator
 from utils import recursive_update
 
 
