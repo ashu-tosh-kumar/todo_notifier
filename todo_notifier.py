@@ -6,8 +6,10 @@ from models import POSITION, TODO, USER
 from utils import compute_line_and_pos_given_span
 
 
-def parse_files_for_todo_items(parent_dir_name: str, files: List[str]) -> Dict[str, List[TODO]]:
-    """ Parses the list of `files` one by one to collect all todo items
+def parse_files_for_todo_items(
+    parent_dir_name: str, files: List[str]
+) -> Dict[str, List[TODO]]:
+    """Parses the list of `files` one by one to collect all todo items
 
     Args:
         parent_dir_name (str): Parent directory of the project (required to get relative path of files and avoid exposing real paths)
@@ -19,7 +21,8 @@ def parse_files_for_todo_items(parent_dir_name: str, files: List[str]) -> Dict[s
     all_todos_objs = {}
     for file in files:
         rel_file_path = os.path.join(
-            parent_dir_name, os.path.relpath(file, parent_dir_name))
+            parent_dir_name, os.path.relpath(file, parent_dir_name)
+        )
         all_todos_objs[rel_file_path] = []
         with open(file, "r") as f:
             file_content = f.read()
@@ -27,7 +30,10 @@ def parse_files_for_todo_items(parent_dir_name: str, files: List[str]) -> Dict[s
             for todo_item in todo_items:
                 todo_item_group = todo_item.group()
                 todo_date_username = re.findall(
-                    r'TODO\s*(\[.*\])?\s*(@[^\s]*)?\s*(.*)?', todo_item_group, re.MULTILINE)
+                    r"TODO\s*(\[.*\])?\s*(@[^\s]*)?\s*(.*)?",
+                    todo_item_group,
+                    re.MULTILINE,
+                )
 
                 msg = todo_date_username[2]
                 user = USER(todo_date_username[1])

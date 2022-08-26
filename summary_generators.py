@@ -10,7 +10,7 @@ T = TypeVar("T")
 
 class BaseSummaryGenerator(ABC):
     def __init__(self, name: str, container: T) -> None:
-        """ Initializer for `BaseSummaryGenerator`
+        """Initializer for `BaseSummaryGenerator`
 
         Args:
             name (str): Name of the respective Summary Generator
@@ -21,7 +21,7 @@ class BaseSummaryGenerator(ABC):
 
     @property
     def name(self) -> str:
-        """ Getter for `name`
+        """Getter for `name`
 
         Returns:
             str: Name of the respective summary generator
@@ -30,7 +30,7 @@ class BaseSummaryGenerator(ABC):
 
     @abstractmethod
     def generate_summary(self, todo_obj: TODO) -> None:
-        """ Abstract function to generate_summary summary
+        """Abstract function to generate_summary summary
 
         Args:
             todo_obj (TODO): todo object
@@ -39,7 +39,7 @@ class BaseSummaryGenerator(ABC):
 
     @abstractmethod
     def generate_html(self) -> str:
-        """ Generates the html representation of the respective summary to be sent as notifications to users
+        """Generates the html representation of the respective summary to be sent as notifications to users
 
         Returns:
             str: String showing HTMl representation of the respective summary
@@ -49,24 +49,40 @@ class BaseSummaryGenerator(ABC):
 
 class SummaryByModule(BaseSummaryGenerator):
     def generate_summary(self, todo_obj: TODO) -> None:
-        """ Generates summary for each module
+        """Generates summary for each module
 
         Args:
             todo_obj (TODO): todo object
         """
         self._container: dict
 
-        user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+        user_name = (
+            todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+        )
 
         if todo_obj.module not in self._container:
-            self._container[todo_obj.module] = [[user_name, todo_obj.user.user_email_id,
-                                                 todo_obj.msg, todo_obj.position.line_no, str(todo_obj.completion_date)]]
+            self._container[todo_obj.module] = [
+                [
+                    user_name,
+                    todo_obj.user.user_email_id,
+                    todo_obj.msg,
+                    todo_obj.position.line_no,
+                    str(todo_obj.completion_date),
+                ]
+            ]
         else:
             self._container[todo_obj.module].append(
-                [user_name, todo_obj.user.user_email_id, todo_obj.msg, todo_obj.position.line_no, str(todo_obj.completion_date)])
+                [
+                    user_name,
+                    todo_obj.user.user_email_id,
+                    todo_obj.msg,
+                    todo_obj.position.line_no,
+                    str(todo_obj.completion_date),
+                ]
+            )
 
     def generate_html(self) -> str:
-        """ Generates the html representation showing module wise summary of todo items
+        """Generates the html representation showing module wise summary of todo items
 
         Returns:
             str: String showing HTMl representation of the respective summary
@@ -109,7 +125,7 @@ class SummaryByModule(BaseSummaryGenerator):
 
 class ExpiredTodosByUser(BaseSummaryGenerator):
     def generate_summary(self, todo_obj: TODO) -> None:
-        """ Generates summary for all expired todo items by user
+        """Generates summary for all expired todo items by user
 
         Args:
             todo_obj (TODO): todo object
@@ -118,18 +134,33 @@ class ExpiredTodosByUser(BaseSummaryGenerator):
         self._container: list
 
         curr_date = datetime.today().date()
-        user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+        user_name = (
+            todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+        )
 
         if curr_date > todo_obj.completion_date:
             if user_name not in self._container:
                 self._container[user_name] = [
-                    [todo_obj.user.user_email_id, todo_obj.msg, todo_obj.module, todo_obj.position.line_no, str(todo_obj.completion_date)]]
+                    [
+                        todo_obj.user.user_email_id,
+                        todo_obj.msg,
+                        todo_obj.module,
+                        todo_obj.position.line_no,
+                        str(todo_obj.completion_date),
+                    ]
+                ]
             else:
                 self._container[user_name].append(
-                    [todo_obj.msg, todo_obj.module, todo_obj.position.line_no, str(todo_obj.completion_date)])
+                    [
+                        todo_obj.msg,
+                        todo_obj.module,
+                        todo_obj.position.line_no,
+                        str(todo_obj.completion_date),
+                    ]
+                )
 
     def generate_html(self, user_name: str) -> str:
-        """ Generates the html representation of the user-wise summary of expired todo items
+        """Generates the html representation of the user-wise summary of expired todo items
 
         Args:
             user_name (str): User name for whom html representation needs to be generated
@@ -172,7 +203,7 @@ class ExpiredTodosByUser(BaseSummaryGenerator):
 
 class UpcomingWeekTodosByUser(BaseSummaryGenerator):
     def generate_summary(self, todo_obj: TODO) -> None:
-        """ Generates summary for all upcoming todo items by user
+        """Generates summary for all upcoming todo items by user
 
         Args:
             todo_obj (TODO): todo object
@@ -180,18 +211,36 @@ class UpcomingWeekTodosByUser(BaseSummaryGenerator):
         self._container: list
 
         curr_date = datetime.today().date()
-        user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+        user_name = (
+            todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+        )
 
-        if curr_date < todo_obj.completion_date and (todo_obj.completion_date - curr_date).days <= 7:
+        if (
+            curr_date < todo_obj.completion_date
+            and (todo_obj.completion_date - curr_date).days <= 7
+        ):
             if user_name not in self._container:
                 self._container[user_name] = [
-                    [todo_obj.user.user_email_id, todo_obj.msg, todo_obj.module, todo_obj.position.line_no, str(todo_obj.completion_date)]]
+                    [
+                        todo_obj.user.user_email_id,
+                        todo_obj.msg,
+                        todo_obj.module,
+                        todo_obj.position.line_no,
+                        str(todo_obj.completion_date),
+                    ]
+                ]
             else:
                 self._container[user_name].append(
-                    [todo_obj.msg, todo_obj.module, todo_obj.position.line_no, str(todo_obj.completion_date)])
+                    [
+                        todo_obj.msg,
+                        todo_obj.module,
+                        todo_obj.position.line_no,
+                        str(todo_obj.completion_date),
+                    ]
+                )
 
     def generate_html(self, user_name: str) -> str:
-        """ Generates the html representation of the user-wise summary of the upcoming (within a week) todo items
+        """Generates the html representation of the user-wise summary of the upcoming (within a week) todo items
 
         Args:
             user_name (str): User name for whom html representation needs to be generated

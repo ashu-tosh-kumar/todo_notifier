@@ -14,13 +14,12 @@ from summary_generators import BaseSummaryGenerator
 
 class BaseNotifier(ABC):
     def __init__(self) -> None:
-        """ Initializer for `BaseNotifier`
-        """
+        """Initializer for `BaseNotifier`"""
         pass
 
     @abstractmethod
     def notify(self, summary_generators: List[BaseSummaryGenerator]) -> None:
-        """ Abstract method allowing sending automated notifications of summary of todo items
+        """Abstract method allowing sending automated notifications of summary of todo items
 
         Args:
             summary_generators (List[BaseSummaryGenerator]): List of summary generators to generate various kind of summary of todo items
@@ -29,8 +28,10 @@ class BaseNotifier(ABC):
 
 
 class EmailNotifier(BaseNotifier):
-    def __init__(self, sender_email: str, password: str, receivers: List[str] = None) -> None:
-        """ Initializer for `EmailNotifier` class
+    def __init__(
+        self, sender_email: str, password: str, receivers: List[str] = None
+    ) -> None:
+        """Initializer for `EmailNotifier` class
 
         Args:
             sender_email (str): Email id from which email needs to be sent
@@ -42,8 +43,10 @@ class EmailNotifier(BaseNotifier):
         self._password = password
         super().__init__()
 
-    def _send_email(self, receivers_str: str, html: str, receivers_list: List[str]) -> None:
-        """ Sends email to `receivers_list` with `html` content
+    def _send_email(
+        self, receivers_str: str, html: str, receivers_list: List[str]
+    ) -> None:
+        """Sends email to `receivers_list` with `html` content
 
         Args:
             receivers_str (str): String containing list of receivers separated by comma (,)
@@ -60,12 +63,10 @@ class EmailNotifier(BaseNotifier):
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
             server.login(self._sender_email, self._password)
-            server.sendmail(
-                self._sender_email, receivers_list, message.as_string()
-            )
+            server.sendmail(self._sender_email, receivers_list, message.as_string())
 
     def notify(self, summary_generators: List[BaseSummaryGenerator]) -> None:
-        """ Allows sending automated notifications of summary of todo items
+        """Allows sending automated notifications of summary of todo items
 
         Args:
             summary_generators (List[BaseSummaryGenerator]): List of summary generators to generate various kind of summary of todo items
@@ -79,9 +80,15 @@ class EmailNotifier(BaseNotifier):
         """
 
         for summary_generator in summary_generators:
-            if summary_generator.name == DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER:
+            if (
+                summary_generator.name
+                == DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER
+            ):
                 user_summary_generator_expired = summary_generator
-            elif summary_generator.name == DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER:
+            elif (
+                summary_generator.name
+                == DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER
+            ):
                 user_summary_generator_upcoming = summary_generator
             else:
                 html += f"""

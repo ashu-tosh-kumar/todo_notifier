@@ -16,7 +16,7 @@ T = TypeVar("T")
 
 class USER:
     def __init__(self, user_name: str) -> None:
-        """ Initializer for class `USER`
+        """Initializer for class `USER`
 
         Args:
             user_name (str): User name
@@ -26,7 +26,7 @@ class USER:
 
     @property
     def user_name(self) -> str:
-        """ Getter for `user_name`
+        """Getter for `user_name`
 
         Returns:
             str: Returns username
@@ -35,7 +35,7 @@ class USER:
 
     @property
     def user_email_id(self) -> str:
-        """ Getter for `user_email_id`
+        """Getter for `user_email_id`
 
         Returns:
             str: Returns user email id
@@ -43,7 +43,7 @@ class USER:
         return self._user_email_id
 
     def __str__(self) -> str:
-        """ Defines str representation of `USER` class object
+        """Defines str representation of `USER` class object
 
         Returns:
             str: Returns string representation of the class object
@@ -53,7 +53,7 @@ class USER:
 
 class POSITION:
     def __init__(self, line_no: int) -> None:
-        """ Initializer for position of a text in file
+        """Initializer for position of a text in file
 
         Args:
             line_no (int): Shows line_no no. of the text
@@ -62,7 +62,7 @@ class POSITION:
 
     @property
     def line_no(self) -> int:
-        """ Getter for `line_no`
+        """Getter for `line_no`
 
         Returns:
             int: Integer representing the line_no no. in respective module
@@ -71,8 +71,15 @@ class POSITION:
 
 
 class TODO:
-    def __init__(self, msg: str, user: USER, completion_date_str: str, module: str, position: POSITION) -> None:
-        """ Initializer for `todo.upper()` class
+    def __init__(
+        self,
+        msg: str,
+        user: USER,
+        completion_date_str: str,
+        module: str,
+        position: POSITION,
+    ) -> None:
+        """Initializer for `todo.upper()` class
 
         Args:
             msg (str): Inline message in the todo
@@ -87,17 +94,17 @@ class TODO:
         self._msg = msg
         self._user = user
         try:
-            self._completion_date = datetime.strptime(
-                completion_date_str, "%Y-%m-%d")
+            self._completion_date = datetime.strptime(completion_date_str, "%Y-%m-%d")
         except ValueError:
             raise InvalidDateFormatException(
-                f"Date: {completion_date_str} is invalid/non-supported format. Expected format: 'YYYY-MM-DD'")
+                f"Date: {completion_date_str} is invalid/non-supported format. Expected format: 'YYYY-MM-DD'"
+            )
         self._module = module
         self._position = position
 
     @property
     def msg(self) -> str:
-        """ Getter for `msg`
+        """Getter for `msg`
 
         Returns:
             str: Message of todo item
@@ -106,7 +113,7 @@ class TODO:
 
     @property
     def user(self) -> USER:
-        """ Getter for `user`
+        """Getter for `user`
 
         Returns:
             USER: user object of the respective todo item
@@ -115,7 +122,7 @@ class TODO:
 
     @property
     def completion_date(self) -> datetime:
-        """ Getter for `datetime` representation of `completion_date_str`
+        """Getter for `datetime` representation of `completion_date_str`
 
         Returns:
             datetime: datetime object representing `completion_date_str`
@@ -124,7 +131,7 @@ class TODO:
 
     @property
     def module(self) -> str:
-        """ Getter for `module`
+        """Getter for `module`
 
         Returns:
             str: Module name/address of the respective todo item
@@ -133,7 +140,7 @@ class TODO:
 
     @property
     def position(self) -> POSITION:
-        """ Getter for `position`
+        """Getter for `position`
 
         Returns:
             POSITION: Position of respective todo item in code
@@ -141,7 +148,7 @@ class TODO:
         return self._position
 
     def __str__(self) -> str:
-        """ str representation of `todo` object
+        """str representation of `todo` object
 
         Returns:
             str: String representation of the respective todo object

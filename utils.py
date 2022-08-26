@@ -8,7 +8,7 @@ from summary_generators import BaseSummaryGenerator
 
 
 def _ignore_dir_or_file(dir_or_file_path: str, exclude_dirs_or_files: dict) -> bool:
-    """ Checks and returns bool about whether a directory should be excluded based on rules in `exclude_dirs_or_files`
+    """Checks and returns bool about whether a directory should be excluded based on rules in `exclude_dirs_or_files`
 
     Args:
         dir_or_file_path (str): Path of the directory.file that needs to be checked
@@ -32,8 +32,10 @@ def _ignore_dir_or_file(dir_or_file_path: str, exclude_dirs_or_files: dict) -> b
     return False
 
 
-def get_files_in_dir(dir_path: str, extension: str, exclude_subdirs: dict, exclude_files: dict) -> List[str]:
-    """ Provides a list of files in the give directory `path` and its subdirectories
+def get_files_in_dir(
+    dir_path: str, extension: str, exclude_subdirs: dict, exclude_files: dict
+) -> List[str]:
+    """Provides a list of files in the give directory `path` and its subdirectories
 
     Args:
         dir_path (str): Path of the directory
@@ -50,17 +52,20 @@ def get_files_in_dir(dir_path: str, extension: str, exclude_subdirs: dict, exclu
         if os.path.isdir(sub_dir_or_file_path):
             if not _ignore_dir_or_file(sub_dir_or_file_path, exclude_subdirs):
                 sub_dir_all_files = get_files_in_dir(
-                    sub_dir_or_file_path, extension, exclude_subdirs, exclude_files)
+                    sub_dir_or_file_path, extension, exclude_subdirs, exclude_files
+                )
                 all_files.extend(sub_dir_all_files)
         elif os.path.isfile(sub_dir_or_file_path):
-            if not _ignore_dir_or_file(sub_dir_or_file_path, exclude_files) and sub_dir_or_file_path.endswith(file_extension):
+            if not _ignore_dir_or_file(
+                sub_dir_or_file_path, exclude_files
+            ) and sub_dir_or_file_path.endswith(file_extension):
                 all_files.append(sub_dir_or_file)
 
     return all_files
 
 
 def recursive_update(base_dict: dict, new_dict: dict) -> None:
-    """ Performs recursive update of dictionary `base_dict` from contents of dictionary `new_dict`
+    """Performs recursive update of dictionary `base_dict` from contents of dictionary `new_dict`
 
     Args:
         base_dict (dict): Base dictionary that needs to be updated
@@ -77,13 +82,14 @@ def recursive_update(base_dict: dict, new_dict: dict) -> None:
                 base_dict[key] = new_dict[key]
             else:
                 raise InCompatibleTypesException(
-                    f"Different types passed: {type(base_dict[key])}, {type(new_dict[key])} for recursive update")
+                    f"Different types passed: {type(base_dict[key])}, {type(new_dict[key])} for recursive update"
+                )
         else:
             base_dict[key] = new_dict[key]
 
 
 def compute_file_line_no_to_chars_map(file: str) -> dict:
-    """ Takes a file location and returns a dict representing number of characters in each line no.
+    """Takes a file location and returns a dict representing number of characters in each line no.
 
     Line numbers are 1-indexed
 
@@ -100,7 +106,7 @@ def compute_file_line_no_to_chars_map(file: str) -> dict:
 
 
 def compute_line_and_pos_given_span(line_no_to_chars_map: dict, start_idx: int) -> int:
-    """ Computes line no. given absolute start position in file and `line_no_to_chars_map` mapping of line no. to no. of characters in that line
+    """Computes line no. given absolute start position in file and `line_no_to_chars_map` mapping of line no. to no. of characters in that line
 
     Args:
         line_no_to_chars_map (dict): Dictionary mapping line no. ot no. of characters in that line in `file`
@@ -119,8 +125,11 @@ def compute_line_and_pos_given_span(line_no_to_chars_map: dict, start_idx: int) 
     return todo_line_no
 
 
-def generate_summary(all_todos_objs: Dict[str, List[TODO]], summary_generators: List[BaseSummaryGenerator]) -> None:
-    """ Function to generate multiple kind of summaries from givel list of todo items
+def generate_summary(
+    all_todos_objs: Dict[str, List[TODO]],
+    summary_generators: List[BaseSummaryGenerator],
+) -> None:
+    """Function to generate multiple kind of summaries from given list of todo items
 
     It allows users to pass a function/callable and a container. For each todo object in `all_todos_objs`, it will
     call the `callable` and pass it with current todo object and the container. The respective callable function can

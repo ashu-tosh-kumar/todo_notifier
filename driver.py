@@ -7,7 +7,7 @@ from utils import generate_summary, get_files_in_dir
 
 
 def run(parent_dir_name: str, config: BaseConfig = default_config) -> None:
-    """ Main run method that would get triggered to generate summary and alerts
+    """Main run method that would get triggered to generate summary and alerts
 
     Args:
         parent_dir_name (str): Parent directory of the project
@@ -17,10 +17,12 @@ def run(parent_dir_name: str, config: BaseConfig = default_config) -> None:
     parent_dir = os.path.join(parent_dir_name, curr_dir)
 
     all_files_in_parent_dir = get_files_in_dir(
-        parent_dir, "py", config.EXCLUDE_DIRS, config.EXCLUDE_FILES)
+        parent_dir, "py", config.EXCLUDE_DIRS, config.EXCLUDE_FILES
+    )
 
     all_todos_items = parse_files_for_todo_items(
-        parent_dir_name, all_files_in_parent_dir)
+        parent_dir_name, all_files_in_parent_dir
+    )
 
     generate_summary(all_todos_items, config.SUMMARY_GENERATORS)
 
