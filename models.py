@@ -1,6 +1,5 @@
 # Standard format for todo item is as follows.
-# Rules:
-# 1. todo has to be in capital letters
+# todo has to be in capital letters
 # Format: TODO [YYYY-MM-DD] @user_name inline_msg
 # Date format must be YYYY-MM-DD
 # Only one todo item is allowed per line. If more than one is in one line, the first one is considered as todo item and the rest are considered as message
