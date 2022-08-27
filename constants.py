@@ -27,7 +27,6 @@ class DEFAULT_SUMMARY_GENERATORS_ENUM:
     EXPIRED_TODO_BY_USER = "Expired TODO Items"
     TODO_BY_MODULE = "Module-wise Summary"
     UPCOMING_TODO_BY_USER = "Upcoming Week TODO Items"
-<<<<<<< HEAD
 
 
 DEFAULT_SUMMARY_GENERATORS = [
