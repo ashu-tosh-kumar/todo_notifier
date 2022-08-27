@@ -7,9 +7,10 @@
 # TODO [2022-05-03] @ashutosh some message 7
 # some message 8 TODO [2022-05-04] @ashutosh some message 8
 
+
 class SampleClass:
-    """ TODO [2022-05-05] @ashutosh some message 9
-    """
+    """TODO [2022-05-05] @ashutosh some message 9"""
+
     pass
 
 

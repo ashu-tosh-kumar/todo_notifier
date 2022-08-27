@@ -10,7 +10,7 @@ Above format has following components
 
 - `TODO` is capital. It need not to be starting word of the comment
 - TODO is followed a date in `YYYY-MM-DD` format within curly brackets. Respective TODO item is expected to be completed by end of this date
-- Date is followed by a unqiue user name
+- Date is followed by a unique user name
 - User name is followed by the usual message/comment of the respective TODO item
 
 The code is robust in the sense that if the TODO item misses some data, the same will still be picked up by the TODO Notifier. However without relevant information, certain functionalities may not work. For e.g. without date, we cannot know if the TODO item has overshoot its expected date of completion.
