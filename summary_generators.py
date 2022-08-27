@@ -279,10 +279,3 @@ class UpcomingWeekTodosByUser(BaseSummaryGenerator):
             </p>
             """
         return tables
-
-
-DEFAULT_SUMMARY_GENERATORS = [
-    ExpiredTodosByUser(DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER),
-    SummaryByModule(DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE),
-    UpcomingWeekTodosByUser(DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER),
-]
