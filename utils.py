@@ -32,9 +32,7 @@ def _ignore_dir_or_file(dir_or_file_path: str, exclude_dirs_or_files: dict) -> b
     return False
 
 
-def get_files_in_dir(
-    dir_path: str, extension: str, exclude_subdirs: dict, exclude_files: dict
-) -> List[str]:
+def get_files_in_dir(dir_path: str, extension: str, exclude_subdirs: dict, exclude_files: dict) -> List[str]:
     """Provides a list of files in the give directory `path` and its subdirectories
 
     Args:
@@ -51,14 +49,10 @@ def get_files_in_dir(
 
         if os.path.isdir(sub_dir_or_file_path):
             if not _ignore_dir_or_file(sub_dir_or_file_path, exclude_subdirs):
-                sub_dir_all_files = get_files_in_dir(
-                    sub_dir_or_file_path, extension, exclude_subdirs, exclude_files
-                )
+                sub_dir_all_files = get_files_in_dir(sub_dir_or_file_path, extension, exclude_subdirs, exclude_files)
                 all_files.extend(sub_dir_all_files)
         elif os.path.isfile(sub_dir_or_file_path):
-            if not _ignore_dir_or_file(
-                sub_dir_or_file_path, exclude_files
-            ) and sub_dir_or_file_path.endswith(file_extension):
+            if not _ignore_dir_or_file(sub_dir_or_file_path, exclude_files) and sub_dir_or_file_path.endswith(file_extension):
                 all_files.append(sub_dir_or_file)
 
     return all_files
@@ -78,12 +72,10 @@ def recursive_update(base_dict: dict, new_dict: dict) -> None:
         if key in base_dict:
             if type(base_dict[key]) is dict and type(new_dict[key]) is dict:
                 recursive_update(base_dict[key], new_dict[key])
-            elif type(base_dict[key]) == type(new_dict[key]):
+            elif type(base_dict[key]) == type(new_dict[key]):  # noqa
                 base_dict[key] = new_dict[key]
             else:
-                raise InCompatibleTypesException(
-                    f"Different types passed: {type(base_dict[key])}, {type(new_dict[key])} for recursive update"
-                )
+                raise InCompatibleTypesException(f"Different types passed: {type(base_dict[key])}, {type(new_dict[key])} for recursive update")
         else:
             base_dict[key] = new_dict[key]
 

@@ -28,9 +28,7 @@ class BaseNotifier(ABC):
 
 
 class EmailNotifier(BaseNotifier):
-    def __init__(
-        self, sender_email: str, password: str, receivers: List[str] = None
-    ) -> None:
+    def __init__(self, sender_email: str, password: str, receivers: List[str] = None) -> None:
         """Initializer for `EmailNotifier` class
 
         Args:
@@ -43,9 +41,7 @@ class EmailNotifier(BaseNotifier):
         self._password = password
         super().__init__()
 
-    def _send_email(
-        self, receivers_str: str, html: str, receivers_list: List[str]
-    ) -> None:
+    def _send_email(self, receivers_str: str, html: str, receivers_list: List[str]) -> None:
         """Sends email to `receivers_list` with `html` content
 
         Args:
@@ -80,15 +76,9 @@ class EmailNotifier(BaseNotifier):
         """
 
         for summary_generator in summary_generators:
-            if (
-                summary_generator.name
-                == DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER
-            ):
+            if summary_generator.name == DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER:
                 user_summary_generator_expired = summary_generator
-            elif (
-                summary_generator.name
-                == DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER
-            ):
+            elif summary_generator.name == DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER:
                 user_summary_generator_upcoming = summary_generator
             else:
                 html += f"""

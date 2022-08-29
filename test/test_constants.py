@@ -25,12 +25,8 @@ class TestUnknownUserName(unittest.TestCase):
 
 class TestDefaultSummaryGeneratorsEnum(unittest.TestCase):
     def test_DEFAULT_SUMMARY_GENERATORS_ENUM_should_contain_expected_enums(self):
-        self.assertEqual(
-            "Expired TODO Items", DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER
-        )
-        self.assertEqual(
-            "Module-wise Summary", DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE
-        )
+        self.assertEqual("Expired TODO Items", DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER)
+        self.assertEqual("Module-wise Summary", DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE)
         self.assertEqual(
             "Upcoming Week TODO Items",
             DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER,

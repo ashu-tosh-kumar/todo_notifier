@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import TypeVar
 
-from constants import DEFAULT_SUMMARY_GENERATORS_ENUM, UNKNOWN_USER_NAME
+from constants import UNKNOWN_USER_NAME
 from models import TODO
 
 T = TypeVar("T")
@@ -56,9 +56,7 @@ class SummaryByModule(BaseSummaryGenerator):
         """
         self._container: dict
 
-        user_name = (
-            todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
-        )
+        user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
 
         if todo_obj.module not in self._container:
             self._container[todo_obj.module] = [
@@ -134,9 +132,7 @@ class ExpiredTodosByUser(BaseSummaryGenerator):
         self._container: list
 
         curr_date = datetime.today().date()
-        user_name = (
-            todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
-        )
+        user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
 
         if curr_date > todo_obj.completion_date:
             if user_name not in self._container:
@@ -211,14 +207,9 @@ class UpcomingWeekTodosByUser(BaseSummaryGenerator):
         self._container: list
 
         curr_date = datetime.today().date()
-        user_name = (
-            todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
-        )
+        user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
 
-        if (
-            curr_date < todo_obj.completion_date
-            and (todo_obj.completion_date - curr_date).days <= 7
-        ):
+        if curr_date < todo_obj.completion_date and (todo_obj.completion_date - curr_date).days <= 7:
             if user_name not in self._container:
                 self._container[user_name] = [
                     [

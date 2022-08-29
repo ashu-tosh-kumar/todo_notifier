@@ -95,9 +95,7 @@ class TODO:
         try:
             self._completion_date = datetime.strptime(completion_date_str, "%Y-%m-%d")
         except ValueError:
-            raise InvalidDateFormatException(
-                f"Date: {completion_date_str} is invalid/non-supported format. Expected format: 'YYYY-MM-DD'"
-            )
+            raise InvalidDateFormatException(f"Date: {completion_date_str} is invalid/non-supported format. Expected format: 'YYYY-MM-DD'")
         self._module = module
         self._position = position
 
