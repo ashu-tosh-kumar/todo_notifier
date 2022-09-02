@@ -1,7 +1,7 @@
 from summary_generators import (
-    ExpiredTodosByUser,
-    SummaryByModule,
-    UpcomingWeekTodosByUser,
+    ByModuleSummaryGenerator,
+    ExpiredTodosByUserSummaryGenerator,
+    UpcomingWeekTodosByUserSummaryGenerator,
 )
 
 DEFAULT_EXCLUDE_DIRS = {"PATTERN": [".*"], "NAME": [], "ABS_PATH": []}
@@ -18,7 +18,7 @@ class DEFAULT_SUMMARY_GENERATORS_ENUM:
 
 
 DEFAULT_SUMMARY_GENERATORS = [
-    ExpiredTodosByUser(DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER),
-    SummaryByModule(DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE),
-    UpcomingWeekTodosByUser(DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER),
+    ExpiredTodosByUserSummaryGenerator(DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER),
+    ByModuleSummaryGenerator(DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE),
+    UpcomingWeekTodosByUserSummaryGenerator(DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER),
 ]

@@ -47,7 +47,7 @@ class BaseSummaryGenerator(ABC):
         pass
 
 
-class SummaryByModule(BaseSummaryGenerator):
+class ByModuleSummaryGenerator(BaseSummaryGenerator):
     def generate_summary(self, todo_obj: TODO) -> None:
         """Generates summary for each module
 
@@ -121,7 +121,7 @@ class SummaryByModule(BaseSummaryGenerator):
         return tables
 
 
-class ExpiredTodosByUser(BaseSummaryGenerator):
+class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
     def generate_summary(self, todo_obj: TODO) -> None:
         """Generates summary for all expired todo items by user
 
@@ -197,7 +197,7 @@ class ExpiredTodosByUser(BaseSummaryGenerator):
         return tables
 
 
-class UpcomingWeekTodosByUser(BaseSummaryGenerator):
+class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
     def generate_summary(self, todo_obj: TODO) -> None:
         """Generates summary for all upcoming todo items by user
 
