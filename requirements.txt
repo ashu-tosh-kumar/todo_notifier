@@ -1,3 +1,7 @@
 # These versions are what is used to build this application initially but there's no hard requirements on versions
 # So, this application can be used by using different versions of the following packages based on need
 # python==3.10.4
+black==22.6.0
+flake8==5.0.4
+mock==4.0.3
+pre-commit==2.20.0
