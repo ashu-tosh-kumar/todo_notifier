@@ -1,6 +1,7 @@
 # Configuration for custom application of todo_notifier
 from typing import Dict, List
 
+from connect import CONNECT_METHOD
 from constants import (
     DEFAULT_EXCLUDE_DIRS,
     DEFAULT_EXCLUDE_FILES,
@@ -18,6 +19,7 @@ class BaseConfig:
         exclude_dirs: Dict[str, List[str]],
         exclude_files: Dict[str, List[str]],
         summary_generators: List[BaseSummaryGenerator],
+        connect_method: CONNECT_METHOD,
     ) -> None:
         """Initializer for `BaseConfig` class
 
@@ -25,10 +27,12 @@ class BaseConfig:
             exclude_dirs (Dict[str, List[str]]): Dictionary containing details about directories to be ignored
             exclude_files (Dict[str, List[str]]): Dictionary containing details about files to be ignored
             summary_generators (List[BaseSummaryGenerator]): List of summary generators to generate various kind of summary of todo items
+            connect_method (CONNECT_METHOD): Method that should be used to pull the repository
         """
         self._exclude_dirs = exclude_dirs
         self._exclude_files = exclude_files
         self._summary_generators = summary_generators
+        self._connect_method = connect_method
 
     @property
     def exclude_dirs(self) -> Dict[str, List[str]]:
@@ -57,6 +61,15 @@ class BaseConfig:
         """
         return self._summary_generators
 
+    @property
+    def connect_method(self) -> CONNECT_METHOD:
+        """Getter for `connect_method`
+
+        Returns:
+            CONNECT_METHOD: Method that should be used to pull repository
+        """
+        return self._connect_method
+
 
 class DefaultConfig(BaseConfig):
     """Allows easy way to setup config by allowing to pass new dirs/files to exclude along with default ones
@@ -72,6 +85,7 @@ class DefaultConfig(BaseConfig):
         flag_default_exclude_files: bool = True,
         summary_generators: List[BaseSummaryGenerator] = [],
         flag_default_summary_generators: bool = True,
+        connect_method: CONNECT_METHOD = CONNECT_METHOD.HTTPS,
     ) -> None:
         """Initializer for `DefaultConfig` class
 
@@ -96,4 +110,7 @@ class DefaultConfig(BaseConfig):
             # Means include the default summary generator list of files
             summary_generators = DEFAULT_SUMMARY_GENERATORS.extend(summary_generators)
 
-        super().__init__(exclude_dirs, exclude_files, summary_generators)
+        super().__init__(exclude_dirs, exclude_files, summary_generators, connect_method)
+
+
+default_config = DefaultConfig()
