@@ -1,25 +1,38 @@
 import os
 import tempfile
+from typing import Dict, TypeVar
 
 from config import BaseConfig, default_config
 from connect import Connect
 from todo_notifier import parse_files_for_todo_items
 from utils import generate_summary, get_files_in_dir
 
+P = TypeVar("P")
 
-def run(git_url: str, project_dir_name: str, config: BaseConfig = default_config) -> None:
+
+class DriverException(Exception):
+    """Exception raised if any issue in `driver` module"""
+
+    pass
+
+
+def run(connect_kwargs: Dict[str, P], config: BaseConfig = default_config) -> None:
     """Main run method that would get triggered to generate summary and alerts
 
     This method can be imported and run accordingly on demand or as a scheduled task etc.
 
     Args:
-        git_url (str): Git url of the project
-        project_dir_name (str): Name of the project on Git
+        connect_kwargs (Dict[str, P]): Dictionary of key-word arguments to be passed to `Connect` to pull the repository
         config (BaseConfig, optional): Configuration to be used. Defaults to `default_config`
     """
+    try:
+        project_dir_name = connect_kwargs["project_dir_name"]  # Mandatory parameter
+    except KeyError:
+        raise DriverException("project_dir_name needs to be passed in argument: connect_kwargs")
+
     with tempfile.gettempdir() as temp_dir:
         # Pull the respective repository into a temporary directory
-        Connect(config.connect_method).pull_repository(git_url=git_url, target_directory=temp_dir)
+        Connect(config.connect_method).pull_repository(**connect_kwargs, target_directory=temp_dir)
 
         project_dir = os.path.join(temp_dir, project_dir_name)
 
