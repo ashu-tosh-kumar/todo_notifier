@@ -1,5 +1,9 @@
 """This module aims to allow connection to the respective repository to allow fetching the repository"""
 from enum import Enum
+from shutil import copy
+from typing import TypeVar
+
+P = TypeVar("P")
 
 
 class CONNECT_METHOD(Enum):
@@ -9,13 +13,35 @@ class CONNECT_METHOD(Enum):
 
 
 class Connect:
+    """Provides a common interface to pull repositories from different sources"""
+
     def __init__(self, connect_method: CONNECT_METHOD):
+        """Initializer for `Connect` class
+
+        Args:
+            connect_method (CONNECT_METHOD): Method to be used to pull a repository into the target location
+        """
         self._connect_method = connect_method
 
-    def pull_repository(self, *args, **kwargs):
+    def pull_repository(self, *args, **kwargs) -> P:
+        """Provides a one point access to pull repository into the target location. This method simply relegates
+        the call to respective methods set during class initialization
+
+        Returns:
+            P: Returns whatever is returned by the respective method to which call is delegated to
+        """
         if self._connect_method == CONNECT_METHOD.HTTPS:
             return self._pull_using_https(*args, **kwargs)
 
     def _pull_using_https(self, url: str, target_dir: str) -> None:
         # TODO
         pass
+
+    def _pull_for_dry_test(self, test_file: str, target_dir: str) -> None:
+        """Copies the local file `test_file` into `target_dir` directory
+
+        Args:
+            test_file (str): Fully qualified file name to be copied
+            target_dir (str): Target directory where file needs to be copied to
+        """
+        copy(test_file, target_dir)
