@@ -1,9 +1,3 @@
-from summary_generators import (
-    ByModuleSummaryGenerator,
-    ExpiredTodosByUserSummaryGenerator,
-    UpcomingWeekTodosByUserSummaryGenerator,
-)
-
 DEFAULT_EXCLUDE_DIRS = {"PATTERN": [".*"], "NAME": [], "ABS_PATH": []}
 
 DEFAULT_EXCLUDE_FILES = {"PATTERN": [".*"], "NAME": [], "ABS_PATH": []}
@@ -15,10 +9,3 @@ class DEFAULT_SUMMARY_GENERATORS_ENUM:
     EXPIRED_TODO_BY_USER = "Expired TODO Items"
     TODO_BY_MODULE = "Module-wise Summary"
     UPCOMING_TODO_BY_USER = "Upcoming Week TODO Items"
-
-
-DEFAULT_SUMMARY_GENERATORS = [
-    ExpiredTodosByUserSummaryGenerator(),
-    ByModuleSummaryGenerator(),
-    UpcomingWeekTodosByUserSummaryGenerator(),
-]

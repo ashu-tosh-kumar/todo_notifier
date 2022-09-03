@@ -2,13 +2,20 @@
 from typing import Dict, List
 
 from connect import CONNECT_METHOD
-from constants import (
-    DEFAULT_EXCLUDE_DIRS,
-    DEFAULT_EXCLUDE_FILES,
-    DEFAULT_SUMMARY_GENERATORS,
+from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
+from summary_generators import (
+    BaseSummaryGenerator,
+    ByModuleSummaryGenerator,
+    ExpiredTodosByUserSummaryGenerator,
+    UpcomingWeekTodosByUserSummaryGenerator,
 )
-from summary_generators import BaseSummaryGenerator
 from utils import recursive_update
+
+DEFAULT_SUMMARY_GENERATORS = [
+    ExpiredTodosByUserSummaryGenerator(),
+    ByModuleSummaryGenerator(),
+    UpcomingWeekTodosByUserSummaryGenerator(),
+]
 
 
 class BaseConfig:
