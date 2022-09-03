@@ -1,4 +1,5 @@
 # Configuration for custom application of todo_notifier
+from copy import deepcopy
 from typing import Dict, List
 
 from connect import CONNECT_METHOD
@@ -10,12 +11,6 @@ from summary_generators import (
     UpcomingWeekTodosByUserSummaryGenerator,
 )
 from utils import recursive_update
-
-DEFAULT_SUMMARY_GENERATORS = [
-    ExpiredTodosByUserSummaryGenerator(),
-    ByModuleSummaryGenerator(),
-    UpcomingWeekTodosByUserSummaryGenerator(),
-]
 
 
 class BaseConfig:
@@ -33,7 +28,7 @@ class BaseConfig:
         Args:
             exclude_dirs (Dict[str, List[str]]): Dictionary containing details about directories to be ignored
             exclude_files (Dict[str, List[str]]): Dictionary containing details about files to be ignored
-            summary_generators (List[BaseSummaryGenerator]): List of summary generators to generate various kind of summary of todo items
+            summary_generators (List[BaseSummaryGenerator]): List of summary generator instance to generate various kind of summary of todo items
             connect_method (CONNECT_METHOD): Method that should be used to pull the repository
         """
         self._exclude_dirs = exclude_dirs
@@ -100,22 +95,34 @@ class DefaultConfig(BaseConfig):
             exclude_dirs (Dict[str, List[str]]): Dictionary containing details about directories to be ignored
             flag_default_exclude_dirs ()
             exclude_files (Dict[str, List[str]]): Dictionary containing details about files to be ignored
-            summary_generators (List[BaseSummaryGenerator]): List of summary generators objects
+            summary_generators (List[BaseSummaryGenerator]): List of summary generator instances
         """
         exclude_dirs = exclude_dirs or {}
         exclude_files = exclude_files or {}
 
         if flag_default_exclude_dirs:
             # Means include the default exclude list of directories
-            exclude_dirs = recursive_update(DEFAULT_EXCLUDE_DIRS, exclude_dirs)
+            default_exclude_dirs = deepcopy(DEFAULT_EXCLUDE_DIRS)
+            recursive_update(default_exclude_dirs, exclude_dirs)
+            exclude_dirs = default_exclude_dirs
 
         if flag_default_exclude_files:
             # Means include the default exclude list of files
-            exclude_files = recursive_update(DEFAULT_EXCLUDE_FILES, exclude_files)
+            default_exclude_files = deepcopy(DEFAULT_EXCLUDE_FILES)
+            recursive_update(default_exclude_files, exclude_files)
+            exclude_files = default_exclude_files
 
         if flag_default_summary_generators:
             # Means include the default summary generator list of files
-            summary_generators = DEFAULT_SUMMARY_GENERATORS.extend(summary_generators)
+            # Instantiate the summary generators
+            default_summary_generators = [
+                ByModuleSummaryGenerator(),
+                ExpiredTodosByUserSummaryGenerator(),
+                UpcomingWeekTodosByUserSummaryGenerator(),
+            ]
+
+            default_summary_generators.extend(summary_generators)
+            summary_generators = default_summary_generators
 
         super().__init__(exclude_dirs, exclude_files, summary_generators, connect_method)
 
