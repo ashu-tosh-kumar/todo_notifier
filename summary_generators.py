@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import TypeVar
 
-from constants import UNKNOWN_USER_NAME
+from constants import DEFAULT_SUMMARY_GENERATORS_ENUM, UNKNOWN_USER_NAME
 from models import TODO
 
 T = TypeVar("T")
@@ -28,6 +28,15 @@ class BaseSummaryGenerator(ABC):
         """
         return self._name
 
+    @property
+    def container(self) -> str:
+        """Getter for `container`
+
+        Returns:
+            str: container of the respective summary generator
+        """
+        return self._container
+
     @abstractmethod
     def generate_summary(self, todo_obj: TODO) -> None:
         """Abstract function to generate_summary summary
@@ -48,14 +57,21 @@ class BaseSummaryGenerator(ABC):
 
 
 class ByModuleSummaryGenerator(BaseSummaryGenerator):
+    def __init__(self, name: str = DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE, container: dict = None) -> None:
+        """Initializer for `ByModuleSummaryGenerator`
+
+        Args:
+            name (str, optional): Name of the respective Summary Generator. Defaults to DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE.
+            container (dict, optional): A container in which `generate_summary` would add info of the current todo object. Defaults to {}.
+        """
+        super().__init__(name=name, container=container or {})
+
     def generate_summary(self, todo_obj: TODO) -> None:
         """Generates summary for each module
 
         Args:
             todo_obj (TODO): todo object
         """
-        self._container: dict
-
         user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
 
         if todo_obj.module not in self._container:
@@ -122,6 +138,15 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
 
 
 class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
+    def __init__(self, name: str = DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER, container: list = []) -> None:
+        """Initializer for `ByModuleSummaryGenerator`
+
+        Args:
+            name (str, optional): Name of the respective Summary Generator. Defaults to DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER.
+            container (list, optional): A container in which `generate_summary` would add info of the current todo object. Defaults to [].
+        """
+        super().__init__(name=name, container=container)
+
     def generate_summary(self, todo_obj: TODO) -> None:
         """Generates summary for all expired todo items by user
 
@@ -129,8 +154,6 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
             todo_obj (TODO): todo object
             expired_todos_by_user_list (dict): Dictionary with user_name as key and corresponding expired todo items as value
         """
-        self._container: list
-
         curr_date = datetime.today().date()
         user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
 
@@ -198,14 +221,21 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
 
 
 class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
+    def __init__(self, name: str = DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER, container: list = []) -> None:
+        """Initializer for `ByModuleSummaryGenerator`
+
+        Args:
+            name (str, optional): Name of the respective Summary Generator
+            container (list, optional): A container in which `generate_summary` would add info of the current todo object
+        """
+        super().__init__(name=name, container=container)
+
     def generate_summary(self, todo_obj: TODO) -> None:
         """Generates summary for all upcoming todo items by user
 
         Args:
             todo_obj (TODO): todo object
         """
-        self._container: list
-
         curr_date = datetime.today().date()
         user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
 

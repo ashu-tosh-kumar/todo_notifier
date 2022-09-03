@@ -18,7 +18,7 @@ class DEFAULT_SUMMARY_GENERATORS_ENUM:
 
 
 DEFAULT_SUMMARY_GENERATORS = [
-    ExpiredTodosByUserSummaryGenerator(DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER),
-    ByModuleSummaryGenerator(DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE),
-    UpcomingWeekTodosByUserSummaryGenerator(DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER),
+    ExpiredTodosByUserSummaryGenerator(),
+    ByModuleSummaryGenerator(),
+    UpcomingWeekTodosByUserSummaryGenerator(),
 ]
