@@ -123,9 +123,9 @@ def generate_summary(
 ) -> None:
     """Function to generate multiple kind of summaries from given list of todo items
 
-    It allows users to pass a function/callable and a container. For each todo object in `all_todos_objs`, it will
-    call the `callable` and pass it with current todo object and the container. The respective callable function can
-    read the passed todo object and save relevant information in the respective container
+    It allows users to pass a function/callable. For each todo object in `all_todos_objs`, it will
+    call the `callable` and pass it with current todo object. The respective callable function can
+    read the passed todo object and save relevant information in its container accessible via `{callable}.container`
 
     Args:
         all_todos_objs (Dict[str, List[TODO]]): Key-value pair where key is relative path of file parsed and value is list of todo objects in that file

@@ -6,11 +6,11 @@ from models import POSITION, TODO, USER
 from utils import compute_line_and_pos_given_span
 
 
-def parse_files_for_todo_items(parent_dir_name: str, files: List[str]) -> Dict[str, List[TODO]]:
+def parse_files_for_todo_items(project_dir_name: str, files: List[str]) -> Dict[str, List[TODO]]:
     """Parses the list of `files` one by one to collect all todo items
 
     Args:
-        parent_dir_name (str): Parent directory of the project (required to get relative path of files and avoid exposing real paths)
+        project_dir_name (str): Parent directory name of the project (required to get relative path of files and avoid exposing temporary paths)
         files (List[str]): List of all files that need to be parsed
 
     Returns:
@@ -18,7 +18,7 @@ def parse_files_for_todo_items(parent_dir_name: str, files: List[str]) -> Dict[s
     """
     all_todos_objs = {}
     for file in files:
-        rel_file_path = os.path.join(parent_dir_name, os.path.relpath(file, parent_dir_name))
+        rel_file_path = os.path.join(project_dir_name, os.path.relpath(file, project_dir_name))
         all_todos_objs[rel_file_path] = []
         with open(file, "r") as f:
             file_content = f.read()
