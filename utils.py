@@ -59,7 +59,7 @@ def get_files_in_dir(dir_path: str, extension: str, exclude_subdirs: dict, exclu
 
 
 def recursive_update(base_dict: dict, new_dict: dict) -> None:
-    """Performs recursive update of dictionary `base_dict` from contents of dictionary `new_dict`
+    """Performs in-place recursive update of dictionary `base_dict` from contents of dictionary `new_dict`
 
     Args:
         base_dict (dict): Base dictionary that needs to be updated
