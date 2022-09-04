@@ -73,3 +73,7 @@ class TestConnect(unittest.TestCase):
             connect._pull_for_dry_run(test_file=test_file, project_dir_name=dummy_project_dir_name, target_dir=temp_dir)
 
             assert os.path.isfile(expected_file_path)
+
+
+if __name__ == "__main__":
+    unittest.main()

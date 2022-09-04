@@ -71,3 +71,7 @@ class TestRun(unittest.TestCase):
 
         with self.assertRaises(TODOException):
             run(dummy_connect_kwargs, MockTestConfig())
+
+
+if __name__ == "__main__":
+    unittest.main()
