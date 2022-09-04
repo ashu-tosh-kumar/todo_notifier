@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import TypeVar
+from typing import Dict, List, TypeVar
 
 from constants import DEFAULT_SUMMARY_GENERATORS_ENUM, UNKNOWN_USER_NAME
 from models import TODO
@@ -38,11 +38,11 @@ class BaseSummaryGenerator(ABC):
         return self._container
 
     @abstractmethod
-    def generate_summary(self, todo_obj: TODO) -> None:
+    def generate_summary(self, all_todos_objs: Dict[str, List[TODO]]) -> None:
         """Abstract function to generate_summary summary
 
         Args:
-            todo_obj (TODO): todo object
+            all_todos_objs (Dict[str, List[TODO]]):  Key-value pair where key is relative path of file parsed and value is list of todo objects in that file
         """
         pass
 
@@ -57,43 +57,45 @@ class BaseSummaryGenerator(ABC):
 
 
 class ByModuleSummaryGenerator(BaseSummaryGenerator):
-    def __init__(self, name: str = DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE, container: dict = None) -> None:
+    def __init__(self, name: str = DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE, container: Dict[str, List[List[str]]] = None) -> None:
         """Initializer for `ByModuleSummaryGenerator`
 
         Args:
             name (str, optional): Name of the respective Summary Generator. Defaults to DEFAULT_SUMMARY_GENERATORS_ENUM.TODO_BY_MODULE.
-            container (dict, optional): A container in which `generate_summary` would add info of the current todo object. Defaults to {}.
+            container (Dict[str, List[List[str]], optional): A container in which `generate_summary` would add info of the current todo object. Defaults to {}.
         """
         super().__init__(name=name, container=container or {})
 
-    def generate_summary(self, todo_obj: TODO) -> None:
+    def generate_summary(self, all_todos_objs: Dict[str, List[TODO]]) -> None:
         """Generates summary for each module
 
         Args:
-            todo_obj (TODO): todo object
+            all_todos_objs (Dict[str, List[TODO]]):  Key-value pair where key is relative path of file parsed and value is list of todo objects in that file
         """
-        user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+        for module in all_todos_objs:
+            for todo_obj in all_todos_objs[module]:
+                user_name = todo_obj.user.user_name
 
-        if todo_obj.module not in self._container:
-            self._container[todo_obj.module] = [
-                [
-                    user_name,
-                    todo_obj.user.user_email_id,
-                    todo_obj.msg,
-                    todo_obj.position.line_no,
-                    str(todo_obj.completion_date),
-                ]
-            ]
-        else:
-            self._container[todo_obj.module].append(
-                [
-                    user_name,
-                    todo_obj.user.user_email_id,
-                    todo_obj.msg,
-                    todo_obj.position.line_no,
-                    str(todo_obj.completion_date),
-                ]
-            )
+                if todo_obj.module not in self._container:
+                    self._container[todo_obj.module] = [
+                        [
+                            user_name,
+                            todo_obj.user.user_email_id,
+                            todo_obj.msg,
+                            todo_obj.position.line_no,
+                            str(todo_obj.completion_date),
+                        ]
+                    ]
+                else:
+                    self._container[todo_obj.module].append(
+                        [
+                            user_name,
+                            todo_obj.user.user_email_id,
+                            todo_obj.msg,
+                            todo_obj.position.line_no,
+                            str(todo_obj.completion_date),
+                        ]
+                    )
 
     def generate_html(self) -> str:
         """Generates the html representation showing module wise summary of todo items
@@ -138,45 +140,48 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
 
 
 class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
-    def __init__(self, name: str = DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER, container: list = []) -> None:
+    def __init__(self, name: str = DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER, container: Dict[str, List[List[str]]] = None) -> None:
         """Initializer for `ByModuleSummaryGenerator`
 
         Args:
             name (str, optional): Name of the respective Summary Generator. Defaults to DEFAULT_SUMMARY_GENERATORS_ENUM.EXPIRED_TODO_BY_USER.
-            container (list, optional): A container in which `generate_summary` would add info of the current todo object. Defaults to [].
+            container (Dict[str, List[List[str]], optional): A container in which `generate_summary` would add info of the current todo object. Defaults to {}.
         """
-        super().__init__(name=name, container=container)
+        super().__init__(name=name, container=container or {})
 
-    def generate_summary(self, todo_obj: TODO) -> None:
+    def generate_summary(self, all_todos_objs: Dict[str, List[TODO]]) -> None:
         """Generates summary for all expired todo items by user
 
         Args:
-            todo_obj (TODO): todo object
+            all_todos_objs (Dict[str, List[TODO]]):  Key-value pair where key is relative path of file parsed and value is list of todo objects in that file
             expired_todos_by_user_list (dict): Dictionary with user_name as key and corresponding expired todo items as value
         """
-        curr_date = datetime.today().date()
-        user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+        curr_date = datetime.today()
 
-        if curr_date > todo_obj.completion_date:
-            if user_name not in self._container:
-                self._container[user_name] = [
-                    [
-                        todo_obj.user.user_email_id,
-                        todo_obj.msg,
-                        todo_obj.module,
-                        todo_obj.position.line_no,
-                        str(todo_obj.completion_date),
-                    ]
-                ]
-            else:
-                self._container[user_name].append(
-                    [
-                        todo_obj.msg,
-                        todo_obj.module,
-                        todo_obj.position.line_no,
-                        str(todo_obj.completion_date),
-                    ]
-                )
+        for module in all_todos_objs:
+            for todo_obj in all_todos_objs[module]:
+                user_name = todo_obj.user.user_name
+
+                if curr_date > todo_obj.completion_date:
+                    if user_name not in self._container:
+                        self._container[user_name] = [
+                            [
+                                todo_obj.user.user_email_id,
+                                todo_obj.msg,
+                                todo_obj.module,
+                                todo_obj.position.line_no,
+                                str(todo_obj.completion_date),
+                            ]
+                        ]
+                    else:
+                        self._container[user_name].append(
+                            [
+                                todo_obj.msg,
+                                todo_obj.module,
+                                todo_obj.position.line_no,
+                                str(todo_obj.completion_date),
+                            ]
+                        )
 
     def generate_html(self, user_name: str) -> str:
         """Generates the html representation of the user-wise summary of expired todo items
@@ -221,44 +226,47 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
 
 
 class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
-    def __init__(self, name: str = DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER, container: list = []) -> None:
+    def __init__(self, name: str = DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER, container: Dict[str, List[List[str]]] = None) -> None:
         """Initializer for `ByModuleSummaryGenerator`
 
         Args:
-            name (str, optional): Name of the respective Summary Generator
-            container (list, optional): A container in which `generate_summary` would add info of the current todo object
+            name (str, optional): Name of the respective Summary Generator. Defaults to DEFAULT_SUMMARY_GENERATORS_ENUM.UPCOMING_TODO_BY_USER
+            container (Dict[str, List[List[str]]], optional): A container in which `generate_summary` would add info of the current todo object. Defaults to {}
         """
-        super().__init__(name=name, container=container)
+        super().__init__(name=name, container=container or {})
 
-    def generate_summary(self, todo_obj: TODO) -> None:
+    def generate_summary(self, all_todos_objs: Dict[str, List[TODO]]) -> None:
         """Generates summary for all upcoming todo items by user
 
         Args:
-            todo_obj (TODO): todo object
+            all_todos_objs (Dict[str, List[TODO]]):  Key-value pair where key is relative path of file parsed and value is list of todo objects in that file
         """
-        curr_date = datetime.today().date()
-        user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+        curr_date = datetime.today()
 
-        if curr_date < todo_obj.completion_date and (todo_obj.completion_date - curr_date).days <= 7:
-            if user_name not in self._container:
-                self._container[user_name] = [
-                    [
-                        todo_obj.user.user_email_id,
-                        todo_obj.msg,
-                        todo_obj.module,
-                        todo_obj.position.line_no,
-                        str(todo_obj.completion_date),
-                    ]
-                ]
-            else:
-                self._container[user_name].append(
-                    [
-                        todo_obj.msg,
-                        todo_obj.module,
-                        todo_obj.position.line_no,
-                        str(todo_obj.completion_date),
-                    ]
-                )
+        for module in all_todos_objs:
+            for todo_obj in all_todos_objs[module]:
+                user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
+
+                if curr_date < todo_obj.completion_date and (todo_obj.completion_date - curr_date).days <= 7:
+                    if user_name not in self._container:
+                        self._container[user_name] = [
+                            [
+                                todo_obj.user.user_email_id,
+                                todo_obj.msg,
+                                todo_obj.module,
+                                todo_obj.position.line_no,
+                                str(todo_obj.completion_date),
+                            ]
+                        ]
+                    else:
+                        self._container[user_name].append(
+                            [
+                                todo_obj.msg,
+                                todo_obj.module,
+                                todo_obj.position.line_no,
+                                str(todo_obj.completion_date),
+                            ]
+                        )
 
     def generate_html(self, user_name: str) -> str:
         """Generates the html representation of the user-wise summary of the upcoming (within a week) todo items

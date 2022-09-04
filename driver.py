@@ -30,9 +30,9 @@ def run(connect_kwargs: Dict[str, P], config: BaseConfig = default_config) -> No
     except KeyError:
         raise DriverException("project_dir_name needs to be passed in argument: connect_kwargs")
 
-    with tempfile.gettempdir() as temp_dir:
+    with tempfile.TemporaryDirectory() as temp_dir:
         # Pull the respective repository into a temporary directory
-        Connect(config.connect_method).pull_repository(**connect_kwargs, target_directory=temp_dir)
+        Connect(config.connect_method).pull_repository(**connect_kwargs, target_dir=temp_dir)
 
         project_dir = os.path.join(temp_dir, project_dir_name)
 
@@ -40,6 +40,6 @@ def run(connect_kwargs: Dict[str, P], config: BaseConfig = default_config) -> No
             dir_path=project_dir, extension="py", exclude_subdirs=config.exclude_dirs, exclude_files=config.exclude_files
         )
 
-        all_todos_items = parse_files_for_todo_items(project_dir_name, all_files_in_project_dir)
+        all_todos_items = parse_files_for_todo_items(temp_dir, all_files_in_project_dir)
 
         generate_summary(all_todos_items, config.summary_generators)
