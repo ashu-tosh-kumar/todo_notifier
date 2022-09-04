@@ -192,6 +192,7 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
                     else:
                         self._container[user_name].append(
                             [
+                                todo_obj.user.user_email_id,
                                 todo_obj.msg,
                                 todo_obj.module,
                                 todo_obj.position.line_no,
@@ -272,7 +273,7 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
             for todo_obj in all_todos_objs[module]:
                 user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
 
-                if curr_date < todo_obj.completion_date and (todo_obj.completion_date - curr_date).days <= 7:
+                if curr_date <= todo_obj.completion_date and (todo_obj.completion_date - curr_date).days <= 7:
                     if user_name not in self._container:
                         self._container[user_name] = [
                             [
@@ -286,6 +287,7 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
                     else:
                         self._container[user_name].append(
                             [
+                                todo_obj.user.user_email_id,
                                 todo_obj.msg,
                                 todo_obj.module,
                                 todo_obj.position.line_no,
