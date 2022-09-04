@@ -1,5 +1,9 @@
 DEFAULT_EXCLUDE_DIRS = {
-    "PATTERN": ["*.egg-info/"],  # Distribution / packaging
+    "PATTERN": [
+        ".egg-info/",  # Distribution / packaging
+        ".cover",  # Unit test / coverage reports
+        ".py,cover",  # Unit test / coverage reports
+    ],
     "NAME": [
         "__pycache__",
         ".env",  # Environments
@@ -27,8 +31,6 @@ DEFAULT_EXCLUDE_DIRS = {
         "htmlcov",  # Unit test / coverage reports
         ".tox",  # Unit test / coverage reports
         ".nox",  # Unit test / coverage reports
-        "*.cover",  # Unit test / coverage reports
-        "*.py,cover",  # Unit test / coverage reports
         ".hypothesis",  # Unit test / coverage reports
         ".pytest_cache",  # Unit test / coverage reports
         "instance",  # Flask stuff
@@ -45,19 +47,19 @@ DEFAULT_EXCLUDE_DIRS = {
 
 DEFAULT_EXCLUDE_FILES = {
     "PATTERN": [
-        "*.py[cod]",  # Byte-compiled / optimized / DLL files
-        "*$py.class",  # Byte-compiled / optimized / DLL files
-        "*.so",  # C extensions
-        "*.manifest",  # PyInstaller
-        "*.spec",  # PyInstaller
+        ".py[cod]",  # Byte-compiled / optimized / DLL files
+        "$py.class",  # Byte-compiled / optimized / DLL files
+        ".so",  # C extensions
+        ".manifest",  # PyInstaller
+        ".spec",  # PyInstaller
         ".coverage.*",  # Unit test / coverage reports
         ".cache",  # Unit test / coverage reports
         "nosetests.xml",  # Unit test / coverage reports
         "coverage.xml",  # Unit test / coverage reports
-        "*.mo",  # Translations
-        "*.pot",  # Translations
-        "*.log",  # Django stuff
-        "*.sage.py",  # SageMath parsed files
+        ".mo",  # Translations
+        ".pot",  # Translations
+        ".log",  # Django stuff
+        ".sage.py",  # SageMath parsed files
     ],
     "NAME": [
         ".coverage",  # Unit test / coverage reports
@@ -83,6 +85,8 @@ DEFAULT_EXCLUDE_FILES = {
 }
 
 UNKNOWN_USER_NAME = "JANE_DOE"
+
+DEFAULT_COMPLETION_DATE = "9999-12-25"
 
 
 class DEFAULT_SUMMARY_GENERATORS_ENUM:
