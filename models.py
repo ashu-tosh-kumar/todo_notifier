@@ -160,5 +160,4 @@ class TODO:
         Returns:
             str: String representation of the respective todo object
         """
-        return f"""TODO: {repr(self)} msg: {self.msg} user:
-         {str(self.user)} completion date: {self.completion_date} module: {self.module} position: {str(self.position)}"""
+        return f"""TODO: {repr(self)} msg: {self.msg} user: {str(self.user)} completion date: {self.completion_date} module: {self.module} position: {str(self.position)}"""  # noqa

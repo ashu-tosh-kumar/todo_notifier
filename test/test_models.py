@@ -69,6 +69,5 @@ class TestTodo(unittest.TestCase):
         self.assertAlmostEqual(self._dummy_position, self._todo.position)
 
     def test___str__(self):
-        expected_value = f"""TODO: {repr(self._todo)} msg: {self._todo.msg}
-         user: {str(self._todo.user)} completion date: {self._todo.completion_date} module: {self._todo.module} position: {str(self._todo.position)}"""
+        expected_value = f"""TODO: {repr(self._todo)} msg: {self._todo.msg} user: {str(self._todo.user)} completion date: {self._todo.completion_date} module: {self._todo.module} position: {str(self._todo.position)}"""  # noqa
         self.assertEqual(expected_value, str(self._todo))
