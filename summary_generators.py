@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Dict, List, TypeVar
@@ -6,6 +7,10 @@ from constants import DEFAULT_SUMMARY_GENERATORS_ENUM, UNKNOWN_USER_NAME
 from models import TODO
 
 T = TypeVar("T")
+
+# logging configuration
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 class BaseSummaryGenerator(ABC):
@@ -72,7 +77,10 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
         Args:
             all_todos_objs (Dict[str, List[TODO]]):  Key-value pair where key is relative path of file parsed and value is list of todo objects in that file
         """
+        logger.info(f"Generating summary: {self.name}")
+
         for module in all_todos_objs:
+            logger.info(f"Generating summary: {self.name} for module: {module}")
             for todo_obj in all_todos_objs[module]:
                 user_name = todo_obj.user.user_name
 
@@ -97,12 +105,16 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
                         ]
                     )
 
+        logger.info(f"Summary generated: {self.container}")
+
     def generate_html(self) -> str:
         """Generates the html representation showing module wise summary of todo items
 
         Returns:
             str: String showing HTMl representation of the respective summary
         """
+        logger.info(f"Generating html for: {self.name}")
+
         tables = ""
         for module in self._container:
             table = """
@@ -136,6 +148,7 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
             </p><br>
             """
 
+        logger.info(f"HTML generated: {tables}")
         return tables
 
 
@@ -156,9 +169,12 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
             all_todos_objs (Dict[str, List[TODO]]):  Key-value pair where key is relative path of file parsed and value is list of todo objects in that file
             expired_todos_by_user_list (dict): Dictionary with user_name as key and corresponding expired todo items as value
         """
+        logger.info(f"Generating summary: {self.name}")
+
         curr_date = datetime.today()
 
         for module in all_todos_objs:
+            logger.info(f"Generating summary: {self.name} for module: {module}")
             for todo_obj in all_todos_objs[module]:
                 user_name = todo_obj.user.user_name
 
@@ -183,6 +199,8 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
                             ]
                         )
 
+        logger.info(f"Summary generated: {self.container}")
+
     def generate_html(self, user_name: str) -> str:
         """Generates the html representation of the user-wise summary of expired todo items
 
@@ -192,6 +210,8 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
         Returns:
             str: String showing HTMl representation of the respective summary
         """
+        logger.info(f"Generating html for: {self.name}")
+
         table = """
             <table>
             <tr>
@@ -222,6 +242,8 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
                 {table}
             </p>
             """
+
+        logger.info(f"HTML generated: {tables}")
         return tables
 
 
@@ -241,9 +263,12 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
         Args:
             all_todos_objs (Dict[str, List[TODO]]):  Key-value pair where key is relative path of file parsed and value is list of todo objects in that file
         """
+        logger.info(f"Generating summary: {self.name}")
+
         curr_date = datetime.today()
 
         for module in all_todos_objs:
+            logger.info(f"Generating summary: {self.name} for module: {module}")
             for todo_obj in all_todos_objs[module]:
                 user_name = todo_obj.user.user_name if todo_obj.user.user_name else UNKNOWN_USER_NAME
 
@@ -268,6 +293,8 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
                             ]
                         )
 
+        logger.info(f"Summary generated: {self.container}")
+
     def generate_html(self, user_name: str) -> str:
         """Generates the html representation of the user-wise summary of the upcoming (within a week) todo items
 
@@ -277,6 +304,8 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
         Returns:
             str: String showing HTMl representation of the respective summary
         """
+        logger.info(f"Generating html for: {self.name}")
+
         table = """
             <table>
             <tr>
@@ -307,4 +336,6 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
                 {table}
             </p>
             """
+
+        logger.info(f"HTML generated: {tables}")
         return tables

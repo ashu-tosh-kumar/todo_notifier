@@ -1,3 +1,4 @@
+import logging
 import os
 import tempfile
 from typing import Dict, TypeVar
@@ -9,8 +10,12 @@ from utils import generate_summary, get_files_in_dir
 
 P = TypeVar("P")
 
+# logging configuration
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
-class DriverException(Exception):
+
+class TODOException(Exception):
     """Exception raised if any issue in `driver` module"""
 
     pass
@@ -28,18 +33,25 @@ def run(connect_kwargs: Dict[str, P], config: BaseConfig = default_config) -> No
     try:
         project_dir_name = connect_kwargs["project_dir_name"]  # Mandatory parameter
     except KeyError:
-        raise DriverException("project_dir_name needs to be passed in argument: connect_kwargs")
+        logger.exception("project_dir_name needs to be passed in argument: connect_kwargs")
+        raise TODOException("project_dir_name needs to be passed in argument: connect_kwargs")
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Pull the respective repository into a temporary directory
-        Connect(config.connect_method).pull_repository(**connect_kwargs, target_dir=temp_dir)
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Pull the respective repository into a temporary directory
+            logger.info(f"Pulling the repository: {connect_kwargs} into temporary directory: {temp_dir}")
+            Connect(config.connect_method).pull_repository(**connect_kwargs, target_dir=temp_dir)
 
-        project_dir = os.path.join(temp_dir, project_dir_name)
+            project_dir = os.path.join(temp_dir, project_dir_name)
 
-        all_files_in_project_dir = get_files_in_dir(
-            dir_path=project_dir, extension="py", exclude_subdirs=config.exclude_dirs, exclude_files=config.exclude_files
-        )
+            all_files_in_project_dir = get_files_in_dir(
+                dir_path=project_dir, extension="py", exclude_subdirs=config.exclude_dirs, exclude_files=config.exclude_files
+            )
 
-        all_todos_items = parse_files_for_todo_items(temp_dir, all_files_in_project_dir)
+            all_todos_items = parse_files_for_todo_items(temp_dir, all_files_in_project_dir)
 
-        generate_summary(all_todos_items, config.summary_generators)
+            summary_generators = config.summary_generators
+            generate_summary(all_todos_items, summary_generators)
+    except Exception:
+        logger.exception("Error in TODO application")
+        raise TODOException("Error in TODO application")

@@ -1,10 +1,21 @@
 """This module aims to allow connection to the respective repository to allow fetching the repository"""
+import logging
 import os
 from enum import Enum
 from shutil import copy
 from typing import TypeVar
 
 P = TypeVar("P")
+
+# logging configuration
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+
+class ConnectException(Exception):
+    """Raised if any exception in `connect` module"""
+
+    pass
 
 
 class CONNECT_METHOD(Enum):
@@ -32,10 +43,15 @@ class Connect:
         Returns:
             P: Returns whatever is returned by the respective method to which call is delegated to
         """
-        if self._connect_method == CONNECT_METHOD.HTTPS:
-            return self._pull_using_https(*args, **kwargs)
-        elif self._connect_method == CONNECT_METHOD.DRY_RUN:
-            return self._pull_for_dry_run(*args, **kwargs)
+        try:
+            logger.info(f"Pulling repository: {args} {kwargs} via {self._connect_method}")
+            if self._connect_method == CONNECT_METHOD.HTTPS:
+                return self._pull_using_https(*args, **kwargs)
+            elif self._connect_method == CONNECT_METHOD.DRY_RUN:
+                return self._pull_for_dry_run(*args, **kwargs)
+        except Exception:
+            logger.exception(f"Error in pulling repository via {self._connect_method}")
+            raise ConnectException(f"Error in pulling repository via {self._connect_method}")
 
     def _pull_using_https(self, url: str, target_dir: str) -> None:
         # TODO

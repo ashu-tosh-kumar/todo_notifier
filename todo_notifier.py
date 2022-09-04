@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from typing import Dict, List
@@ -5,6 +6,10 @@ from typing import Dict, List
 from constants import UNKNOWN_USER_NAME
 from models import POSITION, TODO, USER
 from utils import compute_file_line_no_to_chars_map, compute_line_and_pos_given_span
+
+# logging configuration
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def parse_files_for_todo_items(project_parent_dir: str, files: List[str]) -> Dict[str, List[TODO]]:
@@ -19,45 +24,51 @@ def parse_files_for_todo_items(project_parent_dir: str, files: List[str]) -> Dic
     """
     all_todos_objs = {}
     for file in files:
-        rel_file_path = os.path.relpath(file, project_parent_dir)
-        all_todos_objs[rel_file_path] = []
-        line_no_to_chars_map = compute_file_line_no_to_chars_map(file)
-        with open(file, "r") as f:
-            file_content = f.read()
-            todo_items = re.finditer(r"TODO.*", file_content, re.MULTILINE)
-            for todo_item in todo_items:
-                todo_item_group = todo_item.group()
-                todo_date_username = re.findall(
-                    r"TODO\s*(\[.*\])?\s*(@[^\s]*)?\s*(.*)?",
-                    todo_item_group,
-                    re.MULTILINE,
-                )
+        try:
+            rel_file_path = os.path.relpath(file, project_parent_dir)
+            all_todos_objs[rel_file_path] = []
+            line_no_to_chars_map = compute_file_line_no_to_chars_map(file)
+            with open(file, "r") as f:
+                file_content = f.read()
+                todo_items = re.finditer(r"TODO.*", file_content, re.MULTILINE)
+                for todo_item_idx, todo_item in enumerate(todo_items):
+                    try:
+                        todo_item_group = todo_item.group()
+                        todo_date_username = re.findall(
+                            r"TODO\s*(\[.*\])?\s*(@[^\s]*)?\s*(.*)?",
+                            todo_item_group,
+                            re.MULTILINE,
+                        )
 
-                if todo_date_username:
-                    todo_date_username = todo_date_username[0]
+                        if todo_date_username:
+                            todo_date_username = todo_date_username[0]
 
-                msg = ""
-                if len(todo_date_username) > 2:
-                    msg = todo_date_username[2]
+                        msg = ""
+                        if len(todo_date_username) > 2:
+                            msg = todo_date_username[2]
 
-                user = USER(UNKNOWN_USER_NAME)  # By default we assume an unknown user
-                if len(todo_date_username) > 1:
-                    user = USER(todo_date_username[1][1:] or UNKNOWN_USER_NAME)  # handle empty string
+                        user = USER(UNKNOWN_USER_NAME)  # By default we assume an unknown user
+                        if len(todo_date_username) > 1:
+                            user = USER(todo_date_username[1][1:] or UNKNOWN_USER_NAME)  # handle empty string
 
-                completion_date_str = ""
-                if len(todo_date_username) > 0:
-                    completion_date_str = todo_date_username[0]
-                    if completion_date_str:
-                        completion_date_str = completion_date_str[1:-1]
+                        completion_date_str = ""
+                        if len(todo_date_username) > 0:
+                            completion_date_str = todo_date_username[0]
+                            if completion_date_str:
+                                completion_date_str = completion_date_str[1:-1]
 
-                module = rel_file_path
-                todo_position = todo_item.span()
+                        module = rel_file_path
+                        todo_position = todo_item.span()
 
-                line = compute_line_and_pos_given_span(line_no_to_chars_map, todo_position)
-                position = POSITION(line)
+                        line = compute_line_and_pos_given_span(line_no_to_chars_map, todo_position)
+                        position = POSITION(line)
 
-                todo = TODO(msg, user, completion_date_str, module, position)
+                        todo = TODO(msg, user, completion_date_str, module, position)
 
-                all_todos_objs[rel_file_path].append(todo)
+                        all_todos_objs[rel_file_path].append(todo)
+                    except Exception:
+                        logger.exception(f"Error in parsing todo item: {todo_item}, idx: {todo_item_idx}, all_todos: {all_todos_objs}")
+        except Exception:
+            logger.exception(f"Error in parsing todo items in file: {file}")
 
     return all_todos_objs
