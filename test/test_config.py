@@ -2,7 +2,7 @@ import unittest
 
 from mock import patch
 
-from config import BaseConfig, DefaultConfig
+from config import BaseConfig, DefaultConfig, default_config
 from connect import CONNECT_METHOD
 from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
 
@@ -102,6 +102,11 @@ class TestDefaultConfig(unittest.TestCase):
         actual_value = default_config.summary_generators
 
         self.assertEqual(dummy_summary_generators, actual_value)
+
+
+class TestDefaultConfigInstance(unittest.TestCase):
+    def test_default_config_instance_should_exist(self):
+        self.assertIsInstance(default_config, DefaultConfig)
 
 
 if __name__ == "__main__":
