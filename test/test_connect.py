@@ -43,8 +43,20 @@ class TestConnect(unittest.TestCase):
 
         spy__pull_for_dry_run.assert_called_once_with(test_file=dummy_test_file, project_dir_name=dummy_project_dir_name, target_dir=dummy_target_dir)
 
+    @patch("connect.Connect._pull_using_https")
+    def test_pull_repository_should_raise_connect_exception_if_any_exception_in_connecting(self, stub__pull_using_https):
+        stub__pull_using_https.side_effect = Exception("unittest-connect-via-https-exception")
+        connect = Connect(connect_method=CONNECT_METHOD.HTTPS)
+
+        with self.assertRaises(ConnectException):
+            connect.pull_repository()
+
     def test__pull_using_https(self):
-        pass
+        dummy_url = "unittest-url"
+        dummy_target_dir = "unittest-target-dir"
+        connect = Connect(connect_method=CONNECT_METHOD.DRY_RUN)
+
+        connect._pull_using_https(dummy_url, dummy_target_dir)
 
     def test__pull_for_dry_run_should_copy_file_into_temp_dir(self):
         dummy_project_dir_name = "unittest-project-dir-name"
