@@ -1,10 +1,23 @@
+import logging
 import os
 import re
 from typing import Dict, List, Tuple
 
-from exceptions import InCompatibleTypesException
 from models import TODO
 from summary_generators import BaseSummaryGenerator
+
+# logging configuration
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+
+class InCompatibleTypesException(Exception):
+    """Raised when two different types of data is passed for recursive update of a dictionary
+
+    E.g. {"a": []} and {"a": {}}, Here value of key "a" is of type list and dict which are not same
+    """
+
+    pass
 
 
 def _ignore_dir_or_file(dir_or_file_path: str, exclude_dirs_or_files: dict) -> bool:
@@ -45,15 +58,18 @@ def get_files_in_dir(dir_path: str, extension: str, exclude_subdirs: dict, exclu
     file_extension = f".{extension}"
 
     for sub_dir_or_file in os.listdir(dir_path):
-        sub_dir_or_file_path = os.path.join(dir_path, sub_dir_or_file)
+        try:
+            sub_dir_or_file_path = os.path.join(dir_path, sub_dir_or_file)
 
-        if os.path.isdir(sub_dir_or_file_path):
-            if not _ignore_dir_or_file(sub_dir_or_file_path, exclude_subdirs):
-                sub_dir_all_files = get_files_in_dir(sub_dir_or_file_path, extension, exclude_subdirs, exclude_files)
-                all_files.extend(sub_dir_all_files)
-        elif os.path.isfile(sub_dir_or_file_path):
-            if sub_dir_or_file_path.endswith(file_extension) and not _ignore_dir_or_file(sub_dir_or_file_path, exclude_files):
-                all_files.append(sub_dir_or_file_path)
+            if os.path.isdir(sub_dir_or_file_path):
+                if not _ignore_dir_or_file(sub_dir_or_file_path, exclude_subdirs):
+                    sub_dir_all_files = get_files_in_dir(sub_dir_or_file_path, extension, exclude_subdirs, exclude_files)
+                    all_files.extend(sub_dir_all_files)
+            elif os.path.isfile(sub_dir_or_file_path):
+                if sub_dir_or_file_path.endswith(file_extension) and not _ignore_dir_or_file(sub_dir_or_file_path, exclude_files):
+                    all_files.append(sub_dir_or_file_path)
+        except Exception:
+            logger.exception(f"Error in getting files in directory: {sub_dir_or_file}")
 
     return all_files
 
@@ -134,4 +150,7 @@ def generate_summary(
         summary_generators (List[BaseSummaryGenerator]): List of summary generators objects
     """
     for summary_generator_class_instance in summary_generators:
-        summary_generator_class_instance.generate_summary(all_todos_objs)
+        try:
+            summary_generator_class_instance.generate_summary(all_todos_objs)
+        except Exception:
+            logger.exception(f"Error in generating summary from: {summary_generator_class_instance}")
