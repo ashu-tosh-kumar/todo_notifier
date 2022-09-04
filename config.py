@@ -1,12 +1,15 @@
 # Configuration for custom application of todo_notifier
-from typing import List
+from copy import deepcopy
+from typing import Dict, List
 
-from constants import (
-    DEFAULT_EXCLUDE_DIRS,
-    DEFAULT_EXCLUDE_FILES,
-    DEFAULT_SUMMARY_GENERATORS,
+from connect import CONNECT_METHOD
+from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
+from summary_generators import (
+    BaseSummaryGenerator,
+    ByModuleSummaryGenerator,
+    ExpiredTodosByUserSummaryGenerator,
+    UpcomingWeekTodosByUserSummaryGenerator,
 )
-from summary_generators import BaseSummaryGenerator
 from utils import recursive_update
 
 
@@ -15,41 +18,44 @@ class BaseConfig:
 
     def __init__(
         self,
-        exclude_dirs: dict,
-        exclude_files: dict,
+        exclude_dirs: Dict[str, List[str]],
+        exclude_files: Dict[str, List[str]],
         summary_generators: List[BaseSummaryGenerator],
+        connect_method: CONNECT_METHOD,
     ) -> None:
         """Initializer for `BaseConfig` class
 
         Args:
-            exclude_dirs (dict): Dictionary containing details about directories to be ignored
-            exclude_files (dict): Dictionary containing details about files to be ignored
-            summary_generators (List[BaseSummaryGenerator]): List of summary generators to generate various kind of summary of todo items
+            exclude_dirs (Dict[str, List[str]]): Dictionary containing details about directories to be ignored
+            exclude_files (Dict[str, List[str]]): Dictionary containing details about files to be ignored
+            summary_generators (List[BaseSummaryGenerator]): List of summary generator instance to generate various kind of summary of todo items
+            connect_method (CONNECT_METHOD): Method that should be used to pull the repository
         """
         self._exclude_dirs = exclude_dirs
         self._exclude_files = exclude_files
         self._summary_generators = summary_generators
+        self._connect_method = connect_method
 
     @property
-    def EXCLUDE_DIRS(self) -> dict:
+    def exclude_dirs(self) -> Dict[str, List[str]]:
         """Getter for `exclude_dirs`
 
         Returns:
-            dict: Dictionary containing details about directories to be ignored
+            Dict[str, List[str]]: Dictionary containing details about directories to be ignored
         """
         return self._exclude_dirs
 
     @property
-    def EXCLUDE_FILES(self) -> dict:
+    def exclude_files(self) -> Dict[str, List[str]]:
         """Getter for `exclude_files`
 
         Returns:
-            dict: Dictionary containing details about files to be ignored
+            Dict[str, List[str]]: Dictionary containing details about files to be ignored
         """
         return self._exclude_files
 
     @property
-    def SUMMARY_GENERATORS(self) -> List[BaseSummaryGenerator]:
+    def summary_generators(self) -> List[BaseSummaryGenerator]:
         """Getter for `summary_generators`
 
         Returns:
@@ -57,8 +63,17 @@ class BaseConfig:
         """
         return self._summary_generators
 
+    @property
+    def connect_method(self) -> CONNECT_METHOD:
+        """Getter for `connect_method`
 
-class DefaultConfig:
+        Returns:
+            CONNECT_METHOD: Method that should be used to pull repository
+        """
+        return self._connect_method
+
+
+class DefaultConfig(BaseConfig):
     """Allows easy way to setup config by allowing to pass new dirs/files to exclude along with default ones
 
     It by default adds `DEFAULT_EXCLUDE_DIRS` and `DEFAULT_EXCLUDE_FILES` to list of dirs and files to be ignored respectively
@@ -66,24 +81,50 @@ class DefaultConfig:
 
     def __init__(
         self,
-        exclude_dirs: dict = {},
-        exclude_files: dict = {},
+        exclude_dirs: Dict[str, List[str]] = None,
+        flag_default_exclude_dirs: bool = True,
+        exclude_files: Dict[str, List[str]] = None,
+        flag_default_exclude_files: bool = True,
         summary_generators: List[BaseSummaryGenerator] = [],
+        flag_default_summary_generators: bool = True,
+        connect_method: CONNECT_METHOD = CONNECT_METHOD.HTTPS,
     ) -> None:
         """Initializer for `DefaultConfig` class
 
         Args:
-            exclude_dirs (dict): Dictionary containing details about directories to be ignored
-            exclude_files (dict): Dictionary containing details about files to be ignored
-            summary_generators (List[BaseSummaryGenerator]): List of summary generators objects
+            exclude_dirs (Dict[str, List[str]]): Dictionary containing details about directories to be ignored
+            flag_default_exclude_dirs ()
+            exclude_files (Dict[str, List[str]]): Dictionary containing details about files to be ignored
+            summary_generators (List[BaseSummaryGenerator]): List of summary generator instances
         """
-        exclude_dirs = recursive_update(DEFAULT_EXCLUDE_DIRS, exclude_dirs)
-        exclude_files = recursive_update(DEFAULT_EXCLUDE_FILES, exclude_files)
-        summary_generators = DEFAULT_SUMMARY_GENERATORS.extend(summary_generators)
+        exclude_dirs = exclude_dirs or {}
+        exclude_files = exclude_files or {}
 
-        super().__init__(
-            DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES, summary_generators
-        )
+        if flag_default_exclude_dirs:
+            # Means include the default exclude list of directories
+            default_exclude_dirs = deepcopy(DEFAULT_EXCLUDE_DIRS)
+            recursive_update(default_exclude_dirs, exclude_dirs)
+            exclude_dirs = default_exclude_dirs
+
+        if flag_default_exclude_files:
+            # Means include the default exclude list of files
+            default_exclude_files = deepcopy(DEFAULT_EXCLUDE_FILES)
+            recursive_update(default_exclude_files, exclude_files)
+            exclude_files = default_exclude_files
+
+        if flag_default_summary_generators:
+            # Means include the default summary generator list of files
+            # Instantiate the summary generators
+            default_summary_generators = [
+                ByModuleSummaryGenerator(),
+                ExpiredTodosByUserSummaryGenerator(),
+                UpcomingWeekTodosByUserSummaryGenerator(),
+            ]
+
+            default_summary_generators.extend(summary_generators)
+            summary_generators = default_summary_generators
+
+        super().__init__(exclude_dirs, exclude_files, summary_generators, connect_method)
 
 
 default_config = DefaultConfig()

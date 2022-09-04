@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 
 # User specific code
-user_code/
 
 # VS Code
 .vscode/
@@ -134,3 +133,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# local user directories
+.local

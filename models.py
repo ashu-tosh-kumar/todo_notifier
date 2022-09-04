@@ -8,7 +8,9 @@
 from datetime import datetime
 from typing import TypeVar
 
-from exceptions import InvalidDateFormatException
+from dateutil import parser
+
+from constants import DEFAULT_COMPLETION_DATE
 
 T = TypeVar("T")
 
@@ -93,11 +95,9 @@ class TODO:
         self._msg = msg
         self._user = user
         try:
-            self._completion_date = datetime.strptime(completion_date_str, "%Y-%m-%d")
-        except ValueError:
-            raise InvalidDateFormatException(
-                f"Date: {completion_date_str} is invalid/non-supported format. Expected format: 'YYYY-MM-DD'"
-            )
+            self._completion_date = parser.parse(completion_date_str)
+        except parser.ParserError:
+            self._completion_date = parser.parse(DEFAULT_COMPLETION_DATE)
         self._module = module
         self._position = position
 
