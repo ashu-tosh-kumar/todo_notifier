@@ -1,4 +1,5 @@
 """This module aims to allow connection to the respective repository to allow fetching the repository"""
+import os
 from enum import Enum
 from shutil import copy
 from typing import TypeVar
@@ -10,6 +11,7 @@ class CONNECT_METHOD(Enum):
     """Enum values defining the connection method to pull a repository"""
 
     HTTPS = "HTTPS"
+    DRY_RUN = "DRY_RUN"
 
 
 class Connect:
@@ -32,16 +34,23 @@ class Connect:
         """
         if self._connect_method == CONNECT_METHOD.HTTPS:
             return self._pull_using_https(*args, **kwargs)
+        elif self._connect_method == CONNECT_METHOD.DRY_RUN:
+            return self._pull_for_dry_run(*args, **kwargs)
 
     def _pull_using_https(self, url: str, target_dir: str) -> None:
         # TODO
         pass
 
-    def _pull_for_dry_test(self, test_file: str, target_dir: str) -> None:
+    def _pull_for_dry_run(self, test_file: str, project_dir_name: str, target_dir: str) -> None:
         """Copies the local file `test_file` into `target_dir` directory
 
         Args:
             test_file (str): Fully qualified file name to be copied
+            project_dir_name (str): Project directory name. Since, we only copy a file, this directory will be created
             target_dir (str): Target directory where file needs to be copied to
         """
+        target_dir = os.path.join(target_dir, project_dir_name)
+        if not os.path.isdir(target_dir):
+            os.mkdir(target_dir)
+
         copy(test_file, target_dir)
