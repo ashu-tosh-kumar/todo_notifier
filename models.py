@@ -49,7 +49,7 @@ class USER:
         Returns:
             str: Returns string representation of the class object
         """
-        return f"{str(self)}:{self._user_name}"
+        return f"User: {repr(self)} user_name: {self.user_name}"
 
 
 class POSITION:
@@ -69,6 +69,14 @@ class POSITION:
             int: Integer representing the line_no no. in respective module
         """
         return self._line_no
+
+    def __str__(self) -> str:
+        """Defines str representation of `POSITION` class object
+
+        Returns:
+            str: Returns string representation of the class object
+        """
+        return f"Position: {repr(self)} line_no: {self.line_no}"
 
 
 class TODO:
@@ -96,7 +104,7 @@ class TODO:
         self._user = user
         try:
             self._completion_date = parser.parse(completion_date_str)
-        except parser.ParserError:
+        except Exception:
             self._completion_date = parser.parse(DEFAULT_COMPLETION_DATE)
         self._module = module
         self._position = position
@@ -152,4 +160,5 @@ class TODO:
         Returns:
             str: String representation of the respective todo object
         """
-        return f"TODO: {self.msg} ASSIGNED TO: {self.user.user_name} COMPLETE BY {self.completion_date}"
+        return f"""TODO: {repr(self)} msg: {self.msg} user:
+         {str(self.user)} completion date: {self.completion_date} module: {self.module} position: {str(self.position)}"""
