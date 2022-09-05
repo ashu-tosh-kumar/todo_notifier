@@ -1,8 +1,8 @@
 DEFAULT_EXCLUDE_DIRS = {
     "PATTERN": [
-        ".egg-info/",  # Distribution / packaging
-        ".cover",  # Unit test / coverage reports
-        ".py,cover",  # Unit test / coverage reports
+        r".*[.]egg-info//",  # Distribution / packaging
+        r".*[.]cover",  # Unit test / coverage reports
+        r".*[.]py,cover",  # Unit test / coverage reports
     ],
     "NAME": [
         "__pycache__",
@@ -47,19 +47,17 @@ DEFAULT_EXCLUDE_DIRS = {
 
 DEFAULT_EXCLUDE_FILES = {
     "PATTERN": [
-        ".py[cod]",  # Byte-compiled / optimized / DLL files
-        "$py.class",  # Byte-compiled / optimized / DLL files
-        ".so",  # C extensions
-        ".manifest",  # PyInstaller
-        ".spec",  # PyInstaller
-        ".coverage.*",  # Unit test / coverage reports
-        ".cache",  # Unit test / coverage reports
-        "nosetests.xml",  # Unit test / coverage reports
-        "coverage.xml",  # Unit test / coverage reports
-        ".mo",  # Translations
-        ".pot",  # Translations
-        ".log",  # Django stuff
-        ".sage.py",  # SageMath parsed files
+        r".*[.]py\[cod\]",  # Byte-compiled / optimized / DLL files
+        r".*[.]py[.]class",  # Byte-compiled / optimized / DLL files
+        r".*[.]so",  # C extensions
+        r".*[.]manifest",  # PyInstaller
+        r".*[.]spec",  # PyInstaller
+        r".*[.]coverage[.]*",  # Unit test / coverage reports
+        r".*[.]cache",  # Unit test / coverage reports
+        r".*[.]mo",  # Translations
+        r".*[.]pot",  # Translations
+        r".*[.]log",  # Django stuff
+        r".*[.]sage.py",  # SageMath parsed files
     ],
     "NAME": [
         ".coverage",  # Unit test / coverage reports
@@ -80,6 +78,8 @@ DEFAULT_EXCLUDE_FILES = {
         ".ropeproject",  # Rope project settings
         ".dmypy.json",  # mypy
         "dmypy.json",  # mypy
+        "nosetests.xml",  # Unit test / coverage reports
+        "coverage.xml",  # Unit test / coverage reports
     ],
     "ABS_PATH": [],
 }

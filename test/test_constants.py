@@ -1,6 +1,7 @@
 import unittest
 
 from constants import (
+    DEFAULT_COMPLETION_DATE,
     DEFAULT_EXCLUDE_DIRS,
     DEFAULT_EXCLUDE_FILES,
     DEFAULT_SUMMARY_GENERATORS_ENUM,
@@ -21,6 +22,11 @@ class TestDefaultExcludeFiles(unittest.TestCase):
 class TestUnknownUserName(unittest.TestCase):
     def test_UNKNOWN_USER_NAME_should_exist(self):
         self.assertIsNotNone(UNKNOWN_USER_NAME)
+
+
+class TestDefaultCompletionDate(unittest.TestCase):
+    def test_DEFAULT_COMPLETION_DATE_should_exist(self):
+        self.assertIsNotNone(DEFAULT_COMPLETION_DATE)
 
 
 class TestDefaultSummaryGeneratorsEnum(unittest.TestCase):
