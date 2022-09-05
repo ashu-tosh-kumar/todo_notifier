@@ -96,7 +96,7 @@ def recursive_update(base_dict: dict, new_dict: dict) -> None:
             base_dict[key] = new_dict[key]
 
 
-def compute_file_line_no_to_chars_map(file: str) -> dict:
+def compute_file_line_no_to_chars_map(file: str) -> Dict[int, int]:
     """Takes a file location and returns a dict representing number of characters in each line no.
 
     Line numbers are 1-indexed

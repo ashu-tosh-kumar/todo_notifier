@@ -1,6 +1,6 @@
 DEFAULT_EXCLUDE_DIRS = {
     "PATTERN": [
-        r".*[.]egg-info//",  # Distribution / packaging
+        r".*[.]egg-info",  # Distribution / packaging
         r".*[.]cover",  # Unit test / coverage reports
         r".*[.]py,cover",  # Unit test / coverage reports
     ],
