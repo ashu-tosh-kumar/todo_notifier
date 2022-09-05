@@ -12,7 +12,16 @@ class TestBaseConfig(unittest.TestCase):
         self._dummy_exclude_files = {"unittest-key2": "unittest-val2"}
         self._dummy_summary_generators = ["unittest-item"]
         self._dummy_connect_method = CONNECT_METHOD.HTTPS
-        self._base_config = BaseConfig(self._dummy_exclude_dirs, self._dummy_exclude_files, self._dummy_summary_generators, self._dummy_connect_method)
+        self._dummy_generate_html = True
+        self._dummy_save_html_reports = True
+        self._base_config = BaseConfig(
+            self._dummy_exclude_dirs,
+            self._dummy_exclude_files,
+            self._dummy_summary_generators,
+            self._dummy_connect_method,
+            self._dummy_generate_html,
+            self._dummy_save_html_reports,
+        )
 
     def test_exclude_dirs_should_return_excluded_directory(self):
         expected_value = self._dummy_exclude_dirs
@@ -39,6 +48,20 @@ class TestBaseConfig(unittest.TestCase):
         expected_value = self._dummy_connect_method
 
         actual_value = self._base_config.connect_method
+
+        self.assertEqual(expected_value, actual_value)
+
+    def test_generate_html_should_return_generate_html(self):
+        expected_value = self._dummy_generate_html
+
+        actual_value = self._base_config.generate_html
+
+        self.assertEqual(expected_value, actual_value)
+
+    def test_save_html_reports_should_return_save_html_reports(self):
+        expected_value = self._dummy_save_html_reports
+
+        actual_value = self._base_config.save_html_reports
 
         self.assertEqual(expected_value, actual_value)
 

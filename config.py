@@ -22,6 +22,8 @@ class BaseConfig:
         exclude_files: Dict[str, List[str]],
         summary_generators: List[BaseSummaryGenerator],
         connect_method: CONNECT_METHOD,
+        generate_html: bool,
+        save_html_reports: bool,
     ) -> None:
         """Initializer for `BaseConfig` class
 
@@ -30,11 +32,15 @@ class BaseConfig:
             exclude_files (Dict[str, List[str]]): Dictionary containing details about files to be ignored
             summary_generators (List[BaseSummaryGenerator]): List of summary generator instance to generate various kind of summary of todo items
             connect_method (CONNECT_METHOD): Method that should be used to pull the repository
+            generate_html (bool): Boolean to control whether to generate the html reports
+            save_html_reports (bool): Boolean to control whether to save html reports. Works only if `generate_html` is `True`
         """
         self._exclude_dirs = exclude_dirs
         self._exclude_files = exclude_files
         self._summary_generators = summary_generators
         self._connect_method = connect_method
+        self._generate_html = generate_html
+        self._save_html_reports = save_html_reports
 
     @property
     def exclude_dirs(self) -> Dict[str, List[str]]:
@@ -72,6 +78,24 @@ class BaseConfig:
         """
         return self._connect_method
 
+    @property
+    def generate_html(self) -> bool:
+        """Getter for `generate_html`
+
+        Returns:
+            bool: Boolean whether to generate HTML summary for each summary generator
+        """
+        return self._generate_html
+
+    @property
+    def save_html_reports(self) -> bool:
+        """Getter for `save_html_reports`
+
+        Returns:
+            bool: Boolean whether to save generated HTML summary for each summary generator
+        """
+        return self._save_html_reports
+
 
 class DefaultConfig(BaseConfig):
     """Allows easy way to setup config by allowing to pass new dirs/files to exclude along with default ones
@@ -85,20 +109,29 @@ class DefaultConfig(BaseConfig):
         flag_default_exclude_dirs: bool = True,
         exclude_files: Dict[str, List[str]] = None,
         flag_default_exclude_files: bool = True,
-        summary_generators: List[BaseSummaryGenerator] = [],
+        summary_generators: List[BaseSummaryGenerator] = None,
         flag_default_summary_generators: bool = True,
         connect_method: CONNECT_METHOD = CONNECT_METHOD.HTTPS,
+        generate_html: bool = True,
+        save_html_reports: bool = False,
     ) -> None:
         """Initializer for `DefaultConfig` class
 
         Args:
-            exclude_dirs (Dict[str, List[str]]): Dictionary containing details about directories to be ignored
-            flag_default_exclude_dirs ()
-            exclude_files (Dict[str, List[str]]): Dictionary containing details about files to be ignored
-            summary_generators (List[BaseSummaryGenerator]): List of summary generator instances
+            exclude_dirs (Dict[str, List[str]], optional): Dictionary containing details about directories to be ignored. Defaults to {}
+            flag_default_exclude_dirs (bool, optional): Flag to control whether to use `DEFAULT_EXCLUDE_DIRS` to exclude default directories. Defaults to True.
+            exclude_files (Dict[str, List[str]], optional): Dictionary containing details about files to be ignored. Defaults to {}
+            flag_default_exclude_files (bool, optional): Flag to control whether to use `DEFAULT_EXCLUDE_FILES` to exclude default files. Defaults to True.
+            summary_generators (List[BaseSummaryGenerator], optional): List of summary generator instances. Defaults to []
+            flag_default_summary_generators (bool, optional): Flag to control whether to use default summary generators viz. `ByModuleSummaryGenerator`,
+                                                            `ExpiredTodosByUserSummaryGenerator`, `UpcomingWeekTodosByUserSummaryGenerator`
+            connect_method (CONNECT_METHOD, optional):  Method that should be used to pull the repository. Defaults to CONNECT_METHOD.HTTPS
+            generate_html (bool, optional): Boolean controlling whether to generate HTML report for each summary generator. Defaults to True
+            save_html_reports (bool, optional): Boolean controlling whether to store the generated HTML reports by each summary generator. Defaults to False
         """
         exclude_dirs = exclude_dirs or {}
         exclude_files = exclude_files or {}
+        summary_generators = summary_generators or []
 
         if flag_default_exclude_dirs:
             # Means include the default exclude list of directories
@@ -124,7 +157,7 @@ class DefaultConfig(BaseConfig):
             default_summary_generators.extend(summary_generators)
             summary_generators = default_summary_generators
 
-        super().__init__(exclude_dirs, exclude_files, summary_generators, connect_method)
+        super().__init__(exclude_dirs, exclude_files, summary_generators, connect_method, generate_html, save_html_reports)
 
 
 default_config = DefaultConfig()
