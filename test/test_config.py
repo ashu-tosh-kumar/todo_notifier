@@ -1,6 +1,5 @@
 import unittest
-
-from mock import patch
+from unittest.mock import patch
 
 from config import BaseConfig, DefaultConfig, default_config
 from connect import CONNECT_METHOD

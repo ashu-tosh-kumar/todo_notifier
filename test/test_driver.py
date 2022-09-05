@@ -1,7 +1,6 @@
 import unittest
 from test.mocks import MockTestConfig
-
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from driver import TODOException, run
 

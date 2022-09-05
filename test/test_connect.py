@@ -1,8 +1,7 @@
 import os
 import tempfile
 import unittest
-
-from mock import patch
+from unittest.mock import patch
 
 from connect import CONNECT_METHOD, Connect, ConnectException
 
