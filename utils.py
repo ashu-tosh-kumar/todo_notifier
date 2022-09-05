@@ -135,10 +135,7 @@ def compute_line_and_pos_given_span(line_no_to_chars_map: dict, span: Tuple[int,
     return todo_line_no
 
 
-def generate_summary(
-    all_todos_objs: Dict[str, List[TODO]],
-    summary_generators: List[BaseSummaryGenerator],
-) -> None:
+def generate_summary(all_todos_objs: Dict[str, List[TODO]], summary_generators: List[BaseSummaryGenerator], generate_html: bool) -> None:
     """Function to generate multiple kind of summaries from given list of todo items
 
     It allows users to pass a function/callable. It will call each summary generator `callable` and pass it with
@@ -148,9 +145,40 @@ def generate_summary(
     Args:
         all_todos_objs (Dict[str, List[TODO]]): Key-value pair where key is relative path of file parsed and value is list of todo objects in that file
         summary_generators (List[BaseSummaryGenerator]): List of summary generators objects
+        generate_html (bool): Boolean to control whether to generate the html report for the respective summary generator
     """
     for summary_generator_class_instance in summary_generators:
         try:
             summary_generator_class_instance.generate_summary(all_todos_objs)
+            if generate_html:
+                summary_generator_class_instance.generate_html()
         except Exception:
             logger.exception(f"Error in generating summary from: {summary_generator_class_instance}")
+
+
+def store_html(html: str, report_name: str, target_dir: str = None) -> None:
+    """Function to store html report into files in location `target_dir`
+
+    Args:
+        html (str): HTML content of the report
+        report_name (str): Name with which `html` content needs to be stored into a file with/without extension. Default extension is `.html`
+        target_dir (str, optional): Target location(absolute path) where file needs to be stored. Defaults to folder `.reports` in current location.
+    """
+    default_folder_name = ".report"
+    if not target_dir:
+        target_dir = os.path.join(os.getcwd(), default_folder_name)
+        if not os.path.isdir(target_dir):
+            os.mkdir(target_dir)
+
+    report_name_lst = report_name.split(".")
+    if len(report_name_lst) > 1:
+        extension = report_name_lst[-1]
+        report_name = "".join(report_name_lst[:-1])
+        report_name += f".{extension}"
+    else:
+        report_name += ".html"
+
+    file_path = os.path.join(target_dir, report_name)
+
+    with open(file_path, "w") as f:
+        f.write(html)

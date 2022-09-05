@@ -12,6 +12,7 @@ from utils import (
     generate_summary,
     get_files_in_dir,
     recursive_update,
+    store_html,
 )
 
 
@@ -208,11 +209,23 @@ class TestGenerateSummary(unittest.TestCase):
         spy_summary_generator2 = Mock()
         spy_summary_generator3 = Mock()
 
-        generate_summary(dummy_all_todos_objs, [spy_summary_generator1, spy_summary_generator2, spy_summary_generator3])
+        generate_summary(dummy_all_todos_objs, [spy_summary_generator1, spy_summary_generator2, spy_summary_generator3], False)
 
         spy_summary_generator1.generate_summary.assert_called_once_with(dummy_all_todos_objs)
         spy_summary_generator2.generate_summary.assert_called_once_with(dummy_all_todos_objs)
         spy_summary_generator3.generate_summary.assert_called_once_with(dummy_all_todos_objs)
+
+    def test_generate_summary_should_generate_html_for_all_summary_generators(self):
+        dummy_all_todos_objs = {"unittest-key": []}
+        spy_summary_generator1 = Mock()
+        spy_summary_generator2 = Mock()
+        spy_summary_generator3 = Mock()
+
+        generate_summary(dummy_all_todos_objs, [spy_summary_generator1, spy_summary_generator2, spy_summary_generator3], True)
+
+        spy_summary_generator1.generate_html.assert_called_once_with()
+        spy_summary_generator2.generate_html.assert_called_once_with()
+        spy_summary_generator3.generate_html.assert_called_once_with()
 
     def test_generate_summary_should_call_all_summary_generators_and_not_throw_any_caught_exception(self):
         dummy_all_todos_objs = {"unittest-key": []}
@@ -221,10 +234,57 @@ class TestGenerateSummary(unittest.TestCase):
         spy_summary_generator2.generate_summary.side_effect = Exception("unittest-summary-generator2-exception")
         spy_summary_generator3 = Mock()
 
-        generate_summary(dummy_all_todos_objs, [spy_summary_generator1, spy_summary_generator2, spy_summary_generator3])
+        generate_summary(dummy_all_todos_objs, [spy_summary_generator1, spy_summary_generator2, spy_summary_generator3], False)
 
         spy_summary_generator1.generate_summary.assert_called_once_with(dummy_all_todos_objs)
         spy_summary_generator3.generate_summary.assert_called_once_with(dummy_all_todos_objs)
+
+    def test_generate_summary_should_generate_html_for_all_summary_generators_and_not_throw_any_caught_exception(self):
+        dummy_all_todos_objs = {"unittest-key": []}
+        spy_summary_generator1 = Mock()
+        spy_summary_generator2 = Mock()
+        spy_summary_generator2.generate_html.side_effect = Exception("unittest-summary-generator2-exception")
+        spy_summary_generator3 = Mock()
+
+        generate_summary(dummy_all_todos_objs, [spy_summary_generator1, spy_summary_generator2, spy_summary_generator3], True)
+
+        spy_summary_generator1.generate_html.assert_called_once_with()
+        spy_summary_generator3.generate_html.assert_called_once_with()
+
+
+class TestStoreHtml(unittest.TestCase):
+    def test_store_html_should_store_html_file_passed_without_extension(self):
+        dummy_html = "<div>unittest-html</div>"
+        dummy_report_name = "unittest-report"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store_html(dummy_html, dummy_report_name, temp_dir)
+            expected_file = os.path.join(temp_dir, f"{dummy_report_name}.html")
+
+            self.assertTrue(os.path.isfile(expected_file))
+
+    def test_store_html_should_store_html_file_passed_with_extension(self):
+        dummy_html = "<div>unittest-html</div>"
+        dummy_report_name = "unittest-report.html"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store_html(dummy_html, dummy_report_name, temp_dir)
+            expected_file = os.path.join(temp_dir, dummy_report_name)
+
+            self.assertTrue(os.path.isfile(expected_file))
+
+    def test_store_html_should_store_html_file_passed_with_extension_and_no_target_folder(self):
+        dummy_html = "<div>unittest-html</div>"
+        dummy_report_name = "unittest-report.html"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            init_dir = os.getcwd()
+            os.chdir(temp_dir)
+            store_html(dummy_html, dummy_report_name)
+            os.chdir(init_dir)
+            expected_file = os.path.join(temp_dir, ".report", dummy_report_name)
+
+            self.assertTrue(os.path.isfile(expected_file))
 
 
 if __name__ == "__main__":
