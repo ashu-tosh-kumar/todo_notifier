@@ -12,6 +12,20 @@ T = TypeVar("T")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+DEFAULT_TABLE_HEADER = """
+            <table>
+            <tr>
+                <th>User Name</th>
+                <th>User Email ID</th>
+                <th>Message</th>
+                <th>Line No.</th>
+                <th>Completion Date</th>
+            </tr>
+            """
+TABLE_CLOSE_TAG = """
+            </table>
+            """
+
 
 class BaseSummaryGenerator(ABC):
     def __init__(self, name: str, container: T) -> None:
@@ -117,16 +131,7 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
 
         tables = ""
         for module in self._container:
-            table = """
-            <table>
-            <tr>
-                <th>User Name</th>
-                <th>User Email ID</th>
-                <th>Message</th>
-                <th>Line No.</th>
-                <th>Completion Date</th>
-            </tr>
-            """
+            table = DEFAULT_TABLE_HEADER
             for todo_item in self._container[module]:
                 table += f"""
                 <tr>
@@ -137,9 +142,7 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
                     <td>{todo_item[4]}</td>
                 </tr>
                 """
-            table += """
-            </table>
-            """
+            table += TABLE_CLOSE_TAG
 
             tables += f"""
             <h2>{module}</h2>
@@ -213,16 +216,7 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
         """
         logger.info(f"Generating html for: {self.name}")
 
-        table = """
-            <table>
-            <tr>
-                <th>User Name</th>
-                <th>User Email ID</th>
-                <th>Message</th>
-                <th>Line No.</th>
-                <th>Completion Date</th>
-            </tr>
-            """
+        table = DEFAULT_TABLE_HEADER
         for todo_item in self._container.get(user_name):
             table += f"""
                 <tr>
@@ -233,9 +227,7 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
                     <td>{todo_item[4]}</td>
                 </tr>
                 """
-            table += """
-            </table>
-            """
+            table += TABLE_CLOSE_TAG
 
         tables = f"""
             <h2>Expired TODOs for {user_name}</h2>
@@ -308,16 +300,7 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
         """
         logger.info(f"Generating html for: {self.name}")
 
-        table = """
-            <table>
-            <tr>
-                <th>User Name</th>
-                <th>User Email ID</th>
-                <th>Message</th>
-                <th>Line No.</th>
-                <th>Completion Date</th>
-            </tr>
-            """
+        table = DEFAULT_TABLE_HEADER
         for todo_item in self._container.get(user_name):
             table += f"""
                 <tr>
@@ -328,9 +311,7 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
                     <td>{todo_item[4]}</td>
                 </tr>
                 """
-            table += """
-            </table>
-            """
+            table += TABLE_CLOSE_TAG
 
         tables = f"""
             <h2>Upcoming TODOs for {user_name}</h2>

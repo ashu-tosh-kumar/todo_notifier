@@ -192,8 +192,7 @@ class TestComputeFileLineNoToCharsMap(unittest.TestCase):
 
 class TestComputeLineAndPosGivenSpan(unittest.TestCase):
     def test_compute_line_and_pos_given_span(self):
-        # dummy_file_content = """Dummy file\ncontent\nfor \nunittests"""
-        dummy_line_no_to_chars_map = {1: 11, 2: 8, 3: 5, 4: 9}
+        dummy_line_no_to_chars_map = {1: 11, 2: 8, 3: 5, 4: 9}  # """Dummy file\ncontent\nfor \nunittests"""
         dummy_span = (12, -1)  # we care of only of first value
         expected_value = 2
 
