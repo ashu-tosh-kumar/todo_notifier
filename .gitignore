@@ -5,6 +5,7 @@ __pycache__/
 
 # User specific code
 .report
+user_driver.py
 
 # VS Code
 .vscode/
