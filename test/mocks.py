@@ -13,7 +13,7 @@ class MockTestConfig(BaseConfig):
         exclude_dirs: Dict[str, List[str]] = None,
         exclude_files: Dict[str, List[str]] = None,
         summary_generators: List[BaseSummaryGenerator] = None,
-        connect_method: CONNECT_METHOD = CONNECT_METHOD.DRY_RUN,
+        connect_method: CONNECT_METHOD = CONNECT_METHOD.DRY_RUN_FILE,
         generate_html: bool = True,
         save_html_reports: bool = True,
     ) -> None:

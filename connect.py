@@ -2,7 +2,7 @@
 import logging
 import os
 from enum import Enum
-from shutil import copy
+from shutil import copy, copytree
 from typing import TypeVar
 
 P = TypeVar("P")
@@ -22,7 +22,8 @@ class CONNECT_METHOD(Enum):
     """Enum values defining the connection method to pull a repository"""
 
     HTTPS = "HTTPS"
-    DRY_RUN = "DRY_RUN"
+    DRY_RUN_FILE = "DRY_RUN_FILE"
+    DRY_RUN_DIR = "DRY_RUN_DIR"
 
 
 class Connect:
@@ -47,8 +48,12 @@ class Connect:
             logger.info(f"Pulling repository: {args} {kwargs} via {self._connect_method}")
             if self._connect_method == CONNECT_METHOD.HTTPS:
                 return self._pull_using_https(*args, **kwargs)
-            elif self._connect_method == CONNECT_METHOD.DRY_RUN:
-                return self._pull_for_dry_run(*args, **kwargs)
+            elif self._connect_method == CONNECT_METHOD.DRY_RUN_FILE:
+                return self._pull_file_for_dry_run(*args, **kwargs)
+            elif self._connect_method == CONNECT_METHOD.DRY_RUN_DIR:
+                return self._pull_dir_for_dry_run(*args, **kwargs)
+            else:
+                raise ConnectException("Unsupported connect method passed")
         except Exception:
             logger.exception(f"Error in pulling repository via {self._connect_method}")
             raise ConnectException(f"Error in pulling repository via {self._connect_method}")
@@ -57,7 +62,7 @@ class Connect:
         # TODO
         pass
 
-    def _pull_for_dry_run(self, test_file: str, project_dir_name: str, target_dir: str) -> None:
+    def _pull_file_for_dry_run(self, test_file: str, project_dir_name: str, target_dir: str) -> None:
         """Copies the local file `test_file` into `target_dir` directory
 
         Args:
@@ -70,3 +75,14 @@ class Connect:
             os.mkdir(target_dir)
 
         copy(test_file, target_dir)
+
+    def _pull_dir_for_dry_run(self, test_dir: str, target_dir: str) -> None:
+        """Copies the local file `test_file` into `target_dir` directory
+
+        Args:
+            test_file (str): Fully qualified directory name to be copied
+            target_dir (str): Target directory where file needs to be copied to
+        """
+        test_dir_base_name = os.path.basename(test_dir)
+        target_dir = os.path.join(target_dir, test_dir_base_name)
+        copytree(test_dir, target_dir)
