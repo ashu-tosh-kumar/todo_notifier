@@ -20,7 +20,6 @@ DEFAULT_EXCLUDE_DIRS = {
         "develop-eggs",  # Distribution / packaging
         "dist",  # Distribution / packaging
         "downloads",  # Distribution / packaging
-        "lib",  # Distribution / packaging
         "lib64",  # Distribution / packaging
         "parts",  # Distribution / packaging
         "sdist",  # Distribution / packaging
