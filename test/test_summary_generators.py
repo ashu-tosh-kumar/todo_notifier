@@ -41,7 +41,7 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
             ]
         }
         expected_value = f"""
-            <h2>TODOs for module {self._dummy_module}</h2>
+            <h3>TODOs for module {self._dummy_module}</h3>
             <p>
                 
             <table>
@@ -105,7 +105,7 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
             ]
         }
         expected_value = f"""
-            <h2>Expired TODOs for {self._dummy_user.user_name}</h2>
+            <h3>Expired TODOs for {self._dummy_user.user_name}</h3>
             <p>
                 
             <table>
@@ -171,7 +171,7 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
             ]
         }
         expected_value = f"""
-            <h2>Upcoming TODOs for {self._dummy_user.user_name}</h2>
+            <h3>Upcoming TODOs for {self._dummy_user.user_name}</h3>
             <p>
                 
             <table>
