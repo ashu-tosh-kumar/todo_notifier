@@ -6,7 +6,7 @@ from typing import Dict, TypeVar
 from config import BaseConfig, default_config
 from connect import Connect
 from todo_notifier import parse_files_for_todo_items
-from utils import generate_summary, get_files_in_dir
+from utils import generate_summary, get_files_in_dir, store_html
 
 P = TypeVar("P")
 
@@ -51,7 +51,12 @@ def run(connect_kwargs: Dict[str, P], config: BaseConfig = default_config) -> No
             all_todos_items = parse_files_for_todo_items(temp_dir, all_files_in_project_dir)
 
             summary_generators = config.summary_generators
-            generate_summary(all_todos_items, summary_generators)
+
+        generate_summary(all_todos_items, summary_generators, config.generate_html)
+
+        if config.generate_html and config.save_html_reports:
+            [store_html(summary_generator.html, summary_generator.name) for summary_generator in summary_generators]
+
     except Exception:
         logger.exception("Error in TODO application")
         raise TODOException("Error in TODO application")

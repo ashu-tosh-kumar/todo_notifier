@@ -1,5 +1,5 @@
 import unittest
-from test.mocks import MockTestConfig
+from test.mocks import MockSummaryGenerator, MockTestConfig
 from unittest.mock import Mock, patch
 
 from driver import TODOException, run
@@ -31,7 +31,20 @@ class TestRun(unittest.TestCase):
 
         run(dummy_connect_kwargs, dummy_config)
 
-        spy_generate_summary.assert_called_once_with(dummy_all_todos_items, dummy_config.summary_generators)
+        spy_generate_summary.assert_called_once_with(dummy_all_todos_items, dummy_config.summary_generators, dummy_config.generate_html)
+
+    @patch("driver.store_html")
+    @patch("driver.generate_summary", Mock())
+    @patch("driver.parse_files_for_todo_items", Mock())
+    @patch("driver.get_files_in_dir", Mock())
+    @patch("driver.Connect", Mock())
+    def test_run_should_store_summary(self, spy_store_html):
+        dummy_connect_kwargs = {"project_dir_name": "unittest-project-dir-name"}
+        dummy_config = MockTestConfig(summary_generators=[MockSummaryGenerator])
+
+        run(dummy_connect_kwargs, dummy_config)
+
+        spy_store_html.assert_called()
 
     @patch("driver.Connect")
     def test_run_should_raise_todo_exception_if_any_exception_in_connect(self, stub_connect):
