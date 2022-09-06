@@ -2,8 +2,10 @@
 import logging
 import os
 from enum import Enum
-from shutil import copy, copytree
+from shutil import copy, copytree, ignore_patterns
 from typing import TypeVar
+
+from constants import DEFAULT_EXCLUDE_DIRS
 
 P = TypeVar("P")
 
@@ -76,13 +78,15 @@ class Connect:
 
         copy(test_file, target_dir)
 
-    def _pull_dir_for_dry_run(self, test_dir: str, target_dir: str) -> None:
-        """Copies the local file `test_file` into `target_dir` directory
+    def _pull_dir_for_dry_run(self, test_dir: str, project_dir_name: str, target_dir: str) -> None:
+        """Copies the local file `test_file` into `target_dir` directory. it automatically ignores the directories in `constants.DEFAULT_EXCLUDE_DIRS`
 
         Args:
             test_file (str): Fully qualified directory name to be copied
+            project_dir_name (str): Project directory name. Not required but taking to confirm to design of `_pull_file_for_dry_run`
             target_dir (str): Target directory where file needs to be copied to
         """
         test_dir_base_name = os.path.basename(test_dir)
+        ignore_list = DEFAULT_EXCLUDE_DIRS["PATTERN"] + DEFAULT_EXCLUDE_DIRS["NAME"]
         target_dir = os.path.join(target_dir, test_dir_base_name)
-        copytree(test_dir, target_dir)
+        copytree(test_dir, target_dir, ignore=ignore_patterns(*ignore_list))

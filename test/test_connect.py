@@ -98,7 +98,7 @@ class TestConnect(unittest.TestCase):
             expected_dir_path = os.path.join(temp_dir1, temp_dir2)
             expected_file_path = os.path.join(temp_dir1, os.path.basename(temp_dir2), "unittest-temp-file")
 
-            connect._pull_dir_for_dry_run(test_dir=temp_dir2, target_dir=temp_dir1)
+            connect._pull_dir_for_dry_run(test_dir=temp_dir2, project_dir_name=None, target_dir=temp_dir1)
 
             assert os.path.isdir(expected_dir_path)
             assert os.path.isfile(expected_file_path)
