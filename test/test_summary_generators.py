@@ -34,6 +34,42 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
 
         self.assertEqual(expected_value, self._by_module_summary_generator.container)
 
+    def test_generate_html(self):
+        self._by_module_summary_generator._container = {
+            self._dummy_module: [
+                [self._dummy_user_name, None, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
+            ]
+        }
+        expected_value = f"""
+            <h2>TODOs for module {self._dummy_module}</h2>
+            <p>
+                
+            <table>
+            <tr>
+                <th>User Name</th>
+                <th>User Email ID</th>
+                <th>Message</th>
+                <th>Line No.</th>
+                <th>Completion Date</th>
+            </tr>
+            
+                <tr>
+                    <td>{self._dummy_user_name}</td>
+                    <td>{None}</td>
+                    <td>{self._dummy_msg}</td>
+                    <td>{self._dummy_line_no}</td>
+                    <td>{"2022-09-22 00:00:00"}</td>
+                </tr>
+                
+            </table>
+            
+            </p><br>
+            """  # noqa: W293
+
+        self._by_module_summary_generator.generate_html()
+
+        self.assertEqual(expected_value, self._by_module_summary_generator.html)
+
 
 class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
     def setUp(self):
@@ -62,6 +98,42 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
 
         self.assertEqual(expected_value, self._expired_todos_by_user_summary_generator.container)
 
+    def test_generate_html(self):
+        self._expired_todos_by_user_summary_generator._container = {
+            self._dummy_user.user_name: [
+                [None, self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
+            ]
+        }
+        expected_value = f"""
+            <h2>Expired TODOs for {self._dummy_user.user_name}</h2>
+            <p>
+                
+            <table>
+            <tr>
+                <th>User Email ID</th>
+                <th>Message</th>
+                <th>Module</th>
+                <th>Line No.</th>
+                <th>Completion Date</th>
+            </tr>
+            
+                    <tr>
+                        <td>{None}</td>
+                        <td>{self._dummy_msg}</td>
+                        <td>{self._dummy_module}</td>
+                        <td>{self._dummy_line_no}</td>
+                        <td>{"2020-09-22 00:00:00"}</td>
+                    </tr>
+                    
+            </table>
+            
+            </p><br>
+            """  # noqa: W293
+
+        self._expired_todos_by_user_summary_generator.generate_html()
+
+        self.assertEqual(expected_value, self._expired_todos_by_user_summary_generator.html)
+
 
 class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
     def setUp(self):
@@ -77,7 +149,6 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
         self._dummy_todo_obj2 = TODO(self._dummy_msg, self._dummy_user, self._dummy_completion_date_str2, self._dummy_module, self._dummy_position)
         self._dummy_all_todo_objs = {self._dummy_module: [self._dummy_todo_obj1, self._dummy_todo_obj1, self._dummy_todo_obj2]}
         self._upcoming_week_todos_by_user_summary_generator = UpcomingWeekTodosByUserSummaryGenerator()
-        self.maxDiff = None
 
     def test_generate_summary(self):
         expected_completion_date = str((datetime.today() + timedelta(days=2)).date().strftime("%Y-%m-%d %H:%M:%S"))
@@ -91,6 +162,43 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
         self._upcoming_week_todos_by_user_summary_generator.generate_summary(self._dummy_all_todo_objs)
 
         self.assertEqual(expected_value, self._upcoming_week_todos_by_user_summary_generator.container)
+
+    def test_generate_html(self):
+        expected_completion_date = str((datetime.today() + timedelta(days=2)).date().strftime("%Y-%m-%d %H:%M:%S"))
+        self._upcoming_week_todos_by_user_summary_generator._container = {
+            self._dummy_user.user_name: [
+                [None, self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
+            ]
+        }
+        expected_value = f"""
+            <h2>Upcoming TODOs for {self._dummy_user.user_name}</h2>
+            <p>
+                
+            <table>
+            <tr>
+                <th>User Email ID</th>
+                <th>Message</th>
+                <th>Module</th>
+                <th>Line No.</th>
+                <th>Completion Date</th>
+            </tr>
+            
+                    <tr>
+                        <td>{None}</td>
+                        <td>{self._dummy_msg}</td>
+                        <td>{self._dummy_module}</td>
+                        <td>{self._dummy_line_no}</td>
+                        <td>{expected_completion_date}</td>
+                    </tr>
+                    
+            </table>
+            
+            </p><br>
+            """  # noqa: W293
+
+        self._upcoming_week_todos_by_user_summary_generator.generate_html()
+
+        self.assertEqual(expected_value, self._upcoming_week_todos_by_user_summary_generator.html)
 
 
 if __name__ == "__main__":
