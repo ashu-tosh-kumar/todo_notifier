@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 # User specific code
+.report
 
 # VS Code
 .vscode/
