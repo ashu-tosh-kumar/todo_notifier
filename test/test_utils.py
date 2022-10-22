@@ -41,11 +41,14 @@ class TestIgnoreDirOrFile(unittest.TestCase):
             ("unittest.pot", True),
             ("unittest.log", True),
             ("unittest.sage.py", True),
+            ("/some-file", True),
         ]
         stub_os.path.basename = lambda x: x
+        DEFAULT_EXCLUDE_FILES["ABS_PATH"].append("/some-file")
 
         for pattern, expected_value in test_data:
-            self.assertEqual(expected_value, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES))
+            actual_value = _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES)
+            self.assertEqual(expected_value, actual_value)
 
     @patch("utils.os")
     def test__ignore_dir_or_file_should_correctly_ignore_file_names(self, stub_os):

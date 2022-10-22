@@ -2,7 +2,6 @@
 from copy import deepcopy
 from typing import Dict, List
 
-from connect import CONNECT_METHOD
 from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
 from summary_generators import (
     BaseSummaryGenerator,
@@ -21,9 +20,9 @@ class BaseConfig:
         exclude_dirs: Dict[str, List[str]],
         exclude_files: Dict[str, List[str]],
         summary_generators: List[BaseSummaryGenerator],
-        connect_method: CONNECT_METHOD,
         generate_html: bool,
         save_html_reports: bool,
+        ignore_todo_case: bool,
     ) -> None:
         """Initializer for `BaseConfig` class
 
@@ -31,16 +30,16 @@ class BaseConfig:
             exclude_dirs (Dict[str, List[str]]): Dictionary containing details about directories to be ignored
             exclude_files (Dict[str, List[str]]): Dictionary containing details about files to be ignored
             summary_generators (List[BaseSummaryGenerator]): List of summary generator instance to generate various kind of summary of todo items
-            connect_method (CONNECT_METHOD): Method that should be used to pull the repository
             generate_html (bool): Boolean to control whether to generate the html reports
             save_html_reports (bool): Boolean to control whether to save html reports. Works only if `generate_html` is `True`
+            ignore_todo_case (bool): Boolean whether to look for case insensitive todo items like todo, Todo etc.
         """
         self._exclude_dirs = exclude_dirs
         self._exclude_files = exclude_files
         self._summary_generators = summary_generators
-        self._connect_method = connect_method
         self._generate_html = generate_html
         self._save_html_reports = save_html_reports
+        self._ignore_todo_case = ignore_todo_case
 
     @property
     def exclude_dirs(self) -> Dict[str, List[str]]:
@@ -70,15 +69,6 @@ class BaseConfig:
         return self._summary_generators
 
     @property
-    def connect_method(self) -> CONNECT_METHOD:
-        """Getter for `connect_method`
-
-        Returns:
-            CONNECT_METHOD: Method that should be used to pull repository
-        """
-        return self._connect_method
-
-    @property
     def generate_html(self) -> bool:
         """Getter for `generate_html`
 
@@ -96,6 +86,15 @@ class BaseConfig:
         """
         return self._save_html_reports
 
+    @property
+    def ignore_todo_case(self) -> bool:
+        """Getter for `ignore_todo_case`
+
+        Returns:
+            bool: Boolean whether to look for case insensitive todo items like todo, Todo etc.
+        """
+        return self._ignore_todo_case
+
 
 class DefaultConfig(BaseConfig):
     """Allows easy way to setup config by allowing to pass new dirs/files to exclude along with default ones
@@ -111,9 +110,9 @@ class DefaultConfig(BaseConfig):
         flag_default_exclude_files: bool = True,
         summary_generators: List[BaseSummaryGenerator] = None,
         flag_default_summary_generators: bool = True,
-        connect_method: CONNECT_METHOD = CONNECT_METHOD.HTTPS,
         generate_html: bool = True,
         save_html_reports: bool = False,
+        ignore_todo_case: bool = False,
     ) -> None:
         """Initializer for `DefaultConfig` class
 
@@ -125,9 +124,9 @@ class DefaultConfig(BaseConfig):
             summary_generators (List[BaseSummaryGenerator], optional): List of summary generator instances. Defaults to []
             flag_default_summary_generators (bool, optional): Flag to control whether to use default summary generators viz. `ByModuleSummaryGenerator`,
                                                             `ExpiredTodosByUserSummaryGenerator`, `UpcomingWeekTodosByUserSummaryGenerator`
-            connect_method (CONNECT_METHOD, optional):  Method that should be used to pull the repository. Defaults to CONNECT_METHOD.HTTPS
             generate_html (bool, optional): Boolean controlling whether to generate HTML report for each summary generator. Defaults to True
             save_html_reports (bool, optional): Boolean controlling whether to store the generated HTML reports by each summary generator. Defaults to False
+            ignore_todo_case: bool: Boolean whether to look for case insensitive todo items like todo, Todo etc. Defaults to False
         """
         exclude_dirs = exclude_dirs or {}
         exclude_files = exclude_files or {}
@@ -157,7 +156,7 @@ class DefaultConfig(BaseConfig):
             default_summary_generators.extend(summary_generators)
             summary_generators = default_summary_generators
 
-        super().__init__(exclude_dirs, exclude_files, summary_generators, connect_method, generate_html, save_html_reports)
+        super().__init__(exclude_dirs, exclude_files, summary_generators, generate_html, save_html_reports, ignore_todo_case)
 
 
 default_config = DefaultConfig()

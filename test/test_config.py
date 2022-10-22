@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import patch
 
 from config import BaseConfig, DefaultConfig, default_config
-from connect import CONNECT_METHOD
 from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
 
 
@@ -11,16 +10,17 @@ class TestBaseConfig(unittest.TestCase):
         self._dummy_exclude_dirs = {"unittest-key1": "unittest-val1"}
         self._dummy_exclude_files = {"unittest-key2": "unittest-val2"}
         self._dummy_summary_generators = ["unittest-item"]
-        self._dummy_connect_method = CONNECT_METHOD.HTTPS
         self._dummy_generate_html = True
         self._dummy_save_html_reports = True
+        self._dummy_ignore_todo_case = False
+
         self._base_config = BaseConfig(
             self._dummy_exclude_dirs,
             self._dummy_exclude_files,
             self._dummy_summary_generators,
-            self._dummy_connect_method,
             self._dummy_generate_html,
             self._dummy_save_html_reports,
+            self._dummy_ignore_todo_case,
         )
 
     def test_exclude_dirs_should_return_excluded_directory(self):
@@ -44,13 +44,6 @@ class TestBaseConfig(unittest.TestCase):
 
         self.assertEqual(expected_value, actual_value)
 
-    def test_connect_method_should_return_connect_method(self):
-        expected_value = self._dummy_connect_method
-
-        actual_value = self._base_config.connect_method
-
-        self.assertEqual(expected_value, actual_value)
-
     def test_generate_html_should_return_generate_html(self):
         expected_value = self._dummy_generate_html
 
@@ -62,6 +55,13 @@ class TestBaseConfig(unittest.TestCase):
         expected_value = self._dummy_save_html_reports
 
         actual_value = self._base_config.save_html_reports
+
+        self.assertEqual(expected_value, actual_value)
+
+    def test_ignore_todo_case_should_return_ignore_todo_case(self):
+        expected_value = self._dummy_ignore_todo_case
+
+        actual_value = self._base_config.ignore_todo_case
 
         self.assertEqual(expected_value, actual_value)
 
