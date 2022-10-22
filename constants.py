@@ -40,6 +40,7 @@ DEFAULT_EXCLUDE_DIRS = {
         "site",  # mkdocs documentation
         ".mypy_cache",  # mypy
         ".pyre",  # Pyre type checker
+        "migrations",  # DB migrations
     ],
     "ABS_PATH": [],
 }
