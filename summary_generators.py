@@ -148,7 +148,7 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
             table += TABLE_CLOSE_TAG
 
             tables += f"""
-            <h2>TODOs for module {module}</h2>
+            <h3>TODOs for module {module}</h3>
             <p>
                 {table}
             </p><br>
@@ -238,7 +238,7 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
             table += TABLE_CLOSE_TAG
 
             tables += f"""
-            <h2>Expired TODOs for {user_name}</h2>
+            <h3>Expired TODOs for {user_name}</h3>
             <p>
                 {table}
             </p><br>
@@ -327,7 +327,7 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
             table += TABLE_CLOSE_TAG
 
             tables += f"""
-            <h2>Upcoming TODOs for {user_name}</h2>
+            <h3>Upcoming TODOs for {user_name}</h3>
             <p>
                 {table}
             </p><br>

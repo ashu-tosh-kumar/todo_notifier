@@ -20,7 +20,6 @@ DEFAULT_EXCLUDE_DIRS = {
         "develop-eggs",  # Distribution / packaging
         "dist",  # Distribution / packaging
         "downloads",  # Distribution / packaging
-        "lib",  # Distribution / packaging
         "lib64",  # Distribution / packaging
         "parts",  # Distribution / packaging
         "sdist",  # Distribution / packaging
@@ -41,6 +40,7 @@ DEFAULT_EXCLUDE_DIRS = {
         "site",  # mkdocs documentation
         ".mypy_cache",  # mypy
         ".pyre",  # Pyre type checker
+        "migrations",  # DB migrations
     ],
     "ABS_PATH": [],
 }

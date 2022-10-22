@@ -1,5 +1,6 @@
 import unittest
 from typing import Dict, List
+from unittest.mock import patch
 
 from constants import DEFAULT_COMPLETION_DATE, UNKNOWN_USER_NAME
 from models import POSITION, TODO, USER
@@ -221,6 +222,41 @@ class TestParseFilesForTodoItems(unittest.TestCase):
                 ),
             ]
         }
+
+        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files)
+
+        assert self._compare_todos(expected_value, actual_value)
+
+    @patch("todo_notifier.compute_line_and_pos_given_span")
+    def test_parse_files_for_todo_items_should_handle_exception_in_parsing_todo_items(self, stub_compute_line_and_pos_given_span):
+        dummy_files = ["test/sample_test_file2.py"]
+        project_parent_dir = "test"  # Important to keep it same as test directory
+        stub_compute_line_and_pos_given_span.side_effect = [
+            4,
+            Exception("unittest-compute-line-and-pos-given-span-exception"),
+        ]  # First time letting it call actual function and second time raising an exception
+        expected_value = {
+            "sample_test_file2.py": [
+                TODO(
+                    "some-message-21f886ac-cc41-452b-9a53-3cfd56446341",
+                    USER(UNKNOWN_USER_NAME),
+                    DEFAULT_COMPLETION_DATE,
+                    "sample_test_file2.py",
+                    POSITION(4),
+                ),
+            ]
+        }
+
+        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files)
+
+        assert self._compare_todos(expected_value, actual_value)
+
+    @patch("todo_notifier.compute_file_line_no_to_chars_map")
+    def test_parse_files_for_todo_items_should_handle_exception_in_parsing_file(self, stub_compute_file_line_no_to_chars_map):
+        dummy_files = ["test/sample_test_file2.py"]
+        project_parent_dir = "test"  # Important to keep it same as test directory
+        stub_compute_file_line_no_to_chars_map.side_effect = (Exception("unittest-compute-file-line-no-to-chars-map-exception"),)
+        expected_value = {"sample_test_file2.py": []}
 
         actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files)
 
