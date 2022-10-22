@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import patch
 
 from config import BaseConfig, DefaultConfig, default_config
-from connect import CONNECT_METHOD
 from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
 
 
@@ -11,14 +10,12 @@ class TestBaseConfig(unittest.TestCase):
         self._dummy_exclude_dirs = {"unittest-key1": "unittest-val1"}
         self._dummy_exclude_files = {"unittest-key2": "unittest-val2"}
         self._dummy_summary_generators = ["unittest-item"]
-        self._dummy_connect_method = CONNECT_METHOD.HTTPS
         self._dummy_generate_html = True
         self._dummy_save_html_reports = True
         self._base_config = BaseConfig(
             self._dummy_exclude_dirs,
             self._dummy_exclude_files,
             self._dummy_summary_generators,
-            self._dummy_connect_method,
             self._dummy_generate_html,
             self._dummy_save_html_reports,
         )
@@ -41,13 +38,6 @@ class TestBaseConfig(unittest.TestCase):
         expected_value = self._dummy_summary_generators
 
         actual_value = self._base_config.summary_generators
-
-        self.assertEqual(expected_value, actual_value)
-
-    def test_connect_method_should_return_connect_method(self):
-        expected_value = self._dummy_connect_method
-
-        actual_value = self._base_config.connect_method
 
         self.assertEqual(expected_value, actual_value)
 
