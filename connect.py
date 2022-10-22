@@ -5,6 +5,8 @@ from enum import Enum
 from shutil import copy, copytree, ignore_patterns
 from typing import TypeVar
 
+from git import Repo
+
 from constants import DEFAULT_EXCLUDE_DIRS
 
 P = TypeVar("P")
@@ -23,7 +25,7 @@ class ConnectException(Exception):
 class CONNECT_METHOD(Enum):
     """Enum values defining the connection method to pull a repository"""
 
-    HTTPS = "HTTPS"
+    GIT_CLONE = "GIT_CLONE"
     DRY_RUN_FILE = "DRY_RUN_FILE"
     DRY_RUN_DIR = "DRY_RUN_DIR"
 
@@ -72,8 +74,8 @@ class Connect:
         """
         try:
             logger.info(f"Pulling repository: {self._project_dir_name} via {self._connect_method}")
-            if self._connect_method == CONNECT_METHOD.HTTPS:
-                return self._pull_using_https(target_dir)
+            if self._connect_method == CONNECT_METHOD.GIT_CLONE:
+                return self._pull_using_git_clone(target_dir)
             elif self._connect_method == CONNECT_METHOD.DRY_RUN_FILE:
                 return self._pull_file_for_dry_run(target_dir)
             elif self._connect_method == CONNECT_METHOD.DRY_RUN_DIR:
@@ -84,14 +86,15 @@ class Connect:
             logger.exception(f"Error in pulling repository via {self._connect_method}")
             raise ConnectException(f"Error in pulling repository via {self._connect_method}")
 
-    def _pull_using_https(self, target_dir: str) -> None:
-        """Pulls the repository using HTTPS method
+    def _pull_using_git_clone(self, target_dir: str) -> None:
+        """Pulls the repository using GIT_CLONE method
+
+        NOTE: This method used GitPython library that required Git to be installed on the system
 
         Args:
             target_dir (str): Directory into which the data from given `url` needs to be copied into
         """
-        # TODO
-        pass
+        Repo.clone_from(self._file_dir_url, target_dir)
 
     def _pull_file_for_dry_run(self, target_dir: str) -> None:
         """Copies the local file `test_file` into `target_dir` directory

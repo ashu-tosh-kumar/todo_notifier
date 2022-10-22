@@ -13,8 +13,8 @@ class TestConnectException(unittest.TestCase):
 
 
 class TestConnectMethod(unittest.TestCase):
-    def test_connect_method_should_have_https(self):
-        self.assertIsNotNone(CONNECT_METHOD.HTTPS)
+    def test_connect_method_should_have_git_clone(self):
+        self.assertIsNotNone(CONNECT_METHOD.GIT_CLONE)
 
     def test_connect_method_should_have_dry_run_file(self):
         self.assertIsNotNone(CONNECT_METHOD.DRY_RUN_FILE)
@@ -26,7 +26,7 @@ class TestConnectMethod(unittest.TestCase):
 class TestConnect(unittest.TestCase):
     def test_project_dir_name_should_return_project_name(self):
         dummy_project_dir_name = "unittest-project-dir-name"
-        connect = Connect(connect_method=CONNECT_METHOD.HTTPS, project_dir_name=dummy_project_dir_name, url="")
+        connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=dummy_project_dir_name, url="")
 
         actual_value = connect.project_dir_name
 
@@ -35,18 +35,18 @@ class TestConnect(unittest.TestCase):
     def test___str___should_return_string_representation_of_connect(self):
         dummy_url = "unittest-url"
         dummy_target_dir = "unittest-target-dir"
-        connect = Connect(connect_method=CONNECT_METHOD.HTTPS, project_dir_name=dummy_target_dir, url=dummy_url)
-        expected_value = f"{repr(connect)} connect_method: {CONNECT_METHOD.HTTPS} project_dir_name: {dummy_target_dir} url: {dummy_url}"
+        connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=dummy_target_dir, url=dummy_url)
+        expected_value = f"{repr(connect)} connect_method: {CONNECT_METHOD.GIT_CLONE} project_dir_name: {dummy_target_dir} url: {dummy_url}"
 
         actual_value = str(connect)
 
         assert expected_value == actual_value
 
-    @patch("connect.Connect._pull_using_https")
+    @patch("connect.Connect._pull_using_git_clone")
     def test_pull_repository_should_call__pull_using_https_if_set(self, spy__pull_using_https):
         dummy_url = "unittest-url"
         dummy_target_dir = "unittest-target-dir"
-        connect = Connect(connect_method=CONNECT_METHOD.HTTPS, project_dir_name=dummy_target_dir, url=dummy_url)
+        connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=dummy_target_dir, url=dummy_url)
 
         connect.pull_repository(target_dir=dummy_target_dir)
 
@@ -74,27 +74,33 @@ class TestConnect(unittest.TestCase):
 
         spy__pull_dir_for_dry_run.assert_called_once_with(dummy_target_dir)
 
-    @patch("connect.Connect._pull_using_https")
+    @patch("connect.Connect._pull_using_git_clone")
     def test_pull_repository_should_raise_connect_exception_if_unsupported_connect_method_passed(self, stub__pull_using_https):
         connect = Connect(connect_method="unittest-connect-method", project_dir_name="", url="")
 
         with self.assertRaises(ConnectException):
             connect.pull_repository("")
 
-    @patch("connect.Connect._pull_using_https")
+    @patch("connect.Connect._pull_using_git_clone")
     def test_pull_repository_should_raise_connect_exception_if_any_exception_in_connecting(self, stub__pull_using_https):
-        stub__pull_using_https.side_effect = Exception("unittest-connect-via-https-exception")
-        connect = Connect(connect_method=CONNECT_METHOD.HTTPS, project_dir_name="", url="")
+        stub__pull_using_https.side_effect = Exception("unittest-connect-via-git-clone-exception")
+        connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name="", url="")
 
         with self.assertRaises(ConnectException):
             connect.pull_repository("")
 
+    # NOTE: This test runs over internet
     def test__pull_using_https(self):
-        dummy_url = "unittest-url"
-        dummy_target_dir = "unittest-target-dir"
-        connect = Connect(connect_method=CONNECT_METHOD.DRY_RUN_FILE, project_dir_name="", url=dummy_url)
+        dummy_url = "https://github.com/ashu-tosh-kumar/Interesting-ML-Models.git"
+        dummy_project_dir_name = "interesting-ml-models"
 
-        connect._pull_using_https(dummy_target_dir)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            expected_dir_path = temp_dir
+
+            connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=dummy_project_dir_name, url=dummy_url)
+            connect._pull_using_git_clone(target_dir=temp_dir)
+
+            assert os.path.isdir(expected_dir_path)
 
     def test__pull_file_for_dry_run_should_copy_file_into_temp_dir(self):
         dummy_project_dir_name = "unittest-project-dir-name"

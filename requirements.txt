@@ -2,6 +2,7 @@
 black==22.6.0
 coverage==6.4.4
 flake8==5.0.4
+GitPython==3.1.29  # NOTE: Needs git installed on the system
 mock==4.0.3
 pre-commit==2.20.0
 python-dateutil==2.8.2
