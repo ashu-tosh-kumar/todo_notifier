@@ -14,6 +14,7 @@ class MockTestConfig(BaseConfig):
         summary_generators: List[BaseSummaryGenerator] = None,
         generate_html: bool = True,
         save_html_reports: bool = True,
+        ignore_todo_case: bool = False,
     ) -> None:
         """Initializer for `TestConfig` class
 
@@ -23,8 +24,9 @@ class MockTestConfig(BaseConfig):
             summary_generators (List[BaseSummaryGenerator], optional): List of summary generator instance to generate various kind of summary of todo items
             generate_html (bool, optional): Boolean controlling whether to generate HTML report for each summary generator. Defaults to True
             save_html_reports (bool, optional): Boolean controlling whether to store the generated HTML reports by each summary generator. Defaults to True
+            ignore_todo_case (bool, optional): Boolean controlling whether to skip considering the case of todo like whether to consider Todo, todo etc.
         """
-        super().__init__(exclude_dirs or {}, exclude_files or {}, summary_generators or [], generate_html, save_html_reports)
+        super().__init__(exclude_dirs or {}, exclude_files or {}, summary_generators or [], generate_html, save_html_reports, ignore_todo_case)
 
 
 class MockSummaryGenerator:

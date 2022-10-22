@@ -12,12 +12,15 @@ class TestBaseConfig(unittest.TestCase):
         self._dummy_summary_generators = ["unittest-item"]
         self._dummy_generate_html = True
         self._dummy_save_html_reports = True
+        self._dummy_ignore_todo_case = False
+
         self._base_config = BaseConfig(
             self._dummy_exclude_dirs,
             self._dummy_exclude_files,
             self._dummy_summary_generators,
             self._dummy_generate_html,
             self._dummy_save_html_reports,
+            self._dummy_ignore_todo_case,
         )
 
     def test_exclude_dirs_should_return_excluded_directory(self):
@@ -52,6 +55,13 @@ class TestBaseConfig(unittest.TestCase):
         expected_value = self._dummy_save_html_reports
 
         actual_value = self._base_config.save_html_reports
+
+        self.assertEqual(expected_value, actual_value)
+
+    def test_ignore_todo_case_should_return_ignore_todo_case(self):
+        expected_value = self._dummy_ignore_todo_case
+
+        actual_value = self._base_config.ignore_todo_case
 
         self.assertEqual(expected_value, actual_value)
 

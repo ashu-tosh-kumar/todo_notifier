@@ -22,6 +22,7 @@ class BaseConfig:
         summary_generators: List[BaseSummaryGenerator],
         generate_html: bool,
         save_html_reports: bool,
+        ignore_todo_case: bool,
     ) -> None:
         """Initializer for `BaseConfig` class
 
@@ -31,12 +32,14 @@ class BaseConfig:
             summary_generators (List[BaseSummaryGenerator]): List of summary generator instance to generate various kind of summary of todo items
             generate_html (bool): Boolean to control whether to generate the html reports
             save_html_reports (bool): Boolean to control whether to save html reports. Works only if `generate_html` is `True`
+            ignore_todo_case (bool): Boolean whether to look for case insensitive todo items like todo, Todo etc.
         """
         self._exclude_dirs = exclude_dirs
         self._exclude_files = exclude_files
         self._summary_generators = summary_generators
         self._generate_html = generate_html
         self._save_html_reports = save_html_reports
+        self._ignore_todo_case = ignore_todo_case
 
     @property
     def exclude_dirs(self) -> Dict[str, List[str]]:
@@ -83,6 +86,15 @@ class BaseConfig:
         """
         return self._save_html_reports
 
+    @property
+    def ignore_todo_case(self) -> bool:
+        """Getter for `ignore_todo_case`
+
+        Returns:
+            bool: Boolean whether to look for case insensitive todo items like todo, Todo etc.
+        """
+        return self._ignore_todo_case
+
 
 class DefaultConfig(BaseConfig):
     """Allows easy way to setup config by allowing to pass new dirs/files to exclude along with default ones
@@ -100,6 +112,7 @@ class DefaultConfig(BaseConfig):
         flag_default_summary_generators: bool = True,
         generate_html: bool = True,
         save_html_reports: bool = False,
+        ignore_todo_case: bool = False,
     ) -> None:
         """Initializer for `DefaultConfig` class
 
@@ -113,6 +126,7 @@ class DefaultConfig(BaseConfig):
                                                             `ExpiredTodosByUserSummaryGenerator`, `UpcomingWeekTodosByUserSummaryGenerator`
             generate_html (bool, optional): Boolean controlling whether to generate HTML report for each summary generator. Defaults to True
             save_html_reports (bool, optional): Boolean controlling whether to store the generated HTML reports by each summary generator. Defaults to False
+            ignore_todo_case: bool: Boolean whether to look for case insensitive todo items like todo, Todo etc. Defaults to False
         """
         exclude_dirs = exclude_dirs or {}
         exclude_files = exclude_files or {}
@@ -142,7 +156,7 @@ class DefaultConfig(BaseConfig):
             default_summary_generators.extend(summary_generators)
             summary_generators = default_summary_generators
 
-        super().__init__(exclude_dirs, exclude_files, summary_generators, generate_html, save_html_reports)
+        super().__init__(exclude_dirs, exclude_files, summary_generators, generate_html, save_html_reports, ignore_todo_case)
 
 
 default_config = DefaultConfig()
