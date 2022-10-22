@@ -1,4 +1,4 @@
-# TODO Notifier [WIP]
+# TODO Notifier
 
 ## Description
 
