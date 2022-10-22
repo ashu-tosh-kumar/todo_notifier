@@ -43,7 +43,8 @@ def run(connect: Connect, config: BaseConfig = default_config) -> None:
                 dir_path=project_dir, extension="py", exclude_subdirs=config.exclude_dirs, exclude_files=config.exclude_files
             )
 
-            all_todos_items = parse_files_for_todo_items(temp_dir, all_files_in_project_dir)
+            ignore_todo_case = config.ignore_todo_case
+            all_todos_items = parse_files_for_todo_items(temp_dir, all_files_in_project_dir, ignore_todo_case)
 
             summary_generators = config.summary_generators
 

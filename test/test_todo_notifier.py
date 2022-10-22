@@ -38,7 +38,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
 
         return True
 
-    def test_parse_files_for_todo_items(self):
+    def test_parse_files_for_todo_items_should_parse_todo_items(self):
         dummy_files = ["test/sample_test_file.py"]
         project_parent_dir = "test"  # Important to keep it same as test directory
         expected_value = {
@@ -223,7 +223,47 @@ class TestParseFilesForTodoItems(unittest.TestCase):
             ]
         }
 
-        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files)
+        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
+
+        assert self._compare_todos(expected_value, actual_value)
+
+    def test_parse_files_for_todo_items_should_consider_case_insensitive_values_if_set(self):
+        dummy_files = ["test/sample_test_file2.py"]
+        project_parent_dir = "test"  # Important to keep it same as test directory
+        expected_value = {
+            "sample_test_file2.py": [
+                TODO(
+                    "some-message-21f886ac-cc41-452b-9a53-3cfd56446341",
+                    USER(UNKNOWN_USER_NAME),
+                    DEFAULT_COMPLETION_DATE,
+                    "sample_test_file2.py",
+                    POSITION(4),
+                ),
+                TODO(
+                    "some-message-301ac105-3afe-4d1e-adea-176a17e07393",
+                    USER(UNKNOWN_USER_NAME),
+                    DEFAULT_COMPLETION_DATE,
+                    "sample_test_file2.py",
+                    POSITION(5),
+                ),
+                TODO(
+                    "some-message-0e4fc40f-f7c6-40bb-a6db-a51e158f4cc4",
+                    USER(UNKNOWN_USER_NAME),
+                    DEFAULT_COMPLETION_DATE,
+                    "sample_test_file2.py",
+                    POSITION(6),
+                ),
+                TODO(
+                    "some-message-e5f94208-f4c8-4fee-bb9e-b7d9e00a4600",
+                    USER(UNKNOWN_USER_NAME),
+                    DEFAULT_COMPLETION_DATE,
+                    "sample_test_file2.py",
+                    POSITION(7),
+                ),
+            ]
+        }
+
+        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, True)
 
         assert self._compare_todos(expected_value, actual_value)
 
@@ -247,7 +287,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
             ]
         }
 
-        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files)
+        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
 
         assert self._compare_todos(expected_value, actual_value)
 
@@ -258,7 +298,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
         stub_compute_file_line_no_to_chars_map.side_effect = (Exception("unittest-compute-file-line-no-to-chars-map-exception"),)
         expected_value = {"sample_test_file2.py": []}
 
-        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files)
+        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
 
         assert self._compare_todos(expected_value, actual_value)
 
