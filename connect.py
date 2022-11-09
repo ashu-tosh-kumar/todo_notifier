@@ -3,7 +3,7 @@ import logging
 import os
 from enum import Enum
 from shutil import copy, copytree, ignore_patterns
-from typing import TypeVar
+from typing import TypeVar, Union
 
 from git import Repo
 
@@ -62,12 +62,14 @@ class Connect:
         """
         return f"{repr(self)} connect_method: {self._connect_method} project_dir_name: {self._project_dir_name} url: {self._file_dir_url}"
 
-    def pull_repository(self, target_dir: str) -> P:
+    def pull_repository(self, target_dir: str, branch_name: Union[str, None] = None) -> P:
         """Provides a one point access to pull repository into the target location. This method simply relegates
         the call to respective methods set during class initialization
 
         Args:
             target_dir (str): Directory into which the data from given `url` needs to be copied into
+            branch_name (optional, Union[str, None]): Branch name is specific branch to be checked out
+                                                    after cloning the repository. Useful for `CONNECT_METHOD.GIT_CLONE`. Defaults to None.
 
         Returns:
             P: Returns whatever is returned by the respective method to which call is delegated to
@@ -75,7 +77,7 @@ class Connect:
         try:
             logger.info(f"Pulling repository: {self._project_dir_name} via {self._connect_method}")
             if self._connect_method == CONNECT_METHOD.GIT_CLONE:
-                return self._pull_using_git_clone(target_dir)
+                return self._pull_using_git_clone(target_dir, branch_name=branch_name)
             elif self._connect_method == CONNECT_METHOD.DRY_RUN_FILE:
                 return self._pull_file_for_dry_run(target_dir)
             elif self._connect_method == CONNECT_METHOD.DRY_RUN_DIR:
@@ -86,15 +88,20 @@ class Connect:
             logger.exception(f"Error in pulling repository via {self._connect_method}")
             raise ConnectException(f"Error in pulling repository via {self._connect_method}")
 
-    def _pull_using_git_clone(self, target_dir: str) -> None:
+    def _pull_using_git_clone(self, target_dir: str, branch_name: Union[str, None] = None) -> Repo:
         """Pulls the repository using GIT_CLONE method
 
         NOTE: This method used GitPython library that required Git to be installed on the system
 
         Args:
             target_dir (str): Directory into which the data from given `url` needs to be copied into
+            branch_name (optional, Union[str, None]): Branch name is specific branch to be checked out
+                                                    after cloning the repository. Defaults to None.
+
+            Returns:
+                Repo: Returns handle to the repository cloned
         """
-        Repo.clone_from(self._file_dir_url, target_dir)
+        return Repo.clone_from(self._file_dir_url, target_dir, branch=branch_name)
 
     def _pull_file_for_dry_run(self, target_dir: str) -> None:
         """Copies the local file `test_file` into `target_dir` directory
