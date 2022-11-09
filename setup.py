@@ -14,7 +14,7 @@ setup(
     test_suite="unittest",
     version="1.1.0",
     keywords=["todo", "notifier"],
-    packages=find_packages(exclude=["tests"]),
+    packages=find_packages(exclude=["test"]),
     install_requires=[
         "GitPython==3.1.29",
         "python-dateutil==2.8.2",
