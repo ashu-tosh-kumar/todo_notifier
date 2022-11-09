@@ -5,7 +5,7 @@ from enum import Enum
 from shutil import copy, copytree, ignore_patterns
 from typing import TypeVar, Union
 
-from git import Repo
+from git.repo import Repo
 
 from constants import DEFAULT_EXCLUDE_DIRS
 
@@ -33,17 +33,20 @@ class CONNECT_METHOD(Enum):
 class Connect:
     """Provides a common interface to pull repositories from different sources"""
 
-    def __init__(self, connect_method: CONNECT_METHOD, project_dir_name: str, url: str) -> None:
+    def __init__(self, connect_method: CONNECT_METHOD, project_dir_name: str, url: str, branch_name: Union[str, None] = None) -> None:
         """Initializer for `Connect` class
 
         Args:
             connect_method (CONNECT_METHOD): Method to be used to pull a repository into the target location
             project_dir_name (str): Name of the project. Should match the name of project main directory
             url (str): Url or file address or directory address that needs to be pulled
+            branch_name (optional, Union[str, None]): Branch name is specific branch to be checked out
+                                                    after cloning the repository. Useful for `CONNECT_METHOD.GIT_CLONE`. Defaults to None.
         """
         self._connect_method = connect_method
         self._project_dir_name = project_dir_name
         self._file_dir_url = url
+        self._branch_name = branch_name
 
     @property
     def project_dir_name(self) -> str:
@@ -77,7 +80,7 @@ class Connect:
         try:
             logger.info(f"Pulling repository: {self._project_dir_name} via {self._connect_method}")
             if self._connect_method == CONNECT_METHOD.GIT_CLONE:
-                return self._pull_using_git_clone(target_dir, branch_name=branch_name)
+                return self._pull_using_git_clone(target_dir, branch_name=self._branch_name)
             elif self._connect_method == CONNECT_METHOD.DRY_RUN_FILE:
                 return self._pull_file_for_dry_run(target_dir)
             elif self._connect_method == CONNECT_METHOD.DRY_RUN_DIR:
