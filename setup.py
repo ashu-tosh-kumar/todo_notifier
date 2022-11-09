@@ -12,7 +12,7 @@ setup(
     download_url="",  # To add later
     license="MIT",
     test_suite="unittest",
-    version="1.1.1",
+    version="1.1.0",
     keywords=["todo", "notifier"],
     packages=find_packages(exclude=["tests"]),
     install_requires=[
