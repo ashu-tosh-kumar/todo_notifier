@@ -1,8 +1,8 @@
 import unittest
-from test.mocks import MockSummaryGenerator, MockTestConfig
 from unittest.mock import Mock, patch
 
 from driver import TODOException, run
+from tests.mocks import MockSummaryGenerator, MockTestConfig
 
 
 class TestTodoException(unittest.TestCase):
