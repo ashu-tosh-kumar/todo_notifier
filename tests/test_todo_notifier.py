@@ -39,8 +39,8 @@ class TestParseFilesForTodoItems(unittest.TestCase):
         return True
 
     def test_parse_files_for_todo_items_should_parse_todo_items(self):
-        dummy_files = ["test/sample_test_file.py"]
-        project_parent_dir = "test"  # Important to keep it same as test directory
+        dummy_files = ["tests/sample_test_file.py"]
+        project_parent_dir = "tests"  # Important to keep it same as tests directory
         expected_value = {
             "sample_test_file.py": [
                 TODO(
@@ -228,8 +228,8 @@ class TestParseFilesForTodoItems(unittest.TestCase):
         assert self._compare_todos(expected_value, actual_value)
 
     def test_parse_files_for_todo_items_should_consider_case_insensitive_values_if_set(self):
-        dummy_files = ["test/sample_test_file2.py"]
-        project_parent_dir = "test"  # Important to keep it same as test directory
+        dummy_files = ["tests/sample_test_file2.py"]
+        project_parent_dir = "tests"  # Important to keep it same as tests directory
         expected_value = {
             "sample_test_file2.py": [
                 TODO(
@@ -269,8 +269,8 @@ class TestParseFilesForTodoItems(unittest.TestCase):
 
     @patch("todo_notifier.compute_line_and_pos_given_span")
     def test_parse_files_for_todo_items_should_handle_exception_in_parsing_todo_items(self, stub_compute_line_and_pos_given_span):
-        dummy_files = ["test/sample_test_file2.py"]
-        project_parent_dir = "test"  # Important to keep it same as test directory
+        dummy_files = ["tests/sample_test_file2.py"]
+        project_parent_dir = "tests"  # Important to keep it same as tests directory
         stub_compute_line_and_pos_given_span.side_effect = [
             4,
             Exception("unittest-compute-line-and-pos-given-span-exception"),
@@ -293,8 +293,8 @@ class TestParseFilesForTodoItems(unittest.TestCase):
 
     @patch("todo_notifier.compute_file_line_no_to_chars_map")
     def test_parse_files_for_todo_items_should_handle_exception_in_parsing_file(self, stub_compute_file_line_no_to_chars_map):
-        dummy_files = ["test/sample_test_file2.py"]
-        project_parent_dir = "test"  # Important to keep it same as test directory
+        dummy_files = ["tests/sample_test_file2.py"]
+        project_parent_dir = "tests"  # Important to keep it same as tests directory
         stub_compute_file_line_no_to_chars_map.side_effect = (Exception("unittest-compute-file-line-no-to-chars-map-exception"),)
         expected_value = {"sample_test_file2.py": []}
 

@@ -12,7 +12,7 @@ Recommended format to write TODO items
 
 Above format has following components
 
-- `TODO` in capital (though users can make it case insensitive by setting the same in  `config.py`). It need not to be starting word of the line. For a host of valid examples, please check `test/sample_test_file.py` and `test/sample_test_file2.py`
+- `TODO` in capital (though users can make it case insensitive by setting the same in  `config.py`). It need not to be starting word of the line. For a host of valid examples, please check `tests/sample_test_file.py` and `tests/sample_test_file2.py`
 - [Optional] TODO is followed a date in `YYYY-MM-DD` format within curly brackets. The respective TODO item is expected to be completed by end of this date
 - [Optional] Date is followed by a unique user name accompanied by `@`
 - [Optional] User name is followed by the usual message/comment of the respective TODO item
