@@ -7,7 +7,7 @@ setup(
     description="Library to setup automatic TODO Notifications in code",
     long_description=Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
-    url="https://github.com/gmyrianthous/example-publish-pypi",
+    url="https://github.com/ashu-tosh-kumar/todo_notifier",
     author="Ashutosh Kumar",
     download_url="",  # To add later
     license="MIT",
