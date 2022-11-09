@@ -32,12 +32,12 @@ def run(connect: Connect, config: BaseConfig = default_config) -> None:
     """
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Pull the respective repository into a temporary directory
-            logger.info(f"Pulling the repository into temporary directory: {temp_dir} using connect instance: {connect}")
-            connect.pull_repository(target_dir=temp_dir)
-
             project_dir_name = connect.project_dir_name
             project_dir = os.path.join(temp_dir, project_dir_name)
+
+            # Pull the respective repository into a temporary directory
+            logger.info(f"Pulling the repository into temporary directory: {project_dir} using connect instance: {connect}")
+            connect.pull_repository(target_dir=project_dir)
 
             all_files_in_project_dir = get_files_in_dir(
                 dir_path=project_dir, extension="py", exclude_subdirs=config.exclude_dirs, exclude_files=config.exclude_files
