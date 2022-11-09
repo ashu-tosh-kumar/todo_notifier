@@ -3,7 +3,7 @@ from pathlib import Path
 from setuptools import find_packages, setup
 
 setup(
-    name="todo_notifier",
+    name="todonotifier",
     description="Library to setup automatic TODO Notifications in code",
     long_description=Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
