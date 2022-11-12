@@ -1,8 +1,8 @@
 import unittest
-from test.mocks import MockSummaryGenerator, MockTestConfig
 from unittest.mock import Mock, patch
 
-from driver import TODOException, run
+from tests.mocks import MockSummaryGenerator, MockTestConfig
+from todonotifier.driver import TODOException, run
 
 
 class TestTodoException(unittest.TestCase):
@@ -12,9 +12,9 @@ class TestTodoException(unittest.TestCase):
 
 
 class TestRun(unittest.TestCase):
-    @patch("driver.generate_summary")
-    @patch("driver.parse_files_for_todo_items")
-    @patch("driver.get_files_in_dir")
+    @patch("todonotifier.driver.generate_summary")
+    @patch("todonotifier.driver.parse_files_for_todo_items")
+    @patch("todonotifier.driver.get_files_in_dir")
     def test_run_should_generate_summary(self, stub_get_files_in_dir, stub_parse_files_for_todo_items, spy_generate_summary):
         dummy_all_todos_items = {"unittest-module-1": ["unittest-todo-obj-1"]}
         dummy_connect = Mock()
@@ -27,10 +27,10 @@ class TestRun(unittest.TestCase):
 
         spy_generate_summary.assert_called_once_with(dummy_all_todos_items, dummy_config.summary_generators, dummy_config.generate_html)
 
-    @patch("driver.store_html")
-    @patch("driver.generate_summary", Mock())
-    @patch("driver.parse_files_for_todo_items", Mock())
-    @patch("driver.get_files_in_dir", Mock())
+    @patch("todonotifier.driver.store_html")
+    @patch("todonotifier.driver.generate_summary", Mock())
+    @patch("todonotifier.driver.parse_files_for_todo_items", Mock())
+    @patch("todonotifier.driver.get_files_in_dir", Mock())
     def test_run_should_store_summary(self, spy_store_html):
         dummy_connect = Mock()
         dummy_connect.project_dir_name = ""
@@ -48,7 +48,7 @@ class TestRun(unittest.TestCase):
         with self.assertRaises(TODOException):
             run(stub_connect, MockTestConfig())
 
-    @patch("driver.get_files_in_dir")
+    @patch("todonotifier.driver.get_files_in_dir")
     def test_run_should_raise_todo_exception_if_any_exception_in_get_files_in_dir(self, stub_get_files_in_dir):
         dummy_connect = Mock()
         dummy_connect.project_dir_name = ""
@@ -57,8 +57,8 @@ class TestRun(unittest.TestCase):
         with self.assertRaises(TODOException):
             run(dummy_connect, MockTestConfig())
 
-    @patch("driver.parse_files_for_todo_items")
-    @patch("driver.get_files_in_dir", Mock())
+    @patch("todonotifier.driver.parse_files_for_todo_items")
+    @patch("todonotifier.driver.get_files_in_dir", Mock())
     def test_run_should_raise_todo_exception_if_any_exception_in_parse_files_for_todo_items(self, stub_parse_files_for_todo_items):
         dummy_connect = Mock()
         dummy_connect.project_dir_name = ""
@@ -67,9 +67,9 @@ class TestRun(unittest.TestCase):
         with self.assertRaises(TODOException):
             run(dummy_connect, MockTestConfig())
 
-    @patch("driver.generate_summary")
-    @patch("driver.parse_files_for_todo_items", Mock())
-    @patch("driver.get_files_in_dir", Mock())
+    @patch("todonotifier.driver.generate_summary")
+    @patch("todonotifier.driver.parse_files_for_todo_items", Mock())
+    @patch("todonotifier.driver.get_files_in_dir", Mock())
     def test_run_should_raise_todo_exception_if_any_exception_in_generate_summary(self, stub_generate_summary):
         dummy_connect = Mock()
         dummy_connect.project_dir_name = ""

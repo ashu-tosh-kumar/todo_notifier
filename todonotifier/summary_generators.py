@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Dict, List, TypeVar
 
-from constants import DEFAULT_SUMMARY_GENERATORS_ENUM, UNKNOWN_USER_NAME
-from models import TODO
+from todonotifier.constants import DEFAULT_SUMMARY_GENERATORS_ENUM, UNKNOWN_USER_NAME
+from todonotifier.models import TODO
 
 T = TypeVar("T")
 

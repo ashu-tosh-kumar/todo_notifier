@@ -3,9 +3,12 @@ import os
 import re
 from typing import Dict, List
 
-from constants import UNKNOWN_USER_NAME
-from models import POSITION, TODO, USER
-from utils import compute_file_line_no_to_chars_map, compute_line_and_pos_given_span
+from todonotifier.constants import UNKNOWN_USER_NAME
+from todonotifier.models import POSITION, TODO, USER
+from todonotifier.utils import (
+    compute_file_line_no_to_chars_map,
+    compute_line_and_pos_given_span,
+)
 
 # logging configuration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from connect import CONNECT_METHOD, Connect, ConnectException
+from todonotifier.connect import CONNECT_METHOD, Connect, ConnectException
 
 
 class TestConnectException(unittest.TestCase):
@@ -42,7 +42,7 @@ class TestConnect(unittest.TestCase):
 
         assert expected_value == actual_value
 
-    @patch("connect.Connect._pull_using_git_clone")
+    @patch("todonotifier.connect.Connect._pull_using_git_clone")
     def test_pull_repository_should_call__pull_using_git_clone_if_set(self, spy__pull_using_https):
         dummy_url = "unittest-url"
         dummy_target_dir = "unittest-target-dir"
@@ -52,7 +52,7 @@ class TestConnect(unittest.TestCase):
 
         spy__pull_using_https.assert_called_once_with(dummy_target_dir, branch_name=None)
 
-    @patch("connect.Connect._pull_file_for_dry_run")
+    @patch("todonotifier.connect.Connect._pull_file_for_dry_run")
     def test_pull_repository_should_call__pull_file_using_dry_run_if_set(self, spy__pull_for_dry_run):
         dummy_test_file = "unittest-test-file"
         dummy_project_dir_name = "unittest-dummy-project-dir-name"
@@ -63,7 +63,7 @@ class TestConnect(unittest.TestCase):
 
         spy__pull_for_dry_run.assert_called_once_with(dummy_target_dir)
 
-    @patch("connect.Connect._pull_dir_for_dry_run")
+    @patch("todonotifier.connect.Connect._pull_dir_for_dry_run")
     def test_pull_repository_should_call__pull_dir_using_dry_run_if_set(self, spy__pull_dir_for_dry_run):
         dummy_test_dir = "unittest-test-dir"
         dummy_project_dir_name = "unittest-dummy-project-dir-name"
@@ -74,14 +74,14 @@ class TestConnect(unittest.TestCase):
 
         spy__pull_dir_for_dry_run.assert_called_once_with(dummy_target_dir)
 
-    @patch("connect.Connect._pull_using_git_clone")
+    @patch("todonotifier.connect.Connect._pull_using_git_clone")
     def test_pull_repository_should_raise_connect_exception_if_unsupported_connect_method_passed(self, stub__pull_using_https):
         connect = Connect(connect_method="unittest-connect-method", project_dir_name="", url="")
 
         with self.assertRaises(ConnectException):
             connect.pull_repository("")
 
-    @patch("connect.Connect._pull_using_git_clone")
+    @patch("todonotifier.connect.Connect._pull_using_git_clone")
     def test_pull_repository_should_raise_connect_exception_if_any_exception_in_connecting(self, stub__pull_using_https):
         stub__pull_using_https.side_effect = Exception("unittest-connect-via-git-clone-exception")
         connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name="", url="")

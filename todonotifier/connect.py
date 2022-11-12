@@ -7,7 +7,7 @@ from typing import TypeVar, Union
 
 from git.repo import Repo
 
-from constants import DEFAULT_EXCLUDE_DIRS
+from todonotifier.constants import DEFAULT_EXCLUDE_DIRS
 
 P = TypeVar("P")
 

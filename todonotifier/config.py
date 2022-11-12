@@ -2,14 +2,14 @@
 from copy import deepcopy
 from typing import Dict, List
 
-from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
-from summary_generators import (
+from todonotifier.constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
+from todonotifier.summary_generators import (
     BaseSummaryGenerator,
     ByModuleSummaryGenerator,
     ExpiredTodosByUserSummaryGenerator,
     UpcomingWeekTodosByUserSummaryGenerator,
 )
-from utils import recursive_update
+from todonotifier.utils import recursive_update
 
 
 class BaseConfig:
