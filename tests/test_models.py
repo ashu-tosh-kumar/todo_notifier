@@ -2,8 +2,8 @@ import unittest
 
 from dateutil import parser
 
-from constants import DEFAULT_COMPLETION_DATE
-from models import POSITION, TODO, USER
+from todonotifier.constants import DEFAULT_COMPLETION_DATE
+from todonotifier.models import POSITION, TODO, USER
 
 
 class TestUser(unittest.TestCase):

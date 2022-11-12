@@ -3,8 +3,8 @@ import os
 import re
 from typing import Dict, List, Tuple
 
-from models import TODO
-from summary_generators import BaseSummaryGenerator
+from todonotifier.models import TODO
+from todonotifier.summary_generators import BaseSummaryGenerator
 
 # logging configuration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")

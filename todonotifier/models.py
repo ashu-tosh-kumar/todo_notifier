@@ -10,7 +10,7 @@ from typing import TypeVar
 
 from dateutil import parser
 
-from constants import DEFAULT_COMPLETION_DATE
+from todonotifier.constants import DEFAULT_COMPLETION_DATE
 
 T = TypeVar("T")
 

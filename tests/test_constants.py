@@ -1,6 +1,6 @@
 import unittest
 
-from constants import (
+from todonotifier.constants import (
     DEFAULT_COMPLETION_DATE,
     DEFAULT_EXCLUDE_DIRS,
     DEFAULT_EXCLUDE_FILES,

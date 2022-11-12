@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import patch
 
-from config import BaseConfig, DefaultConfig, default_config
-from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
+from todonotifier.config import BaseConfig, DefaultConfig, default_config
+from todonotifier.constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
 
 
 class TestBaseConfig(unittest.TestCase):
@@ -100,9 +100,9 @@ class TestDefaultConfig(unittest.TestCase):
 
         self.assertEqual(dummy_exclude_files, actual_value)
 
-    @patch("config.UpcomingWeekTodosByUserSummaryGenerator")
-    @patch("config.ExpiredTodosByUserSummaryGenerator")
-    @patch("config.ByModuleSummaryGenerator")
+    @patch("todonotifier.config.UpcomingWeekTodosByUserSummaryGenerator")
+    @patch("todonotifier.config.ExpiredTodosByUserSummaryGenerator")
+    @patch("todonotifier.config.ByModuleSummaryGenerator")
     def test_default_config_should_return_default_summary_generators(
         self, stub_by_module_summary_generator, stub_expired_todos_by_user_summary_generator, stub_upcoming_week_todos_by_user_summary_generator
     ):

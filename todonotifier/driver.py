@@ -3,10 +3,10 @@ import os
 import tempfile
 from typing import TypeVar
 
-from config import BaseConfig, default_config
-from connect import Connect
-from todo_notifier import parse_files_for_todo_items
-from utils import generate_summary, get_files_in_dir, store_html
+from todonotifier.config import BaseConfig, default_config
+from todonotifier.connect import Connect
+from todonotifier.todo_notifier import parse_files_for_todo_items
+from todonotifier.utils import generate_summary, get_files_in_dir, store_html
 
 P = TypeVar("P")
 

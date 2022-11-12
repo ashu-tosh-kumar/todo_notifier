@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
-from utils import (
+from todonotifier.constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
+from todonotifier.utils import (
     InCompatibleTypesException,
     _ignore_dir_or_file,
     compute_file_line_no_to_chars_map,
@@ -23,7 +23,7 @@ class TestInCompatibleTypesException(unittest.TestCase):
 
 
 class TestIgnoreDirOrFile(unittest.TestCase):
-    @patch("utils.os")
+    @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_correctly_ignore_file_patterns(self, stub_os):
         test_data = [
             # file to test, expected value
@@ -50,21 +50,21 @@ class TestIgnoreDirOrFile(unittest.TestCase):
             actual_value = _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES)
             self.assertEqual(expected_value, actual_value)
 
-    @patch("utils.os")
+    @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_correctly_ignore_file_names(self, stub_os):
         stub_os.path.basename = lambda x: x
 
         for pattern in DEFAULT_EXCLUDE_FILES["NAME"]:
             self.assertEqual(True, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES))
 
-    @patch("utils.os")
+    @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_correctly_ignore_file_path(self, stub_os):
         stub_os.path.basename = lambda x: x
 
         for pattern in DEFAULT_EXCLUDE_FILES["ABS_PATH"]:
             self.assertEqual(True, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES))
 
-    @patch("utils.os")
+    @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_not_ignore_correct_files(self, stub_os):
         test_data = [
             # file to test, expected value
@@ -76,7 +76,7 @@ class TestIgnoreDirOrFile(unittest.TestCase):
         for pattern, expected_value in test_data:
             self.assertEqual(expected_value, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES))
 
-    @patch("utils.os")
+    @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_correctly_ignore_dir_patterns(self, stub_os):
         test_data = [
             # file to test, expected value
@@ -92,21 +92,21 @@ class TestIgnoreDirOrFile(unittest.TestCase):
         for pattern, expected_value in test_data:
             self.assertEqual(expected_value, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_DIRS))
 
-    @patch("utils.os")
+    @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_correctly_ignore_dir_names(self, stub_os):
         stub_os.path.basename = lambda x: x
 
         for pattern in DEFAULT_EXCLUDE_DIRS["NAME"]:
             self.assertEqual(True, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_DIRS))
 
-    @patch("utils.os")
+    @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_correctly_ignore_dir_path(self, stub_os):
         stub_os.path.basename = lambda x: x
 
         for pattern in DEFAULT_EXCLUDE_DIRS["ABS_PATH"]:
             self.assertEqual(True, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_DIRS))
 
-    @patch("utils.os")
+    @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_not_ignore_correct_dirs(self, stub_os):
         test_data = [
             # file to test, expected value
@@ -144,7 +144,7 @@ class TestGetFilesInDir(unittest.TestCase):
             actual_value = set(get_files_in_dir(temp_dir, dummy_extension, {}, {}))
             self.assertEqual(expected_value, actual_value)
 
-    @patch("utils._ignore_dir_or_file")
+    @patch("todonotifier.utils._ignore_dir_or_file")
     def test_get_files_in_dir_should_not_throw_exception_if_caught_any(self, stub__ignore_dir_or_file):
         dummy_extension = "py"
         stub__ignore_dir_or_file.side_effect = [False, Exception("unittest-ignore-dir-or-file-exception")]

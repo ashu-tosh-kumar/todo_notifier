@@ -2,9 +2,9 @@ import unittest
 from typing import Dict, List
 from unittest.mock import patch
 
-from constants import DEFAULT_COMPLETION_DATE, UNKNOWN_USER_NAME
-from models import POSITION, TODO, USER
-from todo_notifier import parse_files_for_todo_items
+from todonotifier.constants import DEFAULT_COMPLETION_DATE, UNKNOWN_USER_NAME
+from todonotifier.models import POSITION, TODO, USER
+from todonotifier.todo_notifier import parse_files_for_todo_items
 
 
 class TestParseFilesForTodoItems(unittest.TestCase):
@@ -267,7 +267,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
 
         assert self._compare_todos(expected_value, actual_value)
 
-    @patch("todo_notifier.compute_line_and_pos_given_span")
+    @patch("todonotifier.todo_notifier.compute_line_and_pos_given_span")
     def test_parse_files_for_todo_items_should_handle_exception_in_parsing_todo_items(self, stub_compute_line_and_pos_given_span):
         dummy_files = ["tests/sample_test_file2.py"]
         project_parent_dir = "tests"  # Important to keep it same as tests directory
@@ -291,7 +291,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
 
         assert self._compare_todos(expected_value, actual_value)
 
-    @patch("todo_notifier.compute_file_line_no_to_chars_map")
+    @patch("todonotifier.todo_notifier.compute_file_line_no_to_chars_map")
     def test_parse_files_for_todo_items_should_handle_exception_in_parsing_file(self, stub_compute_file_line_no_to_chars_map):
         dummy_files = ["tests/sample_test_file2.py"]
         project_parent_dir = "tests"  # Important to keep it same as tests directory

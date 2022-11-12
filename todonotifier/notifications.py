@@ -8,8 +8,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import List
 
-from constants import DEFAULT_SUMMARY_GENERATORS_ENUM
-from summary_generators import BaseSummaryGenerator
+from todonotifier.constants import DEFAULT_SUMMARY_GENERATORS_ENUM
+from todonotifier.summary_generators import BaseSummaryGenerator
 
 
 class BaseNotifier(ABC):

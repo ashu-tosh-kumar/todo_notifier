@@ -1,7 +1,7 @@
 from typing import Dict, List
 
-from config import BaseConfig
-from summary_generators import BaseSummaryGenerator
+from todonotifier.config import BaseConfig
+from todonotifier.summary_generators import BaseSummaryGenerator
 
 
 class MockTestConfig(BaseConfig):

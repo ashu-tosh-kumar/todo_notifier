@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime, timedelta
 
-from models import POSITION, TODO, USER
-from summary_generators import (
+from todonotifier.models import POSITION, TODO, USER
+from todonotifier.summary_generators import (
     ByModuleSummaryGenerator,
     ExpiredTodosByUserSummaryGenerator,
     UpcomingWeekTodosByUserSummaryGenerator,
