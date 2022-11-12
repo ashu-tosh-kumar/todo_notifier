@@ -12,9 +12,11 @@
 
 ## Description
 
+> Find project on [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier), [PyPi](https://pypi.org/project/todonotifier/)
+
 More often than not, we put some TODO items in code and forget about them. Sometimes, we think of coming back to a TODO item by some date but miss it being too busy with some other development.
 
-TODO Notifier aims to solve this problem. It parses through any project, collects all the todo items and send automated reminders about them *[Upcoming feature]*.
+TODO Notifier aims to solve this problem. It parses through any project, collects all the todo items, generates automated summaries and send automated reminders about them *[Upcoming feature]*.
 
 Recommended format to write TODO items**
 
