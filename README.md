@@ -35,6 +35,8 @@ The framework is robust in the sense that if the TODO item misses some data like
 
 ## How to use?
 
+Before running TODO Notifier, check out the sample summary files produced by the TODO Notifier in directory `sample_reports`. It generates three default summaries. For more information, check out point #3 in [Salient Features](#salient-features).
+
 ### Method 1: As a pip package
 
 Install TODO Notifier by running `pip install todonotifier`
@@ -52,14 +54,26 @@ project_dir_name: str = ""  # Placeholder. Must match project name in git reposi
 config = DefaultConfig(save_html_reports=True, ignore_todo_case=True)  # Change per need
 connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=project_dir_name, url=git_url, branch_name="production")  # If using a local folder address in `git_url`, then change `connect_method` to `CONNECT_METHOD.DRY_RUN_DIR`
 
-driver_run(connect=connect, config=config)  # This would generate (by default) 3 summary files in `.report` folder in current working directory
+driver_run(connect=connect, config=config)
 ```
+It will generate three files by default in folder `.report` under current working directory.
 
 ### Method 2: Directly cloning from GitHub
 
 Clone using `git clone https://github.com/ashu-tosh-kumar/todo_notifier.git`
 
-Then you can use the `user_driver.py` file to run it.
+Then you can use the `user_driver.py` file to run it. You can edit the `user_driver.py` to following to try running it on `tests/sample_test_file.py`.
+
+```python
+git_url: str = "tests/sample_test_file.py"  # Placeholder for HTTPS/SSH based git url
+project_dir_name: str = ""  # Placeholder. Must match project name in git repository.
+config: BaseConfig = DefaultConfig(save_html_reports=True, ignore_todo_case=True)  # Change per need
+connect = Connect(connect_method=CONNECT_METHOD.DRY_RUN_FILE, project_dir_name=project_dir_name, url=git_url, branch_name="production")
+
+driver_run(connect=connect, config=config)
+```
+
+It will generate three files by default in folder `.report` under the main project directory.
 
 Also, if you plan to use it simply by cloning the repository, you can put your custom code in `user_driver.py` as the same will not be updated and is added for end users.
 
