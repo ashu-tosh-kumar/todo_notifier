@@ -25,8 +25,8 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
     def test_generate_summary(self):
         expected_value = {
             self._dummy_module: [
-                [self._dummy_user_name, None, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
-                [self._dummy_user_name, None, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
+                [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
+                [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
             ]
         }
 
@@ -37,7 +37,7 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
     def test_generate_html(self):
         self._by_module_summary_generator._container = {
             self._dummy_module: [
-                [self._dummy_user_name, None, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
+                [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
             ]
         }
         expected_value = f"""
@@ -47,7 +47,6 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
             <table>
             <tr>
                 <th>User Name</th>
-                <th>User Email ID</th>
                 <th>Message</th>
                 <th>Line No.</th>
                 <th>Completion Date</th>
@@ -55,7 +54,6 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
             
                 <tr>
                     <td>{self._dummy_user_name}</td>
-                    <td>{None}</td>
                     <td>{self._dummy_msg}</td>
                     <td>{self._dummy_line_no}</td>
                     <td>{"2022-09-22 00:00:00"}</td>
@@ -89,8 +87,8 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
     def test_generate_summary(self):
         expected_value = {
             self._dummy_user.user_name: [
-                [None, self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
-                [None, self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
+                [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
+                [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
             ]
         }
 
@@ -101,7 +99,7 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
     def test_generate_html(self):
         self._expired_todos_by_user_summary_generator._container = {
             self._dummy_user.user_name: [
-                [None, self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
+                [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
             ]
         }
         expected_value = f"""
@@ -110,7 +108,6 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
                 
             <table>
             <tr>
-                <th>User Email ID</th>
                 <th>Message</th>
                 <th>Module</th>
                 <th>Line No.</th>
@@ -118,7 +115,6 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
             </tr>
             
                     <tr>
-                        <td>{None}</td>
                         <td>{self._dummy_msg}</td>
                         <td>{self._dummy_module}</td>
                         <td>{self._dummy_line_no}</td>
@@ -154,8 +150,8 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
         expected_completion_date = str((datetime.today() + timedelta(days=2)).date().strftime("%Y-%m-%d %H:%M:%S"))
         expected_value = {
             self._dummy_user.user_name: [
-                [None, self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
-                [None, self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
+                [self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
+                [self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
             ]
         }
 
@@ -167,7 +163,7 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
         expected_completion_date = str((datetime.today() + timedelta(days=2)).date().strftime("%Y-%m-%d %H:%M:%S"))
         self._upcoming_week_todos_by_user_summary_generator._container = {
             self._dummy_user.user_name: [
-                [None, self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
+                [self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
             ]
         }
         expected_value = f"""
@@ -176,7 +172,6 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
                 
             <table>
             <tr>
-                <th>User Email ID</th>
                 <th>Message</th>
                 <th>Module</th>
                 <th>Line No.</th>
@@ -184,7 +179,6 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
             </tr>
             
                     <tr>
-                        <td>{None}</td>
                         <td>{self._dummy_msg}</td>
                         <td>{self._dummy_module}</td>
                         <td>{self._dummy_line_no}</td>

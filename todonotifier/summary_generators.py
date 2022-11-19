@@ -99,7 +99,6 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
                     self._container[todo_obj.module] = [
                         [
                             user_name,
-                            todo_obj.user.user_email_id,
                             todo_obj.msg,
                             todo_obj.position.line_no,
                             str(todo_obj.completion_date),
@@ -109,7 +108,6 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
                     self._container[todo_obj.module].append(
                         [
                             user_name,
-                            todo_obj.user.user_email_id,
                             todo_obj.msg,
                             todo_obj.position.line_no,
                             str(todo_obj.completion_date),
@@ -128,7 +126,6 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
             <table>
             <tr>
                 <th>User Name</th>
-                <th>User Email ID</th>
                 <th>Message</th>
                 <th>Line No.</th>
                 <th>Completion Date</th>
@@ -142,7 +139,6 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
                     <td>{todo_item[1]}</td>
                     <td>{todo_item[2]}</td>
                     <td>{todo_item[3]}</td>
-                    <td>{todo_item[4]}</td>
                 </tr>
                 """
             table += TABLE_CLOSE_TAG
@@ -188,7 +184,6 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
                     if user_name not in self._container:
                         self._container[user_name] = [
                             [
-                                todo_obj.user.user_email_id,
                                 todo_obj.msg,
                                 todo_obj.module,
                                 todo_obj.position.line_no,
@@ -198,7 +193,6 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
                     else:
                         self._container[user_name].append(
                             [
-                                todo_obj.user.user_email_id,
                                 todo_obj.msg,
                                 todo_obj.module,
                                 todo_obj.position.line_no,
@@ -217,7 +211,6 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
             table = """
             <table>
             <tr>
-                <th>User Email ID</th>
                 <th>Message</th>
                 <th>Module</th>
                 <th>Line No.</th>
@@ -232,7 +225,6 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
                         <td>{todo_item[1]}</td>
                         <td>{todo_item[2]}</td>
                         <td>{todo_item[3]}</td>
-                        <td>{todo_item[4]}</td>
                     </tr>
                     """
             table += TABLE_CLOSE_TAG
@@ -277,7 +269,6 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
                     if user_name not in self._container:
                         self._container[user_name] = [
                             [
-                                todo_obj.user.user_email_id,
                                 todo_obj.msg,
                                 todo_obj.module,
                                 todo_obj.position.line_no,
@@ -287,7 +278,6 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
                     else:
                         self._container[user_name].append(
                             [
-                                todo_obj.user.user_email_id,
                                 todo_obj.msg,
                                 todo_obj.module,
                                 todo_obj.position.line_no,
@@ -306,7 +296,6 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
             table = """
             <table>
             <tr>
-                <th>User Email ID</th>
                 <th>Message</th>
                 <th>Module</th>
                 <th>Line No.</th>
@@ -321,7 +310,6 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
                         <td>{todo_item[1]}</td>
                         <td>{todo_item[2]}</td>
                         <td>{todo_item[3]}</td>
-                        <td>{todo_item[4]}</td>
                     </tr>
                     """
             table += TABLE_CLOSE_TAG

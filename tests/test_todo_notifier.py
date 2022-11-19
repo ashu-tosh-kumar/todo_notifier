@@ -24,9 +24,6 @@ class TestParseFilesForTodoItems(unittest.TestCase):
                 if expected_todo.user.user_name != actual_todo.user.user_name:
                     return False
 
-                if expected_todo.user.user_email_id != actual_todo.user._user_email_id:
-                    return False
-
                 if expected_todo.completion_date != actual_todo.completion_date:
                     return False
 

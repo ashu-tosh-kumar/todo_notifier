@@ -111,7 +111,7 @@ by_module_summary_generator.html
 - TODO Notifier copies/clones the respective repository into a temporary location to avoid the risk of modifying any file.
 - It then reads through all the files in the project and collects all the TODO items
 - It then generates the summaries as specified in the configuration
-- Finally it sends the notifications (by default via Emails) to respective users and a group as a whole *[Upcoming feature]*.
+- Finally it sends the notifications (by default via Emails) to the set group as a whole *[Upcoming feature]*.
 
 ### Salient Features
 
