@@ -56,7 +56,7 @@ def run(connect: Connect, config: BaseConfig = default_config) -> None:
             [store_html(summary_generator.html, summary_generator.name) for summary_generator in summary_generators]
 
         if config.notifier:
-            config.notifier.notify(summary_generators)
+            config.notifier.notify([(summary_generator.name, summary_generator.html) for summary_generator in summary_generators])
 
     except Exception:
         logger.exception("Error in TODO application")

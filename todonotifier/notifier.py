@@ -6,9 +6,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import List, Union
-
-from todonotifier.summary_generators import BaseSummaryGenerator
+from typing import List, Tuple, Union
 
 
 class BaseNotifier(ABC):
@@ -16,11 +14,11 @@ class BaseNotifier(ABC):
         """Initializer for `BaseNotifier`"""
         pass
 
-    def _aggregate_all_summaries(self, summary_generators: List[BaseSummaryGenerator]) -> str:
+    def _aggregate_all_summaries(self, summary: List[Tuple[str, str]]) -> str:
         """Abstract method allowing to aggregate all summaries together to be sent
 
         Args:
-            summary_generators (List[BaseSummaryGenerator]): List of summary generators to generate various kind of summary of todo items
+            summary (List[Tuple[str, str]]): List of tuples where each tuple consists of summary name and generated summary html
 
         Returns:
             str: Returns the string representing aggregation of all summaries in their html format
@@ -30,11 +28,11 @@ class BaseNotifier(ABC):
         <body>
         """
 
-        for summary_generator in summary_generators:
+        for summary_name, summary_html in summary:
             html += f"""
-            <h1>{summary_generator.name}</h1>
+            <h1>{summary_name}</h1>
             <p>
-                {summary_generator.generate_html()}
+                {summary_html}
             </p><br>
             """
 
@@ -46,11 +44,11 @@ class BaseNotifier(ABC):
         return html
 
     @abstractmethod
-    def notify(self, summary_generators: List[BaseSummaryGenerator]) -> None:
+    def notify(self, summary: List[Tuple[str, str]]) -> None:
         """Abstract method to send notification to users via method setup by users
 
         Args:
-            summary_generators (List[BaseSummaryGenerator]): List of summary generators to generate various kind of summary of todo items
+            summary (List[Tuple[str, str]]): List of tuples where each tuple consists of summary name and generated summary html
         """
         pass
 
@@ -73,13 +71,13 @@ class EmailNotifier(BaseNotifier):
         self._port = port
         super().__init__()
 
-    def notify(self, summary_generators: List[BaseSummaryGenerator]) -> None:
+    def notify(self, summary: List[Tuple[str, str]]) -> None:
         """Sends email to `receivers_list` with `html` content
 
         Args:
-            summary_generators (List[BaseSummaryGenerator]): List of summary generators to generate various kind of summary of todo items
+            summary (List[Tuple[str, str]]): List of tuples where each tuple consists of summary name and generated summary html
         """
-        html = self._aggregate_all_summaries(summary_generators)
+        html = self._aggregate_all_summaries(summary)
         receivers_str = ", ".join(self._receivers)
 
         message = MIMEMultipart("alternative")
