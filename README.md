@@ -74,9 +74,9 @@ Then you can use the `user_driver.py` file to run it. You can edit the `user_dri
 ```python
 git_url: str = "tests/sample_test_file.py"  # Placeholder for HTTPS/SSH based git url
 project_dir_name: str = ""  # Placeholder. Suggested to keep same as project name
-sender_email = "ashutosh.npr@gmail.com"
+sender_email = ""
 password = ""
-receivers = ["ashutosh.npr@gmail.com"]
+receivers = []
 host = "smtp.gmail.com"
 port = 465
 notifier = EmailNotifier(sender_email, password, host, port, receivers)
