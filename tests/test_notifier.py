@@ -42,19 +42,20 @@ class TestBaseNotifier(unittest.TestCase):
         """  # noqa: W293
         base_notifier = MockBaseNotifier()
 
-        actual_value = base_notifier._aggregate_all_summaries([mock_summary_generator_1, mock_summary_generator_2])
-        print(actual_value)
+        actual_value = base_notifier._aggregate_all_summaries(
+            [("mock-summary-generator-1", "unittest-html-1"), ("mock-summary-generator-2", "unittest-html-2")]
+        )
         self.assertEqual(expected_value, actual_value)
 
 
 class TestEmailNotifier(unittest.TestCase):
     @patch("todonotifier.notifier.smtplib")
     @patch("todonotifier.notifier.ssl", Mock())
-    @patch("todonotifier.notifier.MIMEText")
-    @patch("todonotifier.notifier.datetime")
+    @patch("todonotifier.notifier.MIMEText", Mock())
+    @patch("todonotifier.notifier.datetime", Mock())
     @patch("todonotifier.notifier.MIMEMultipart")
-    @patch("todonotifier.notifier.EmailNotifier._aggregate_all_summaries")
-    def test_notify_should_notify(self, stub__aggregate_all_summaries, stub_mime_multipart, stub_datetime, stub_mime_text, stub_smtplib):
+    @patch("todonotifier.notifier.EmailNotifier._aggregate_all_summaries", Mock())
+    def test_notify_should_notify(self, stub_mime_multipart, stub_smtplib):
         dummy_sender_email = "unittest-sender-email"
         dummy_password = "unittest-password"
         dummy_receivers = ["unittest-receiver-1", "unittest-receiver-2"]
