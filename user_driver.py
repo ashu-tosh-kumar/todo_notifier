@@ -17,7 +17,9 @@ def run():
     sender_email = ""
     password = ""
     receivers = []
-    notifier = EmailNotifier(sender_email, password, receivers)
+    host = "smtp.gmail.com"
+    port = 465
+    notifier = EmailNotifier(sender_email, password, host, port, receivers)
     config: BaseConfig = DefaultConfig(save_html_reports=True, ignore_todo_case=True, notifier=notifier)  # Change per need
     connect = Connect(
         connect_method=CONNECT_METHOD.DRY_RUN_FILE, project_dir_name=project_dir_name, url=git_url, branch_name="production"
