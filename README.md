@@ -5,6 +5,7 @@
   - [How to use?](#how-to-use)
     - [Method 1: As a pip package](#method-1-as-a-pip-package)
     - [Method 2: Directly cloning from GitHub](#method-2-directly-cloning-from-github)
+  - [Accessing generated summaries](#accessing-generated-summaries)
   - [Technical Details](#technical-details)
     - [Working](#working)
     - [Salient Features](#salient-features)
@@ -56,6 +57,7 @@ connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=proj
 
 driver_run(connect=connect, config=config)
 ```
+
 It will generate three files by default in folder `.report` under current working directory.
 
 ### Method 2: Directly cloning from GitHub
@@ -75,7 +77,32 @@ driver_run(connect=connect, config=config)
 
 It will generate three files by default in folder `.report` under the main project directory.
 
-Also, if you plan to use it simply by cloning the repository, you can put your custom code in `user_driver.py` as the same will not be updated and is added for end users.
+This method is however not recommended and there's always a risk of overriding any local changes made when pulling latest changes. Please use Method 1.
+
+## Accessing generated summaries
+
+After running above code to generate the summaries, the TODO Notifier stores these summaries as `.html` files if `save_html_reports=True` is passed in the configuration. All such reports are saved in directory `.report` in current working directory.
+
+TODO Notifier also sends automated emails about the same if setup in the configuration [Upcoming].
+
+However, if users require access to the generated summaries for some custom downstream integration, they can access the same as following:
+
+```python
+# Access all the summary generators
+config.config.summary_generators
+
+# Access summary from (say) ByModuleSummaryGenerator
+by_module_summary_generator = config.summary_generators[0]
+
+# Check name of the respective summary generator
+by_module_summary_generator.name
+
+# Generated `list` of `TODO` objects
+by_module_summary_generator.container
+
+# Generated html summary of `TODO` objects
+by_module_summary_generator.html
+```
 
 ## Technical Details
 
@@ -84,7 +111,7 @@ Also, if you plan to use it simply by cloning the repository, you can put your c
 - TODO Notifier copies/clones the respective repository into a temporary location to avoid the risk of modifying any file.
 - It then reads through all the files in the project and collects all the TODO items
 - It then generates the summaries as specified in the configuration
-- Finally it sends the notifications (by default via Emails) to respective users and a group as a whole *[Upcoming feature]*.
+- Finally it sends the notifications (by default via Emails) to the set group as a whole *[Upcoming feature]*.
 
 ### Salient Features
 
@@ -107,7 +134,7 @@ Also, if you plan to use it simply by cloning the repository, you can put your c
 
 - Provides two ways of dry running the code locally viz. `CONNECT_METHOD.DRY_RUN_FILE` to dry run on a single local file and `CONNECT.DRY_RUN_DIR` to dry run on an entire local directory/project.
 
-- `user_driver.py` provides the single point of access for users. It can be modified accordingly to run the code. This file is added to `.gitignore` and is not expected to be updated and so users can safely modify this file.
+- `user_driver.py` provides examples on how to use. It can be modified accordingly to run the code.
 
 ### Other Salient Features
 

@@ -48,10 +48,15 @@ def run(connect: Connect, config: BaseConfig = default_config) -> None:
 
             summary_generators = config.summary_generators
 
+        # Generate summaries
         generate_summary(all_todos_items, summary_generators, config.generate_html)
 
+        # Store generated summaries
         if config.generate_html and config.save_html_reports:
             [store_html(summary_generator.html, summary_generator.name) for summary_generator in summary_generators]
+
+        if config.notifier:
+            config.notifier.notify(summary_generators)
 
     except Exception:
         logger.exception("Error in TODO application")

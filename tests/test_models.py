@@ -14,9 +14,6 @@ class TestUser(unittest.TestCase):
     def test_user_name_should_give_correct_user_name(self):
         self.assertEqual(self._dummy_user_name, self._user.user_name)
 
-    def test_user_email_id_should_give_correct_user_email_id(self):
-        self.assertEqual(None, self._user.user_email_id)
-
     def test___str__(self):
         expected_value = f"User: {repr(self._user)} user_name: {self._user.user_name}"
         self.assertEqual(expected_value, str(self._user))

@@ -12,6 +12,9 @@ from dateutil import parser
 
 from todonotifier.constants import DEFAULT_COMPLETION_DATE
 
+# from enum import Enum
+
+
 T = TypeVar("T")
 
 
@@ -23,7 +26,6 @@ class USER:
             user_name (str): User name
         """
         self._user_name = user_name
-        self._user_email_id = None
 
     @property
     def user_name(self) -> str:
@@ -33,15 +35,6 @@ class USER:
             str: Returns username
         """
         return self._user_name
-
-    @property
-    def user_email_id(self) -> str:
-        """Getter for `user_email_id`
-
-        Returns:
-            str: Returns user email id
-        """
-        return self._user_email_id
 
     def __str__(self) -> str:
         """Defines str representation of `USER` class object
