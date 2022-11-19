@@ -40,6 +40,20 @@ class TestRun(unittest.TestCase):
 
         spy_store_html.assert_called()
 
+    @patch("todonotifier.driver.store_html", Mock())
+    @patch("todonotifier.driver.generate_summary", Mock())
+    @patch("todonotifier.driver.parse_files_for_todo_items", Mock())
+    @patch("todonotifier.driver.get_files_in_dir", Mock())
+    def test_run_should_notify(self):
+        dummy_connect = Mock()
+        dummy_connect.project_dir_name = ""
+        spy_notifier = Mock()
+        dummy_config = MockTestConfig(notifier=spy_notifier)
+
+        run(dummy_connect, dummy_config)
+
+        spy_notifier.notify.assert_called()
+
     def test_run_should_raise_todo_exception_if_any_exception_in_connect(self):
         stub_connect = Mock()
         stub_connect.project_dir_name = ""
