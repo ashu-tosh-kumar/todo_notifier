@@ -1,6 +1,6 @@
-from config import BaseConfig, DefaultConfig
-from connect import CONNECT_METHOD, Connect
-from driver import run as driver_run
+from todonotifier.config import BaseConfig, DefaultConfig
+from todonotifier.connect import CONNECT_METHOD, Connect
+from todonotifier.driver import run as driver_run
 
 
 def run():
@@ -11,10 +11,12 @@ def run():
     This file/function after initial code commit should be added in `.gitignore` so that users
     can safely update the TODO application by simply pulling the latest changes
     """
-    git_url: str = ""  # Placeholder for HTTPS/SSH based git url
-    project_dir_name: str = ""  # Placeholder. Must match project name in git repository.
+    git_url: str = "tests/sample_test_file.py"  # Placeholder for HTTPS/SSH based git url
+    project_dir_name: str = ""  # Placeholder. Generaly same as project name and must be empty for `CONNECT_METHOD.DRY_RUN_FILE`
     config: BaseConfig = DefaultConfig(save_html_reports=True, ignore_todo_case=True)  # Change per need
-    connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=project_dir_name, url=git_url)
+    connect = Connect(
+        connect_method=CONNECT_METHOD.DRY_RUN_FILE, project_dir_name=project_dir_name, url=git_url, branch_name="production"
+    )  # branch is not important for `DRY_RUN_FILE` and `DRY_RUN_DIR`
 
     driver_run(connect=connect, config=config)
 
