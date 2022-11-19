@@ -56,17 +56,21 @@ class BaseNotifier(ABC):
 
 
 class EmailNotifier(BaseNotifier):
-    def __init__(self, sender_email: str, password: str, receivers: Union[List[str], None] = None) -> None:
+    def __init__(self, sender_email: str, password: str, host: str, port: int, receivers: Union[List[str], None] = None) -> None:
         """Initializer for `EmailNotifier` class
 
         Args:
             sender_email (str): Email id from which email needs to be sent
             password (str): Password for email id `sender_email`
+            host (str): Host for sending email for e.g. `smtp.gmail.com` for Gmail
+            port (int): Port for sending email for e.g. `465` for Gmail
             receivers (Union[List[str], None], optional): List of receivers. Defaults to None.
         """
         self._sender_email = sender_email
         self._receivers = receivers or []
         self._password = password
+        self._host = host
+        self._port = port
         super().__init__()
 
     def notify(self, summary_generators: List[BaseSummaryGenerator]) -> None:
@@ -86,6 +90,6 @@ class EmailNotifier(BaseNotifier):
         html = MIMEText(html, "html")
         message.attach(html)
         context = ssl.create_default_context()
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        with smtplib.SMTP_SSL(self._host, self._port, context=context) as server:
             server.login(self._sender_email, self._password)
             server.sendmail(self._sender_email, self._receivers, message.as_string())

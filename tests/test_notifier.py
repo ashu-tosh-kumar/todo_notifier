@@ -63,7 +63,7 @@ class TestEmailNotifier(unittest.TestCase):
         FakeContextManager.return_value = spy_server
         stub_mime_multipart.return_value = MagicMock()
 
-        email_notifier = EmailNotifier(dummy_sender_email, dummy_password, dummy_receivers)
+        email_notifier = EmailNotifier(dummy_sender_email, dummy_password, None, None, dummy_receivers)
         email_notifier.notify([])
 
         spy_server.login.assert_called_once_with(dummy_sender_email, dummy_password)
