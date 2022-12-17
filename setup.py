@@ -12,7 +12,7 @@ setup(
     download_url="https://pypi.org/project/todonotifier/",
     license="MIT",
     test_suite="unittest",
-    version="1.2.1",
+    version="1.2.2",
     keywords=["todo", "notifier"],
     packages=find_packages(exclude=["tests", "sample_reports"]),
     install_requires=[
