@@ -9,7 +9,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/ashu-tosh-kumar/todo_notifier",
     author="Ashutosh Kumar",
-    download_url="",  # To add later
+    download_url="https://pypi.org/project/todonotifier/",
     license="MIT",
     test_suite="unittest",
     version="1.2.1",
