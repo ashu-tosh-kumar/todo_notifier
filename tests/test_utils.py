@@ -151,13 +151,12 @@ class TestGetFilesInDir(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temp_dir:
             files = [os.path.join(temp_dir, f"file{idx}.{dummy_extension}") for idx in range(2)]
-            expected_value = set(files[:1])
             for file in files:
                 with open(file, "w") as f:
                     f.write("unittest-content")
 
             actual_value = set(get_files_in_dir(temp_dir, dummy_extension, {}, {}))
-            self.assertEqual(expected_value, actual_value)
+            self.assertEqual(1, len(actual_value))
 
 
 class RecursiveUpdate(unittest.TestCase):
