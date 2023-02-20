@@ -16,7 +16,7 @@ setup(
     keywords=["todo", "notifier"],
     packages=find_packages(exclude=["tests", "sample_reports"]),
     install_requires=[
-        "GitPython==3.1.30",
+        "GitPython==3.1.31",
         "python-dateutil==2.8.2",
     ],
 )
