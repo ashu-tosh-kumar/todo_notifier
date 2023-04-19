@@ -13,7 +13,7 @@
 
 ## Description
 
-> Find project on [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier), [PyPi](https://pypi.org/project/todonotifier/)
+> Find project on [ProductHunt](https://www.producthunt.com/posts/todo-notifier), [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier), [PyPi](https://pypi.org/project/todonotifier/)
 > Medium Article detailing about TODO Notifier and how to use it (complements README): [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34)
 
 More often than not, we put some TODO items in code and forget about them. Sometimes, we think of coming back to a TODO item by some date but miss it being too busy with some other development.
