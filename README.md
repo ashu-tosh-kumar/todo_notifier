@@ -1,5 +1,7 @@
 # TODO Notifier
 
+<img width="492" alt="Screenshot 2023-04-20 at 10 27 27 PM" src="https://user-images.githubusercontent.com/37182127/233436178-26c2b4be-e630-4f9b-b4c9-d58424bd365d.png">
+
 - [TODO Notifier](#todo-notifier)
   - [Description](#description)
   - [How to use?](#how-to-use)
