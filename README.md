@@ -15,7 +15,7 @@
 
 ## Description
 
-> Find project on [ProductHunt](https://www.producthunt.com/posts/todo-notifier), [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier), [PyPi](https://pypi.org/project/todonotifier/)
+> Find project on [ProductHunt](https://www.producthunt.com/posts/todo-notifier), [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier), [PyPi](https://pypi.org/project/todonotifier/), [SoureForge](https://sourceforge.net/projects/todo-notifier/)
 
 > Medium Article detailing about TODO Notifier and how to use it (complements README): [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34)
 
