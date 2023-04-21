@@ -139,6 +139,3 @@ by_module_summary_generator.html
 - Provides two ways of dry running the code locally viz. `CONNECT_METHOD.DRY_RUN_FILE` to dry run on a single local file and `CONNECT.DRY_RUN_DIR` to dry run on an entire local directory/project.
 
 - `user_driver.py` provides examples on how to use. It can be modified accordingly to run the code.
-  - CodeQL
-  - OSSAR
-  - Python application
