@@ -1,17 +1,8 @@
 # TODO Notifier
 
-<img width="492" alt="Screenshot 2023-04-20 at 10 27 27 PM" src="https://user-images.githubusercontent.com/37182127/233436178-26c2b4be-e630-4f9b-b4c9-d58424bd365d.png">
-
-- [TODO Notifier](#todo-notifier)
-  - [Description](#description)
-  - [How to use?](#how-to-use)
-    - [Method 1: As a pip package](#method-1-as-a-pip-package)
-    - [Method 2: Directly cloning from GitHub](#method-2-directly-cloning-from-github)
-  - [Accessing generated summaries](#accessing-generated-summaries)
-  - [Technical Details](#technical-details)
-    - [Working](#working)
-    - [Salient Features](#salient-features)
-    - [Other Salient Features](#other-salient-features)
+<p align="center">
+  <a target="blank"><img src="https://user-images.githubusercontent.com/37182127/233436178-26c2b4be-e630-4f9b-b4c9-d58424bd365d.png" width="280" alt="TODO Notifier Logo" /></a>
+</p>
 
 ## Description
 
@@ -150,17 +141,6 @@ by_module_summary_generator.html
 - Provides two ways of dry running the code locally viz. `CONNECT_METHOD.DRY_RUN_FILE` to dry run on a single local file and `CONNECT.DRY_RUN_DIR` to dry run on an entire local directory/project.
 
 - `user_driver.py` provides examples on how to use. It can be modified accordingly to run the code.
-
-### Other Salient Features
-
-- All code in Python 3
-- Using following pre-commit hooks to keep code clean and nice during development
-  - black
-  - flake8
-  - isort
-  - requirements-txt-fixer
-- Almost 100% test coverage for whole repository and we intend to keep it that way
-- Integrated GitHub flows to keep repo clean and updated
   - CodeQL
   - OSSAR
   - Python application
