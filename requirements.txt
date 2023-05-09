@@ -1,6 +1,6 @@
 # python==3.10.4
 black==23.3.0
-coverage==7.2.3
+coverage==7.2.5
 flake8==6.0.0
 GitPython==3.1.31  # NOTE: Needs git installed on the system
 pre-commit==3.3.1
