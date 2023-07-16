@@ -4,9 +4,9 @@
 
 ## Description
 
-> Find project on [ProductHunt](https://www.producthunt.com/posts/todo-notifier), [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier), [PyPi](https://pypi.org/project/todonotifier/), [SoureForge](https://sourceforge.net/projects/todo-notifier/)
+> Find project on [PyPi](https://pypi.org/project/todonotifier/), [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier), [ProductHunt](https://www.producthunt.com/posts/todo-notifier) or [SoureForge](https://sourceforge.net/projects/todo-notifier/).
 
-> Medium Article detailing about TODO Notifier and how to use it (complements README): [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34)
+> Medium Article detailing about TODO Notifier and how to use it (complements README): [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34). Short Article on [Dev.to](https://dev.to/atkumar/streamline-your-todos-with-todo-notifier-for-python-projects-5fpe)
 
 <img width="1080" alt="Demo" src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f4ac-4462-a2d7-0fe8f5836aca">
 
