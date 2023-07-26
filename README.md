@@ -1,37 +1,59 @@
 # TODO Notifier
 
-<img width="492" alt="Screenshot 2023-04-20 at 10 27 27 PM" src="https://user-images.githubusercontent.com/37182127/233436178-26c2b4be-e630-4f9b-b4c9-d58424bd365d.png">
+<img width="492" alt="Screenshot 2023-04-20 at 10 27 27 PM"
+src="https://user-images.githubusercontent.com/37182127/233436178-26c2b4be-e630-4f9b-b4c9-d58424bd365d.png">
 
 ## Description
 
-> Find project on [PyPi](https://pypi.org/project/todonotifier/), [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier), [ProductHunt](https://www.producthunt.com/posts/todo-notifier) or [SoureForge](https://sourceforge.net/projects/todo-notifier/).
+> Find project on [PyPi](https://pypi.org/project/todonotifier/),
+> [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier),
+> [ProductHunt](https://www.producthunt.com/posts/todo-notifier) or
+> [SoureForge](https://sourceforge.net/projects/todo-notifier/).
 
-> Medium Article detailing about TODO Notifier and how to use it (complements README): [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34). Short Article on [Dev.to](https://dev.to/atkumar/streamline-your-todos-with-todo-notifier-for-python-projects-5fpe)
+> Medium Article detailing about TODO Notifier and how to use it (complements README):
+> [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34).
+> Short Article on
+> [Dev.to](https://dev.to/atkumar/streamline-your-todos-with-todo-notifier-for-python-projects-5fpe)
 
-<img width="1080" alt="Demo" src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f4ac-4462-a2d7-0fe8f5836aca">
+<img width="1080" alt="Demo of TODO Notifier"
+src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f4ac-4462-a2d7-0fe8f5836aca">
 
-More often than not, we put some TODO items in code and forget about them. Sometimes, we think of coming back to a TODO item by some date but miss it being too busy with some other development.
+More often than not, we put some TODO items in code and forget about them. Sometimes, we
+think of coming back to a TODO item by some date but miss it being too busy with some
+other development.
 
-TODO Notifier aims to solve this problem. It parses through any project, collects all the todo items, generates automated summaries and send automated reminders about them.
+TODO Notifier aims to solve this problem. It parses through any project, collects all
+the TODO items, generates automated summaries and sends automated reminders about them.
 
 Recommended format to write TODO items**
 
 `TODO {2022-05-22} @user_name msg`
 
-Above format has following components
+The above format has the following components
 
-- `TODO` in capital (though users can make it case insensitive by setting the same in  `config.py`). It need not to be starting word of the line. For a host of valid examples, please check `tests/sample_test_file.py` and `tests/sample_test_file2.py`
-- [Optional] TODO is followed a date in `YYYY-MM-DD` format within curly brackets. The respective TODO item is expected to be completed by end of this date
+- `TODO` in the capital (though users can make it case insensitive by setting the same
+  in  `config.py`). It need not be starting word of the line. For a host of valid
+  examples, please check `tests/sample_test_file.py` and `tests/sample_test_file2.py`
+- [Optional] TODO is followed by a date in `YYYY-MM-DD` format within curly brackets.
+  The respective TODO item is expected to be completed by the end of this date
 - [Optional] Date is followed by a unique user name accompanied by `@`
-- [Optional] User name is followed by the usual message/comment of the respective TODO item
+- [Optional] User name is followed by the usual message/comment of the respective TODO
+  item
 
-However, the relative position of the `TODO` item, date inside `{}` brackets, username with `@` and message should be as recommended above.
+But, the relative position of the `TODO` item, date inside `{}` brackets, username with
+`@` and message should be as recommended above.
 
-The framework is robust in the sense that if the TODO item misses some data like date and/or message and/or username etc., the respective TODO item will still be picked up by the TODO Notifier. However without relevant information, certain functionalities may not work. For e.g. without date, it cannot know if the TODO item has overshoot its expected date of completion.
+The framework is robust. If the TODO item misses some data like date and/or message
+and/or username etc., the respective TODO item will still be picked up by the TODO
+Notifier. But, without relevant information, certain functionalities may not work. For
+e.g. without a date, it cannot know if the TODO item has overshoot its expected date of
+completion.
 
 ## How to use?
 
-Before running TODO Notifier, check out the sample summary files produced by the TODO Notifier in directory `sample_reports`. It generates three default summaries. For more information, check out point #3 in [Salient Features](#salient-features).
+Before running TODO Notifier, check out the sample summary files produced by the TODO
+Notifier in the directory `sample_reports`. It generates three default summaries. For
+more information, check out point #3 in [Salient Features](#salient-features).
 
 ### Method 1: As a pip package
 
@@ -58,13 +80,15 @@ connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=proj
 driver_run(connect=connect, config=config)
 ```
 
-It will generate three files by default in folder `.report` under current working directory.
+It will generate three files by default in folder `.report` under current working
+directory.
 
 ### Method 2: Directly cloning from GitHub
 
 Clone using `git clone https://github.com/ashu-tosh-kumar/todo_notifier.git`
 
-Then you can use the `user_driver.py` file to run it. You can edit the `user_driver.py` to following to try running it on `tests/sample_test_file.py`.
+Then you can use the `user_driver.py` file to run it. You can edit the `user_driver.py`
+to following to try running it on `tests/sample_test_file.py`.
 
 ```python
 git_url: str = "tests/sample_test_file.py"  # Placeholder for HTTPS/SSH based git url
@@ -81,17 +105,22 @@ connect = Connect(connect_method=CONNECT_METHOD.DRY_RUN_FILE, project_dir_name=p
 driver_run(connect=connect, config=config)
 ```
 
-It will generate three files by default in folder `.report` under the main project directory.
+It will generate three files by default in folder `.report` under the main project
+directory.
 
-This method is however not recommended and there's always a risk of overriding any local changes made when pulling latest changes. Please use Method 1.
+This method is not recommended and there's always a risk of overriding any local changes
+made when pulling the latest changes. Please use Method 1.
 
 ## Accessing generated summaries
 
-After running above code to generate the summaries, the TODO Notifier stores these summaries as `.html` files if `save_html_reports=True` is passed in the configuration. All such reports are saved in directory `.report` in current working directory.
+After running the above code to generate the summaries, the TODO Notifier stores these
+summaries as `.html` files if `save_html_reports=True` is passed in the configuration.
+All such reports are saved in directory `.report` in the current working directory.
 
-TODO Notifier also sends automated emails about the same if setup in the configuration.
+TODO Notifier also sends automated emails about the same if set up in the configuration.
 
-However, if users require access to the generated summaries for some custom downstream integration, they can access the same as following:
+But, if users need access to the generated summaries for some custom downstream
+integration, they can access the same as following:
 
 ```python
 # Access all the summary generators
@@ -114,30 +143,54 @@ by_module_summary_generator.html
 
 ### Working
 
-- TODO Notifier copies/clones the respective repository into a temporary location to avoid the risk of modifying any file.
+- TODO Notifier copies/clones the respective repository into a temporary location to
+  avoid the risk of modifying any file.
 - It then reads through all the files in the project and collects all the TODO items.
 - It then generates the summaries as specified in the configuration.
-- Finally it sends the notifications (only Email notifications are supported as of now) to the configured email id.
+- Finally, it sends the notifications (only Email notifications are supported as of now)
+  to the configured email id.
 
 ### Salient Features
 
-- Allows excluding specific folders of the project via absolute address, relative address or regular expression from being scanned. It has a default list of folders that are not scanned: `DEFAULT_EXCLUDE_DIRS` in `constants.py`. But the same can be controlled using the flag `flag_default_exclude_dirs` in `config/DefaultConfig`
+- Allows excluding specific folders of the project via absolute address, relative
+  address or regular expression from being scanned. It has a default list of folders
+  that are not scanned: `DEFAULT_EXCLUDE_DIRS` in `constants.py`. But the same can be
+  controlled using the flag `flag_default_exclude_dirs` in `config/DefaultConfig`
 
-- Allows excluding specific files of the project via absolute address, relative address or regular expression from being scanned. It has a default list of files that are not scanned: `DEFAULT_EXCLUDE_FILES` in `constants.py`. But the same can be controlled using the flag `flag_default_exclude_files` in `config/DefaultConfig`
+- Allows excluding specific files of the project via absolute address, relative address
+  or regular expression from being scanned. It has a default list of files that are not
+  scanned: `DEFAULT_EXCLUDE_FILES` in `constants.py`. But the same can be controlled
+  using the flag `flag_default_exclude_files` in `config/DefaultConfig`
 
-- Provides three default summary generators. Summaries are how TODO Notifier shares the information about TODO items. Each summary is essentially an HTML document that can be easily shared. The default summary generation can be controlled by flag: `flag_default_summary_generators` in `config/DefaultConfig`.
-  - Module wise list of all TODO items
-  - User wise list of TODO items expired already
-  - User wise list of TODO items that are supposed to expire in the upcoming week
+- Provides three default summary generators. Summaries are how TODO Notifier shares
+  information about TODO items. Each summary is an HTML document that can be shared. The
+  default summary generation can be controlled by a flag:
+  `flag_default_summary_generators` in `config/DefaultConfig`.
+  - Module-wise list of all TODO items
+  - User-wise list of TODO items expired already
+  - User-wise list of TODO items that are supposed to expire in the upcoming week
 
-- Flag `save_html_reports` can be used to control whether to save the generated summaries as files. If yes, it will store all generated summaries in folder `.report` locally
+- Flag `save_html_reports` can be used to control whether to save the generated
+  summaries as files. If yes, it will store all generated summaries in folder `.report`
+  locally
 
-- Users can write their own summary generators and add pass the same in variable `summary_generators` in `config/DefaultConfig`. Each summary generator is a child of `BaseSummaryGenerator` in `summary_generators.py`
+- Users can write their own summary generators and add pass the same in variable
+  `summary_generators` in `config/DefaultConfig`. Each summary generator is a child of
+  `BaseSummaryGenerator` in `summary_generators.py`
 
-- Provides default implementation of sending notifications via Email as `EmailNotifier` in `notifications.py`. More ways of notifications can be added easily by inheriting from `BaseNotifier`
+- Provides a default implementation of sending notifications via Email as
+  `EmailNotifier` in `notifications.py`. More ways of notifications can be added by
+  inheriting from `BaseNotifier`
 
-- Most of the features are configurable via configuration file. Configuration must be a child class of `BaseConfig` in `config.py`. It provides a default configuration class: `DefaultConfig` in `config.py` that can also be configured easily via various flag parameters. But users are free to write another configuration class or simply inherit from `DefaultConfig`
+- Most of the features are configurable via a configuration file. Configuration must be
+  a child class of `BaseConfig` in `config.py`. It provides a default configuration
+  class: `DefaultConfig` in `config.py` that can also be configured via various flag
+  parameters. But users are free to write another configuration class or simply inherit
+  from `DefaultConfig`
 
-- Provides two ways of dry running the code locally viz. `CONNECT_METHOD.DRY_RUN_FILE` to dry run on a single local file and `CONNECT.DRY_RUN_DIR` to dry run on an entire local directory/project.
+- Provides two ways of dry running the code locally viz. `CONNECT_METHOD.DRY_RUN_FILE`
+  to dry run on a single local file and `CONNECT.DRY_RUN_DIR` to dry run on an entire
+  local directory/project.
 
-- `user_driver.py` provides examples on how to use. It can be modified accordingly to run the code.
+- `user_driver.py` provides example of how to use it. It can be modified accordingly to
+  run the code.
