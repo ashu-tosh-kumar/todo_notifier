@@ -4,7 +4,7 @@ name: website
 on:
   push:
     branches:
-      - main
+      - development
     # Alternative: only build for tags.
     # tags:
     #   - '*'
