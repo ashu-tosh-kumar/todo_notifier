@@ -1,4 +1,8 @@
-# Configuration for custom application of todo_notifier
+"""Configuration for custom application of todo_notifier. This module provides a base
+configuration that can be inherited. And a default configuration that blows all the
+whistles of defining a configuration while being equally extensible.
+"""
+
 from copy import deepcopy
 from typing import Dict, List, Union
 

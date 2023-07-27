@@ -1,3 +1,6 @@
+"""This module contains the core logic of the application
+"""
+
 import logging
 import os
 import re

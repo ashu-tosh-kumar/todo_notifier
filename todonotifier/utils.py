@@ -1,3 +1,6 @@
+"""This module provides utility functions used in the application
+"""
+
 import logging
 import os
 import re

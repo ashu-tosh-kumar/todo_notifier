@@ -1,4 +1,7 @@
-"""This module aims to allow connection to the respective repository to allow fetching the repository"""
+"""This module provides interface for connecting to the respective repository to allow
+cloning the repository to be able to run TODO Notifier.
+"""
+
 import logging
 import os
 from enum import Enum
