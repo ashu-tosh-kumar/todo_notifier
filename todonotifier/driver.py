@@ -1,3 +1,6 @@
+"""This module provides a sample driver method to setup and run TODO Notifier
+"""
+
 import logging
 import os
 import tempfile

@@ -1,3 +1,7 @@
+"""This module provides the base summary generator that can be inherited to define a new
+summary generator. It also provides three default summary generators.
+"""
+
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
