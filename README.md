@@ -16,6 +16,8 @@ You can find project on [PyPi](https://pypi.org/project/todonotifier/), [GitHub]
 
 Please have a look at article on [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34) detailing TODO Notifier and how to use it (complements this README file): Short Article on [Dev.to](https://dev.to/atkumar/streamline-your-todos-with-todo-notifier-for-python-projects-5fpe)
 
+Read the documentation on [GitHub Pages](https://ashu-tosh-kumar.github.io/todo_notifier/).
+
 Let's first see TODO Notifier in action.
 
 <img width="1080" alt="Demo of TODO Notifier"
