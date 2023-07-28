@@ -4,7 +4,7 @@ name: website
 on:
   push:
     branches:
-      - enable-docs
+      - main
     # Alternative: only build for tags.
     # tags:
     #   - '*'
