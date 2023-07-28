@@ -1,7 +1,8 @@
 # python==3.10.4
-black==23.3.0
-coverage==7.2.3
+black==23.7.0
+coverage==7.2.7
 flake8==6.0.0
-GitPython==3.1.31  # NOTE: Needs git installed on the system
-pre-commit==3.2.2
+GitPython==3.1.32  # NOTE: Needs git installed on the system
+pdoc==14.0.0
+pre-commit==3.3.3
 python-dateutil==2.8.2

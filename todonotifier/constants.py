@@ -1,3 +1,6 @@
+"""This module defines the constants used in the application
+"""
+
 DEFAULT_EXCLUDE_DIRS = {
     "PATTERN": [
         r".*[.]egg-info",  # Distribution / packaging

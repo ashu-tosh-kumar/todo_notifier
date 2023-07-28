@@ -1,9 +1,13 @@
-# Standard format for todo item is as follows.
-# todo has to be in capital letters
-# Format: TODO [YYYY-MM-DD] @user_name inline_msg
-# Date format must be YYYY-MM-DD
-# Only one todo item is allowed per line. If more than one is in one line, the first one is considered as todo item and the rest are considered as message
-# No. of spaces between todo, date, user, message is NOT important
+"""This module defines the standard models used in the application.
+
+Standard format for todo item is as follows.
+todo has to be in capital letters
+Format: TODO [YYYY-MM-DD] @user_name inline_msg
+Date format must be YYYY-MM-DD
+Only one todo item is allowed per line. If more than one is in one line, the first one
+is considered as todo item and the rest are considered as message.
+No. of spaces between todo, date, user, message is NOT important.
+"""
 
 from datetime import datetime
 from typing import TypeVar
@@ -11,9 +15,6 @@ from typing import TypeVar
 from dateutil import parser
 
 from todonotifier.constants import DEFAULT_COMPLETION_DATE
-
-# from enum import Enum
-
 
 T = TypeVar("T")
 
