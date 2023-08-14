@@ -1,6 +1,6 @@
 # python==3.10.4
 black==23.7.0
-coverage==7.2.7
+coverage==7.3.0
 flake8==6.1.0
 GitPython==3.1.32  # NOTE: Needs git installed on the system
 pdoc==14.0.0
