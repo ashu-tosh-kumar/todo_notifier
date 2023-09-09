@@ -25,8 +25,8 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
     def test_generate_summary(self):
         expected_value = {
             self._dummy_module: [
-                [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
-                [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
+                [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22"],
+                [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22"],
             ]
         }
 
@@ -37,7 +37,7 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
     def test_generate_html(self):
         self._by_module_summary_generator._container = {
             self._dummy_module: [
-                [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22 00:00:00"],
+                [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22"],
             ]
         }
         expected_value = f"""
@@ -56,7 +56,7 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
                     <td>{self._dummy_user_name}</td>
                     <td>{self._dummy_msg}</td>
                     <td>{self._dummy_line_no}</td>
-                    <td>{"2022-09-22 00:00:00"}</td>
+                    <td>{"2022-09-22"}</td>
                 </tr>
                 
             </table>
@@ -87,8 +87,8 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
     def test_generate_summary(self):
         expected_value = {
             self._dummy_user.user_name: [
-                [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
-                [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
+                [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22"],
+                [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22"],
             ]
         }
 
@@ -99,7 +99,7 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
     def test_generate_html(self):
         self._expired_todos_by_user_summary_generator._container = {
             self._dummy_user.user_name: [
-                [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22 00:00:00"],
+                [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22"],
             ]
         }
         expected_value = f"""
@@ -118,7 +118,7 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
                         <td>{self._dummy_msg}</td>
                         <td>{self._dummy_module}</td>
                         <td>{self._dummy_line_no}</td>
-                        <td>{"2020-09-22 00:00:00"}</td>
+                        <td>{"2020-09-22"}</td>
                     </tr>
                     
             </table>
@@ -147,7 +147,7 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
         self._upcoming_week_todos_by_user_summary_generator = UpcomingWeekTodosByUserSummaryGenerator()
 
     def test_generate_summary(self):
-        expected_completion_date = str((datetime.today() + timedelta(days=2)).date().strftime("%Y-%m-%d %H:%M:%S"))
+        expected_completion_date = str((datetime.today() + timedelta(days=2)).date().strftime("%Y-%m-%d"))
         expected_value = {
             self._dummy_user.user_name: [
                 [self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
@@ -160,7 +160,7 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
         self.assertEqual(expected_value, self._upcoming_week_todos_by_user_summary_generator.container)
 
     def test_generate_html(self):
-        expected_completion_date = str((datetime.today() + timedelta(days=2)).date().strftime("%Y-%m-%d %H:%M:%S"))
+        expected_completion_date = str((datetime.today() + timedelta(days=2)).date().strftime("%Y-%m-%d"))
         self._upcoming_week_todos_by_user_summary_generator._container = {
             self._dummy_user.user_name: [
                 [self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
