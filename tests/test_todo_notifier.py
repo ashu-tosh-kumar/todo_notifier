@@ -7,33 +7,43 @@ from todonotifier.models import POSITION, TODO, USER
 from todonotifier.todo_notifier import parse_files_for_todo_items
 
 
+class UnitTestCustomException(Exception):
+    """Raised to custom fail a test case where we have a custom logic of asserting test
+    pass/fail
+    """
+
+    pass
+
+
 class TestParseFilesForTodoItems(unittest.TestCase):
     def _compare_todos(self, expected_value: Dict[str, List[TODO]], actual_value: Dict[str, List[TODO]]) -> bool:
-        if set(expected_value.keys()) != set(actual_value.keys()):
-            return False
+        if (expected_value_set := set(expected_value.keys())) != (actual_value_set := set(actual_value.keys())):
+            raise UnitTestCustomException(f"Keys in expected_value: {expected_value_set} is different than keys in actual value: {actual_value_set}")
 
         for module in actual_value:
-            if len(expected_value[module]) != len(actual_value[module]):
-                return False
+            if (expected_value_num := len(expected_value[module])) != (actual_value_num := len(actual_value[module])):
+                raise UnitTestCustomException(f"Number of modules in different in expected_value: {expected_value_num} and actual_value: {actual_value_num}")
 
         for module in actual_value:
             for expected_todo, actual_todo in zip(expected_value[module], actual_value[module]):
                 if expected_todo.msg != actual_todo.msg:
-                    return False
+                    raise UnitTestCustomException(f"Expected message: {expected_todo.msg} doesn't match with actual message: {actual_todo.msg}")
 
                 if expected_todo.user.user_name != actual_todo.user.user_name:
-                    return False
+                    raise UnitTestCustomException(f"Expected user_name: {expected_todo.user_name} doesn't match with actual user_name: {actual_todo.user_name}")
 
                 if expected_todo.completion_date != actual_todo.completion_date:
-                    return False
+                    raise UnitTestCustomException(
+                        f"Expected completion_date: {expected_todo.completion_date} doesn't match with actual completion_date: {actual_todo.completion_date}"
+                    )
 
                 if expected_todo.module != actual_todo.module:
-                    return False
+                    raise UnitTestCustomException(f"Expected module: {expected_todo.module} doesn't match with actual module: {actual_todo.module}")
 
                 if expected_todo.position.line_no != actual_todo.position.line_no:
-                    return False
-
-        return True
+                    raise UnitTestCustomException(
+                        f"Expected line_no: {expected_todo.position.line_no} doesn't match with actual line_no: {actual_todo.position.line_no}"
+                    )
 
     def test_parse_files_for_todo_items_should_parse_todo_items(self):
         dummy_files = ["tests/sample_test_file.py"]
@@ -66,14 +76,14 @@ class TestParseFilesForTodoItems(unittest.TestCase):
                     POSITION(10),
                 ),
                 TODO(
-                    "[2022-05-03 @ashutosh some-message-faa74c20-d4c2-444e-9fa0-7f202cb10b44",
+                    "{2022-05-03 @ashutosh some-message-faa74c20-d4c2-444e-9fa0-7f202cb10b44",
                     USER(UNKNOWN_USER_NAME),
                     DEFAULT_COMPLETION_DATE,
                     "sample_test_file.py",
                     POSITION(11),
                 ),
                 TODO(
-                    "2022-05-03] @ashutosh some-message-63448d77-07fb-4bc1-bf80-2d94ab902f5f",
+                    "2022-05-03} @ashutosh some-message-63448d77-07fb-4bc1-bf80-2d94ab902f5f",
                     USER(UNKNOWN_USER_NAME),
                     DEFAULT_COMPLETION_DATE,
                     "sample_test_file.py",
@@ -151,7 +161,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
                     POSITION(23),
                 ),
                 TODO(
-                    "some-message-27cdb8bc-fffe-40df-a212-76452cbdb47c [2022-05-09] some-@message-db1d606f-88d3-474e-890e-8e9c34f093d0",
+                    "some-message-27cdb8bc-fffe-40df-a212-76452cbdb47c {2022-05-09} some-@message-db1d606f-88d3-474e-890e-8e9c34f093d0",
                     USER(UNKNOWN_USER_NAME),
                     DEFAULT_COMPLETION_DATE,
                     "sample_test_file.py",
@@ -176,16 +186,16 @@ class TestParseFilesForTodoItems(unittest.TestCase):
                     "sample_test_file.py",
                     POSITION(31),
                 ),
-                TODO("[2022-05-09]", USER("ashutosh"), DEFAULT_COMPLETION_DATE, "sample_test_file.py", POSITION(32)),
+                TODO("{2022-05-09}", USER("ashutosh"), DEFAULT_COMPLETION_DATE, "sample_test_file.py", POSITION(32)),
                 TODO(
-                    "some-message-40b01cd7-3480-4f9b-9d0c-98ad297cf591 @ashutosh [2022-05-09]",
+                    "some-message-40b01cd7-3480-4f9b-9d0c-98ad297cf591 @ashutosh {2022-05-09}",
                     USER(UNKNOWN_USER_NAME),
                     DEFAULT_COMPLETION_DATE,
                     "sample_test_file.py",
                     POSITION(33),
                 ),
                 TODO(
-                    "[2022-05-09] some-message-afc38fb9-5a40-470b-9e1c-d4bacc451727",
+                    "{2022-05-09} some-message-afc38fb9-5a40-470b-9e1c-d4bacc451727",
                     USER("ashutosh"),
                     DEFAULT_COMPLETION_DATE,
                     "sample_test_file.py",
@@ -193,14 +203,14 @@ class TestParseFilesForTodoItems(unittest.TestCase):
                 ),
                 TODO("TODO", USER(UNKNOWN_USER_NAME), DEFAULT_COMPLETION_DATE, "sample_test_file.py", POSITION(35)),
                 TODO(
-                    "TODO [2022-05-11] some-message-7c2a62cb-8037-46cb-bdee-76dd0791d747",
+                    "TODO {2022-05-11} some-message-7c2a62cb-8037-46cb-bdee-76dd0791d747",
                     USER("ashutosh"),
                     DEFAULT_COMPLETION_DATE,
                     "sample_test_file.py",
                     POSITION(36),
                 ),
                 TODO(
-                    "# TODO [2022-05-12] some-message-d2cad1b4-8881-4687-a38d-2d14fbfd1306",
+                    "# TODO {2022-05-12} some-message-d2cad1b4-8881-4687-a38d-2d14fbfd1306",
                     USER("ashutosh"),
                     DEFAULT_COMPLETION_DATE,
                     "sample_test_file.py",
@@ -222,7 +232,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
 
         actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
 
-        assert self._compare_todos(expected_value, actual_value)
+        self._compare_todos(expected_value, actual_value)
 
     def test_parse_files_for_todo_items_should_consider_case_insensitive_values_if_set(self):
         dummy_files = ["tests/sample_test_file2.py"]
@@ -262,7 +272,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
 
         actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, True)
 
-        assert self._compare_todos(expected_value, actual_value)
+        self._compare_todos(expected_value, actual_value)
 
     @patch("todonotifier.todo_notifier.compute_line_and_pos_given_span")
     def test_parse_files_for_todo_items_should_handle_exception_in_parsing_todo_items(self, stub_compute_line_and_pos_given_span):
@@ -286,7 +296,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
 
         actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
 
-        assert self._compare_todos(expected_value, actual_value)
+        self._compare_todos(expected_value, actual_value)
 
     @patch("todonotifier.todo_notifier.compute_file_line_no_to_chars_map")
     def test_parse_files_for_todo_items_should_handle_exception_in_parsing_file(self, stub_compute_file_line_no_to_chars_map):
@@ -297,7 +307,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
 
         actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
 
-        assert self._compare_todos(expected_value, actual_value)
+        self._compare_todos(expected_value, actual_value)
 
 
 if __name__ == "__main__":
