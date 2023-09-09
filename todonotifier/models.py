@@ -97,9 +97,9 @@ class TODO:
         self._msg = msg
         self._user = user
         try:
-            self._completion_date = parser.parse(completion_date_str)
+            self._completion_date = parser.parse(completion_date_str).date()
         except Exception:
-            self._completion_date = parser.parse(DEFAULT_COMPLETION_DATE)
+            self._completion_date = parser.parse(DEFAULT_COMPLETION_DATE).date()
         self._module = module
         self._position = position
 
@@ -122,7 +122,7 @@ class TODO:
         return self._user
 
     @property
-    def completion_date(self) -> datetime:
+    def completion_date(self) -> datetime.date:
         """Getter for `datetime` representation of `completion_date_str`
 
         Returns:

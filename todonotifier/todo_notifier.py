@@ -46,7 +46,7 @@ def parse_files_for_todo_items(project_parent_dir: str, files: List[str], ignore
                 for todo_item_idx, todo_item in enumerate(todo_items):
                     try:
                         todo_item_group = todo_item.group()
-                        todo_date_username = re.findall(r"TODO\s*(\[.*\])?\s*(@[^\s]*)?\s*(.*)?", todo_item_group, flags=flags)
+                        todo_date_username = re.findall(r"TODO\s*(\{.*\})?\s*(@[^\s]*)?\s*(.*)?", todo_item_group, flags=flags)
 
                         if todo_date_username:
                             todo_date_username = todo_date_username[0]

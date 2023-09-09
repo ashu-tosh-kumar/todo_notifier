@@ -177,7 +177,7 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
         """
         logger.info(f"Generating summary: {self.name}")
 
-        curr_date = datetime.today()
+        curr_date = datetime.today().date()
 
         for module in all_todos_objs:
             logger.info(f"Generating summary: {self.name} for module: {module}")
@@ -262,7 +262,7 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
         """
         logger.info(f"Generating summary: {self.name}")
 
-        curr_date = datetime.today()
+        curr_date = datetime.today().date()
 
         for module in all_todos_objs:
             logger.info(f"Generating summary: {self.name} for module: {module}")
