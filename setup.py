@@ -12,11 +12,12 @@ setup(
     download_url="https://pypi.org/project/todonotifier/",
     license="MIT",
     test_suite="unittest",
-    version="1.2.3",
+    version="1.2.4",
     keywords=["todo", "notifier"],
     packages=find_packages(exclude=["tests", "sample_reports"]),
+    python_requires=">=3.7",
     install_requires=[
-        "GitPython==3.1.32",
+        "GitPython==3.1.35",
         "python-dateutil==2.8.2",
     ],
 )

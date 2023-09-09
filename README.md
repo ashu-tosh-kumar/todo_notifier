@@ -12,10 +12,6 @@ other development.
 TODO Notifier aims to solve this problem. It parses through any project, collects all
 the TODO items, generates automated summaries and sends automated reminders about them.
 
-You can find project on [PyPi](https://pypi.org/project/todonotifier/), [GitHub](https://github.com/ashu-tosh-kumar/todo_notifier), [ProductHunt](https://www.producthunt.com/posts/todo-notifier) or [SoureForge](https://sourceforge.net/projects/todo-notifier/).
-
-Please have a look at article on [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34) detailing TODO Notifier and how to use it (complements this README file): Short Article on [Dev.to](https://dev.to/atkumar/streamline-your-todos-with-todo-notifier-for-python-projects-5fpe)
-
 Let's first see TODO Notifier in action.
 
 <img width="1080" alt="Demo of TODO Notifier"
@@ -193,3 +189,8 @@ by_module_summary_generator.html
 
 - `user_driver.py` provides an example of how to use it. It can be modified accordingly to
   run the code.
+
+## Links
+- Find the package on [PyPi](https://pypi.org/project/todonotifier/)
+- Read article on how to setup TODO Notifier on [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34)
+- Documentation on [GitHub Pages](https://ashu-tosh-kumar.github.io/todo_notifier/).
