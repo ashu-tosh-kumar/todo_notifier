@@ -44,7 +44,7 @@ class TestTodo(unittest.TestCase):
         self._todo = TODO(self._dummy_msg, self._dummy_user, self._dummy_completion_date_str, self._dummy_module, self._dummy_position)
 
     def test_todo_should_use_default_completion_date_if_any_issue_in_parser(self):
-        expected_completion_date = parser.parse(DEFAULT_COMPLETION_DATE)
+        expected_completion_date = parser.parse(DEFAULT_COMPLETION_DATE).date()
         todo = TODO(self._dummy_msg, self._dummy_user, None, self._dummy_module, self._dummy_position)
 
         self.assertEqual(expected_completion_date, todo.completion_date)
@@ -56,7 +56,7 @@ class TestTodo(unittest.TestCase):
         self.assertAlmostEqual(self._dummy_user, self._todo.user)
 
     def test_completion_date_should_return_correct_completion_date(self):
-        expected_value = parser.parse(self._dummy_completion_date_str)
+        expected_value = parser.parse(self._dummy_completion_date_str).date()
         self.assertAlmostEqual(expected_value, self._todo.completion_date)
 
     def test_module_should_return_correct_module(self):
