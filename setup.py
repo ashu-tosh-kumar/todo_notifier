@@ -17,7 +17,7 @@ setup(
     packages=find_packages(exclude=["tests", "sample_reports"]),
     python_requires=">=3.7",
     install_requires=[
-        "GitPython==3.1.35",
+        "GitPython==3.1.37",
         "python-dateutil==2.8.2",
     ],
 )
