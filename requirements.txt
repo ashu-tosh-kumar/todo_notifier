@@ -1,7 +1,7 @@
 # python==3.10.4
 black==23.12.1
 coverage==7.3.4
-flake8==6.1.0
+flake8==7.0.0
 GitPython==3.1.40  # NOTE: Needs git installed on the system
 pdoc==14.3.0
 pre-commit==3.6.0
