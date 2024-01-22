@@ -2,7 +2,7 @@
 black==23.12.1
 coverage==7.4.0
 flake8==7.0.0
-GitPython==3.1.40  # NOTE: Needs git installed on the system
+GitPython==3.1.41  # NOTE: Needs git installed on the system
 pdoc==14.4.0
 pre-commit==3.6.0
 pytest==7.4.4
