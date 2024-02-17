@@ -138,3 +138,4 @@ dmypy.json
 
 # local user directories
 .local
+.scannerwork/
