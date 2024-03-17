@@ -137,5 +137,5 @@ dmypy.json
 .pyre/
 
 # local user directories
-.local
+.local/
 .scannerwork/
