@@ -1,9 +1,0 @@
-# python==3.10.4
-black==24.2.0
-coverage==7.4.1
-flake8==7.0.0
-GitPython==3.1.42  # NOTE: Needs git installed on the system
-pdoc==14.4.0
-pre-commit==3.6.2
-pytest==8.0.1
-python-dateutil==2.8.2

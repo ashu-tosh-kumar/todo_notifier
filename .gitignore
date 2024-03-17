@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 
 # User specific code
-.report
 .DS_STORE
 
 # VS Code
@@ -137,5 +136,5 @@ dmypy.json
 .pyre/
 
 # local user directories
-.local
+.local/
 .scannerwork/
