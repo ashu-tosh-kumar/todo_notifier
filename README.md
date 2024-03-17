@@ -1,5 +1,17 @@
 # TODO Notifier
 
+- [TODO Notifier](#todo-notifier)
+  - [Description](#description)
+  - [How to use it?](#how-to-use-it)
+    - [Method 1: As a pip package](#method-1-as-a-pip-package)
+    - [Method 2: Directly cloning from GitHub](#method-2-directly-cloning-from-github)
+  - [Accessing generated summaries](#accessing-generated-summaries)
+  - [Technical Details](#technical-details)
+    - [Working](#working)
+    - [Salient Features](#salient-features)
+  - [Links](#links)
+  - [Changelog](#changelog)
+
 <img width="492" alt="Screenshot 2023-04-20 at 10 27 27 PM"
 src="https://user-images.githubusercontent.com/37182127/233436178-26c2b4be-e630-4f9b-b4c9-d58424bd365d.png">
 
@@ -191,6 +203,21 @@ by_module_summary_generator.html
   run the code.
 
 ## Links
+
 - Find the package on [PyPi](https://pypi.org/project/todonotifier/)
 - Read article on how to setup TODO Notifier on [Medium](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34)
 - Documentation on [GitHub Pages](https://ashu-tosh-kumar.github.io/todo_notifier/).
+
+## Changelog
+
+Unfortunately, didn't maintain this before `v1.3.1`.
+
+`1.3.1`
+
+- Release with all bug fixes. Please use minimum of 1.3.1. All previous release are yanked on PyPi.
+
+`1.3.2`
+
+- Move minimum python version supported from 3.7 to 3.9.
+- Package upgrades.
+- Move build from setup.py to poetry.
