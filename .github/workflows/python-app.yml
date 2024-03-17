@@ -29,12 +29,18 @@ jobs:
           poetry install
       - name: Lint with flake8
         run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
           # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --config ./tox.init
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --config ./tox.init
       - name: Test with pytest
         run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
           pytest
 
   build3_11:
@@ -54,13 +60,15 @@ jobs:
       - name: Lint with flake8
         run: |
           python -m pip install --upgrade pip
+          pip install poetry
           poetry install
           # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --config ./tox.init
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --config ./tox.init
       - name: Test with pytest
         run: |
           python -m pip install --upgrade pip
+          pip install poetry
           poetry install
           pytest
