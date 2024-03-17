@@ -25,21 +25,24 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install poetry
           poetry export -f requirements.txt --with dev>> requirements.txt
           pip install -r requirements.txt
       - name: Lint with flake8
         run: |
           python -m pip install --upgrade pip
-          poetry export -f requirements.txt --with dev>> requirements.txt
+          pip install poetry
+          poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
           # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --config ./tox.init
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --config ./tox.ini
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --config ./tox.init
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --config ./tox.ini
       - name: Test with pytest
         run: |
           python -m pip install --upgrade pip
-          poetry export -f requirements.txt --with dev>> requirements.txt
+          pip install poetry
+          poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
           pytest
 
@@ -55,20 +58,23 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          poetry export -f requirements.txt --with dev>> requirements.txt
+          pip install poetry
+          poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
       - name: Lint with flake8
         run: |
           python -m pip install --upgrade pip
-          poetry export -f requirements.txt --with dev>> requirements.txt
+          pip install poetry
+          poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
           # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --config ./tox.init
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --config ./tox.ini
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --config ./tox.init
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --config ./tox.ini
       - name: Test with pytest
         run: |
           python -m pip install --upgrade pip
-          poetry export -f requirements.txt --with dev>> requirements.txt
+          pip install poetry
+          poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
           pytest
