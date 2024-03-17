@@ -5,15 +5,16 @@ from todonotifier.notifier import EmailNotifier
 
 
 def run():
-    """Main starting point of the TODO application to be modified by end users per their need
+    """Main starting point of the TODO application to be modified by end users per their
+    need.
 
-    This script can be modified to add a for loop for multiple projects
+    This script can be modified to add a for loop for multiple projects.
 
-    This file/function after initial code commit should be added in `.gitignore` so that users
-    can safely update the TODO application by simply pulling the latest changes
+    This file/function after initial code commit should be added in `.gitignore` so that
+    users can safely update the TODO application by simply pulling the latest changes.
     """
     git_url: str = "tests/sample_test_file.py"  # Placeholder for HTTPS/SSH based git url
-    project_dir_name: str = ""  # Placeholder. Generaly same as project name and must be empty for `CONNECT_METHOD.DRY_RUN_FILE`
+    project_dir_name: str = ""  # Placeholder. Generally same as project name and must be empty for `CONNECT_METHOD.DRY_RUN_FILE`
     sender_email = ""
     password = ""
     receivers = []
