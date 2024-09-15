@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from todonotifier.connect import CONNECT_METHOD, Connect, ConnectException
+from todonotifier.connect import Connect, ConnectException, ConnectMethod
 
 
 class TestConnectException(unittest.TestCase):
@@ -14,19 +14,19 @@ class TestConnectException(unittest.TestCase):
 
 class TestConnectMethod(unittest.TestCase):
     def test_connect_method_should_have_git_clone(self):
-        self.assertIsNotNone(CONNECT_METHOD.GIT_CLONE)
+        self.assertIsNotNone(ConnectMethod.GIT_CLONE)
 
     def test_connect_method_should_have_dry_run_file(self):
-        self.assertIsNotNone(CONNECT_METHOD.DRY_RUN_FILE)
+        self.assertIsNotNone(ConnectMethod.DRY_RUN_FILE)
 
     def test_connect_method_should_have_dry_run_dir(self):
-        self.assertIsNotNone(CONNECT_METHOD.DRY_RUN_DIR)
+        self.assertIsNotNone(ConnectMethod.DRY_RUN_DIR)
 
 
 class TestConnect(unittest.TestCase):
     def test_project_dir_name_should_return_project_name(self):
         dummy_project_dir_name = "unittest-project-dir-name"
-        connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=dummy_project_dir_name, url="")
+        connect = Connect(connect_method=ConnectMethod.GIT_CLONE, project_dir_name=dummy_project_dir_name, url="")
 
         actual_value = connect.project_dir_name
 
@@ -35,8 +35,8 @@ class TestConnect(unittest.TestCase):
     def test___str___should_return_string_representation_of_connect(self):
         dummy_url = "unittest-url"
         dummy_target_dir = "unittest-target-dir"
-        connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=dummy_target_dir, url=dummy_url)
-        expected_value = f"{repr(connect)} connect_method: {CONNECT_METHOD.GIT_CLONE} project_dir_name: {dummy_target_dir} url: {dummy_url}"
+        connect = Connect(connect_method=ConnectMethod.GIT_CLONE, project_dir_name=dummy_target_dir, url=dummy_url)
+        expected_value = f"{repr(connect)} connect_method: {ConnectMethod.GIT_CLONE} project_dir_name: {dummy_target_dir} url: {dummy_url}"
 
         actual_value = str(connect)
 
@@ -46,7 +46,7 @@ class TestConnect(unittest.TestCase):
     def test_pull_repository_should_call__pull_using_git_clone_if_set(self, spy__pull_using_https):
         dummy_url = "unittest-url"
         dummy_target_dir = "unittest-target-dir"
-        connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=dummy_target_dir, url=dummy_url)
+        connect = Connect(connect_method=ConnectMethod.GIT_CLONE, project_dir_name=dummy_target_dir, url=dummy_url)
 
         connect.pull_repository(target_dir=dummy_target_dir)
 
@@ -57,7 +57,7 @@ class TestConnect(unittest.TestCase):
         dummy_test_file = "unittest-test-file"
         dummy_project_dir_name = "unittest-dummy-project-dir-name"
         dummy_target_dir = "unittest-target-dir"
-        connect = Connect(connect_method=CONNECT_METHOD.DRY_RUN_FILE, project_dir_name=dummy_project_dir_name, url=dummy_test_file)
+        connect = Connect(connect_method=ConnectMethod.DRY_RUN_FILE, project_dir_name=dummy_project_dir_name, url=dummy_test_file)
 
         connect.pull_repository(target_dir=dummy_target_dir)
 
@@ -68,7 +68,7 @@ class TestConnect(unittest.TestCase):
         dummy_test_dir = "unittest-test-dir"
         dummy_project_dir_name = "unittest-dummy-project-dir-name"
         dummy_target_dir = "unittest-target-dir"
-        connect = Connect(connect_method=CONNECT_METHOD.DRY_RUN_DIR, project_dir_name=dummy_project_dir_name, url=dummy_test_dir)
+        connect = Connect(connect_method=ConnectMethod.DRY_RUN_DIR, project_dir_name=dummy_project_dir_name, url=dummy_test_dir)
 
         connect.pull_repository(target_dir=dummy_target_dir)
 
@@ -84,7 +84,7 @@ class TestConnect(unittest.TestCase):
     @patch("todonotifier.connect.Connect._pull_using_git_clone")
     def test_pull_repository_should_raise_connect_exception_if_any_exception_in_connecting(self, stub__pull_using_https):
         stub__pull_using_https.side_effect = Exception("unittest-connect-via-git-clone-exception")
-        connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name="", url="")
+        connect = Connect(connect_method=ConnectMethod.GIT_CLONE, project_dir_name="", url="")
 
         with self.assertRaises(ConnectException):
             connect.pull_repository("")
@@ -97,7 +97,7 @@ class TestConnect(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             expected_dir_path = temp_dir
 
-            connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=dummy_project_dir_name, url=dummy_url)
+            connect = Connect(connect_method=ConnectMethod.GIT_CLONE, project_dir_name=dummy_project_dir_name, url=dummy_url)
             connect._pull_using_git_clone(target_dir=temp_dir)
 
             assert os.path.isdir(expected_dir_path)
@@ -111,7 +111,7 @@ class TestConnect(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             expected_dir_path = temp_dir
 
-            connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=dummy_project_dir_name, url=dummy_url)
+            connect = Connect(connect_method=ConnectMethod.GIT_CLONE, project_dir_name=dummy_project_dir_name, url=dummy_url)
             repo = connect._pull_using_git_clone(target_dir=temp_dir, branch_name=dummy_branch_name)
 
             assert os.path.isdir(expected_dir_path)
@@ -128,7 +128,7 @@ class TestConnect(unittest.TestCase):
             test_file_base_name = os.path.basename(test_file)
             expected_file_path = os.path.join(temp_dir, dummy_project_dir_name, test_file_base_name)
 
-            connect = Connect(connect_method=CONNECT_METHOD.DRY_RUN_FILE, project_dir_name=dummy_project_dir_name, url=test_file)
+            connect = Connect(connect_method=ConnectMethod.DRY_RUN_FILE, project_dir_name=dummy_project_dir_name, url=test_file)
             connect._pull_file_for_dry_run(target_dir=temp_dir)
 
             assert os.path.isfile(expected_file_path)
@@ -142,7 +142,7 @@ class TestConnect(unittest.TestCase):
             expected_dir_path = os.path.join(temp_dir1, temp_dir2)
             expected_file_path = os.path.join(temp_dir1, os.path.basename(temp_dir2), "unittest-temp-file")
 
-            connect = Connect(connect_method=CONNECT_METHOD.DRY_RUN_DIR, project_dir_name="", url=temp_dir2)
+            connect = Connect(connect_method=ConnectMethod.DRY_RUN_DIR, project_dir_name="", url=temp_dir2)
             connect._pull_dir_for_dry_run(target_dir=temp_dir1)
 
             assert os.path.isdir(expected_dir_path)
