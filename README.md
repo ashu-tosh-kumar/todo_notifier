@@ -70,7 +70,7 @@ Then you can use the below code to try the TODO Notifier.
 
 ```python
 from todonotifier.config import DefaultConfig
-from todonotifier.connect import CONNECT_METHOD, Connect
+from todonotifier.connect import ConnectMethod, Connect
 from todonotifier.driver import run as driver_run
 
 git_url: str = ""  # Placeholder for HTTPS/SSH based git url. It could also be a local folder address
@@ -82,7 +82,7 @@ host = "smtp.gmail.com"  # Change accordingly
 port = 465  # Change accordingly
 notifier = EmailNotifier(sender_email, password, host, port, receivers)
 config = DefaultConfig(save_html_reports=True, ignore_todo_case=True, notifier=notifier)  # Change flags as per need
-connect = Connect(connect_method=CONNECT_METHOD.GIT_CLONE, project_dir_name=project_dir_name, url=git_url, branch_name="production")  # If using a local folder address in `git_url`, then change `connect_method` to `CONNECT_METHOD.DRY_RUN_DIR`
+connect = Connect(connect_method=ConnectMethod.GIT_CLONE, project_dir_name=project_dir_name, url=git_url, branch_name="production")  # If using a local folder address in `git_url`, then change `connect_method` to `ConnectMethod.DRY_RUN_DIR`
 
 driver_run(connect=connect, config=config)
 ```
@@ -107,7 +107,7 @@ host = "smtp.gmail.com"
 port = 465
 notifier = EmailNotifier(sender_email, password, host, port, receivers)
 config: BaseConfig = DefaultConfig(save_html_reports=True, ignore_todo_case=True, notifier=notifier)  # Change flags as per need
-connect = Connect(connect_method=CONNECT_METHOD.DRY_RUN_FILE, project_dir_name=project_dir_name, url=git_url, branch_name="production")  # If using a local folder address in `git_url`, then change `connect_method` to `CONNECT_METHOD.DRY_RUN_DIR`. For `CONNECT_METHOD.DRY_RUN_FILE` and `CONNECT_METHOD.DRY_RUN_DIR`, branch_name is not important
+connect = Connect(connect_method=ConnectMethod.DRY_RUN_FILE, project_dir_name=project_dir_name, url=git_url, branch_name="production")  # If using a local folder address in `git_url`, then change `connect_method` to `ConnectMethod.DRY_RUN_DIR`. For `ConnectMethod.DRY_RUN_FILE` and `ConnectMethod.DRY_RUN_DIR`, branch_name is not important
 
 driver_run(connect=connect, config=config)
 ```
@@ -195,7 +195,7 @@ by_module_summary_generator.html
   parameters. But users are free to write another configuration class or simply inherit
   from `DefaultConfig`
 
-- Provides two ways of dry running the code locally viz. `CONNECT_METHOD.DRY_RUN_FILE`
+- Provides two ways of dry running the code locally viz. `ConnectMethod.DRY_RUN_FILE`
   to dry run on a single local file and `CONNECT.DRY_RUN_DIR` to dry run on an entire
   local directory/project.
 

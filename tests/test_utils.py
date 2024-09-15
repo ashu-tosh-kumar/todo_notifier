@@ -55,14 +55,14 @@ class TestIgnoreDirOrFile(unittest.TestCase):
         stub_os.path.basename = lambda x: x
 
         for pattern in DEFAULT_EXCLUDE_FILES["NAME"]:
-            self.assertEqual(True, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES))
+            self.assertTrue(_ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES))
 
     @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_correctly_ignore_file_path(self, stub_os):
         stub_os.path.basename = lambda x: x
 
         for pattern in DEFAULT_EXCLUDE_FILES["ABS_PATH"]:
-            self.assertEqual(True, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES))
+            self.assertTrue(_ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_FILES))
 
     @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_not_ignore_correct_files(self, stub_os):
@@ -97,14 +97,14 @@ class TestIgnoreDirOrFile(unittest.TestCase):
         stub_os.path.basename = lambda x: x
 
         for pattern in DEFAULT_EXCLUDE_DIRS["NAME"]:
-            self.assertEqual(True, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_DIRS))
+            self.assertTrue(_ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_DIRS))
 
     @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_correctly_ignore_dir_path(self, stub_os):
         stub_os.path.basename = lambda x: x
 
         for pattern in DEFAULT_EXCLUDE_DIRS["ABS_PATH"]:
-            self.assertEqual(True, _ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_DIRS))
+            self.assertTrue(_ignore_dir_or_file(pattern, DEFAULT_EXCLUDE_DIRS))
 
     @patch("todonotifier.utils.os")
     def test__ignore_dir_or_file_should_not_ignore_correct_dirs(self, stub_os):
