@@ -45,6 +45,7 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
             <p>
                 
             <table>
+                <caption>Module wise summary</caption>
             <tr>
                 <th>User Name</th>
                 <th>Message</th>
@@ -107,6 +108,7 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
             <p>
                 
             <table>
+                <caption>User wise summary of expired todo item</caption>
             <tr>
                 <th>Message</th>
                 <th>Module</th>
@@ -171,6 +173,7 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
             <p>
                 
             <table>
+                <caption>User wise summary of upcoming todo items</caption>
             <tr>
                 <th>Message</th>
                 <th>Module</th>

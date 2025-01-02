@@ -171,7 +171,7 @@ def store_html(html: str, report_name: str, target_dir: str = None) -> None:
     if not target_dir:
         target_dir = os.path.join(os.getcwd(), default_folder_name)
         if not os.path.isdir(target_dir):
-            os.mkdir(target_dir)
+            os.makedirs(target_dir)
 
     report_name_lst = report_name.split(".")
     if len(report_name_lst) > 1:
