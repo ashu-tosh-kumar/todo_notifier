@@ -17,6 +17,8 @@ from todonotifier.utils import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+TODO_REGEX_PATTERN = r"TODO\s*(\{.*\})?\s*(@[^\s]*)?\s*(.*)?"
+
 
 def parse_files_for_todo_items(project_parent_dir: str, files: List[str], ignore_todo_case: bool) -> Dict[str, List[TODO]]:
     """Parses the list of `files` one by one to collect all todo items
@@ -46,7 +48,7 @@ def parse_files_for_todo_items(project_parent_dir: str, files: List[str], ignore
                 for todo_item_idx, todo_item in enumerate(todo_items):
                     try:
                         todo_item_group = todo_item.group()
-                        todo_date_username = re.findall(r"TODO\s*(\{.*\})?\s*(@[^\s]*)?\s*(.*)?", todo_item_group, flags=flags)
+                        todo_date_username = re.findall(TODO_REGEX_PATTERN, todo_item_group, flags=flags)
 
                         if todo_date_username:
                             todo_date_username = todo_date_username[0]
