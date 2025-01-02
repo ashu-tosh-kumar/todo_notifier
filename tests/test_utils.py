@@ -133,7 +133,7 @@ class TestGetFilesInDir(unittest.TestCase):
                     f.write("unittest-content")
 
             nested_dir = os.path.join(temp_dir, "nested_dir")
-            os.mkdir(nested_dir)
+            os.makedirs(nested_dir)
             nested_files = [os.path.join(nested_dir, f"file{idx}.{dummy_extension}") for idx in range(5)]
             expected_value = expected_value.union(nested_files)
             nested_files.append(os.path.join(nested_dir, "diff_file.diff_extension"))

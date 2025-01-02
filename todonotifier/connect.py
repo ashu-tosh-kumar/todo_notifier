@@ -117,7 +117,7 @@ class Connect:
         """
         target_dir = os.path.join(target_dir, self._project_dir_name)
         if not os.path.isdir(target_dir):
-            os.mkdir(target_dir)
+            os.makedirs(target_dir)
 
         copy(self._file_dir_url, target_dir)
 
