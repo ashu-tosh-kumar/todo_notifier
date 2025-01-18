@@ -24,6 +24,8 @@ other development.
 TODO Notifier aims to solve this problem. It parses through any project, collects all
 the TODO items, generates automated summaries and sends automated reminders about them.
 
+It's available on [PyPi](https://pypi.org/project/todonotifier/).
+
 Let's first see TODO Notifier in action.
 
 <img width="1080" alt="Demo of TODO Notifier"
@@ -221,3 +223,12 @@ Unfortunately, didn't maintain this before `v1.3.1`.
 - Move minimum python version supported from 3.7 to 3.9.
 - Package upgrades.
 - Move build from setup.py to poetry.
+
+`1.4.0`
+
+**NOTE**: It contains breaking change.
+
+- Add captions in HTML generated for accessibility.
+- **Breaking Change**: Rename `CONNECT_METHOD` in `todonotifier.connect` to `ConnectMethod`.
+- Fix code smells per Sonarlint and Snyk.
+- Package and security upgrades.

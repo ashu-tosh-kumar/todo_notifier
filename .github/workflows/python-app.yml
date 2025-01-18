@@ -26,13 +26,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install poetry
-          pip install poetry
+          poetry self add poetry-plugin-export
           poetry export -f requirements.txt --with dev>> requirements.txt
           pip install -r requirements.txt
       - name: Lint with flake8
         run: |
           python -m pip install --upgrade pip
           pip install poetry
+          poetry self add poetry-plugin-export
           poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
           # stop the build if there are Python syntax errors or undefined names
@@ -43,6 +44,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install poetry
+          poetry self add poetry-plugin-export
           poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
           pytest
@@ -60,12 +62,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install poetry
+          poetry self add poetry-plugin-export
           poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
       - name: Lint with flake8
         run: |
           python -m pip install --upgrade pip
           pip install poetry
+          poetry self add poetry-plugin-export
           poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
           # stop the build if there are Python syntax errors or undefined names
@@ -76,6 +80,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install poetry
+          poetry self add poetry-plugin-export
           poetry export -f requirements.txt --with dev >> requirements.txt
           pip install -r requirements.txt
           pytest
