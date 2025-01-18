@@ -25,7 +25,7 @@ class ConnectException(Exception):
     pass
 
 
-class CONNECT_METHOD(Enum):
+class ConnectMethod(Enum):
     """Enum values defining the connection method to pull a repository"""
 
     GIT_CLONE = "GIT_CLONE"
@@ -36,15 +36,15 @@ class CONNECT_METHOD(Enum):
 class Connect:
     """Provides a common interface to pull repositories from different sources"""
 
-    def __init__(self, connect_method: CONNECT_METHOD, project_dir_name: str, url: str, branch_name: Union[str, None] = None) -> None:
+    def __init__(self, connect_method: ConnectMethod, project_dir_name: str, url: str, branch_name: Union[str, None] = None) -> None:
         """Initializer for `Connect` class
 
         Args:
-            connect_method (CONNECT_METHOD): Method to be used to pull a repository into the target location
+            connect_method (ConnectMethod): Method to be used to pull a repository into the target location
             project_dir_name (str): Name of the project. Should match the name of project main directory
             url (str): Url or file address or directory address that needs to be pulled
             branch_name (optional, Union[str, None]): Branch name is specific branch to be checked out
-                                                    after cloning the repository. Useful for `CONNECT_METHOD.GIT_CLONE`. Defaults to None.
+                                                    after cloning the repository. Useful for `ConnectMethod.GIT_CLONE`. Defaults to None.
         """
         self._connect_method = connect_method
         self._project_dir_name = project_dir_name
@@ -75,18 +75,18 @@ class Connect:
         Args:
             target_dir (str): Directory into which the data from given `url` needs to be copied into
             branch_name (optional, Union[str, None]): Branch name is specific branch to be checked out
-                                                    after cloning the repository. Useful for `CONNECT_METHOD.GIT_CLONE`. Defaults to None.
+                                                    after cloning the repository. Useful for `ConnectMethod.GIT_CLONE`. Defaults to None.
 
         Returns:
             P: Returns whatever is returned by the respective method to which call is delegated to
         """
         try:
             logger.info(f"Pulling repository: {self._project_dir_name} via {self._connect_method}")
-            if self._connect_method == CONNECT_METHOD.GIT_CLONE:
+            if self._connect_method == ConnectMethod.GIT_CLONE:
                 return self._pull_using_git_clone(target_dir, branch_name=self._branch_name)
-            elif self._connect_method == CONNECT_METHOD.DRY_RUN_FILE:
+            elif self._connect_method == ConnectMethod.DRY_RUN_FILE:
                 return self._pull_file_for_dry_run(target_dir)
-            elif self._connect_method == CONNECT_METHOD.DRY_RUN_DIR:
+            elif self._connect_method == ConnectMethod.DRY_RUN_DIR:
                 return self._pull_dir_for_dry_run(target_dir)
             else:
                 raise ConnectException("Unsupported connect method passed")
@@ -117,7 +117,7 @@ class Connect:
         """
         target_dir = os.path.join(target_dir, self._project_dir_name)
         if not os.path.isdir(target_dir):
-            os.mkdir(target_dir)
+            os.makedirs(target_dir)
 
         copy(self._file_dir_url, target_dir)
 

@@ -128,6 +128,7 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
         for module in self._container:
             table = """
             <table>
+                <caption>Module wise summary</caption>
             <tr>
                 <th>User Name</th>
                 <th>Message</th>
@@ -214,6 +215,7 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
         for user_name in self._container:
             table = """
             <table>
+                <caption>User wise summary of expired todo item</caption>
             <tr>
                 <th>Message</th>
                 <th>Module</th>
@@ -299,6 +301,7 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
         for user_name in self._container:
             table = """
             <table>
+                <caption>User wise summary of upcoming todo items</caption>
             <tr>
                 <th>Message</th>
                 <th>Module</th>
