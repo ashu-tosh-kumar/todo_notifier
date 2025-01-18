@@ -224,6 +224,11 @@ Unfortunately, didn't maintain this before `v1.3.1`.
 - Package upgrades.
 - Move build from setup.py to poetry.
 
-`1.3.3`
+`1.4.0`
 
+**NOTE**: It contains breaking change.
+
+- Add captions in HTML generated for accessibility.
+- **Breaking Change**: Rename `CONNECT_METHOD` in `todonotifier.connect` to `ConnectMethod`.
+- Fix code smells per Sonarlint and Snyk.
 - Package and security upgrades.
