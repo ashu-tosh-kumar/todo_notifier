@@ -9,9 +9,16 @@ on:
     # tags:
     #   - '*'
 
-# security: restrict permissions for CI jobs.
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   # Build the documentation and upload the static HTML files as an artifact.
@@ -23,20 +30,24 @@ jobs:
         with:
           python-version: "3.9"
 
-      # ADJUST THIS: install all dependencies (including pdoc)
+      # Install all dependencies (including pdoc)
       - run: pip install poetry; poetry install --with dev
-      # ADJUST THIS: build your documentation into docs/.
-      # We use a custom build script for pdoc itself, ideally you just run `pdoc -o docs/ ...` here.
+
+      # Build your documentation into docs/
       - run: pdoc -o docs --docformat google --logo https://user-images.githubusercontent.com/37182127/233436178-26c2b4be-e630-4f9b-b4c9-d58424bd365d.png todonotifier/
-      # Add this step to create .nojekyll file
+
+      # Create .nojekyll file to disable Jekyll processing
       - run: touch docs/.nojekyll
+
+      # Setup Pages (this was missing from your original workflow)
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/
 
   # Deploy the artifact to GitHub pages.
-  # This is a separate job so that only actions/deploy-pages has the necessary permissions.
   deploy:
     needs: build
     runs-on: ubuntu-latest
