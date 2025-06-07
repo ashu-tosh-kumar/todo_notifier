@@ -10,7 +10,8 @@
 
 **Automated TODO tracking and notifications for your codebase**
 
-Never forget a TODO again! Automatically parse, track, and get notified about TODO items in your code.
+Never forget a TODO again! Automatically parse, track, and get notified about TODO items
+in your code.
 
 [Installation](#installation) •
 [Quick Start](#quick-start) •
@@ -24,7 +25,8 @@ src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f
 
 ## Features
 
-- **Smart TODO Detection** - Automatically discovers TODO items across your entire codebase
+- **Smart TODO Detection** - Automatically discovers TODO items across your entire
+  codebase
 - **Date-based Tracking** - Set completion dates and get notified about overdue items
 - **User Assignment** - Assign TODOs to specific team members
 - **Multiple Report Types** - Module-wise, user-wise, and deadline-based summaries
@@ -211,7 +213,8 @@ TODO Notifier supports a flexible format for TODO items in your code:
 - `message` - Optional description
 
 **Supported Languages:**
-Works with any programming language that supports comments (Python, JavaScript, Java, C++, etc.)
+Works with any programming language that supports comments (Python, JavaScript, Java,
+C++, etc.)
 
 ## 🔧 Architecture
 
@@ -351,13 +354,15 @@ pytest tests
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for
+details.
 
 ## Links
 
 - [PyPI Package](https://pypi.org/project/todonotifier/)
 - [Documentation](https://ashu-tosh-kumar.github.io/todo_notifier/)
-- [Setup Guide](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34)
+- [Setup
+  Guide](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34)
 - [Issue Tracker](https://github.com/ashu-tosh-kumar/todo_notifier/issues)
 
 ## Changelog
