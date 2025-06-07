@@ -10,7 +10,8 @@
 
 **Automated TODO tracking and notifications for your codebase**
 
-Never forget a TODO again! Automatically parse, track, and get notified about TODO items in your code.
+Never forget a TODO again! Automatically parse, track, and get notified about TODO items
+in your code.
 
 [Installation](#installation) •
 [Quick Start](#quick-start) •
@@ -22,24 +23,26 @@ src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f
 
 </div>
 
-## ✨ Features
+## Features
 
-- 🔍 **Smart TODO Detection** - Automatically discovers TODO items across your entire codebase
-- 📅 **Date-based Tracking** - Set completion dates and get notified about overdue items
-- 👥 **User Assignment** - Assign TODOs to specific team members
-- 📊 **Multiple Report Types** - Module-wise, user-wise, and deadline-based summaries
-- 📧 **Email Notifications** - Automated email reports with HTML formatting
-- 🎯 **Flexible Configuration** - Extensive customization options for different workflows
-- 🚀 **Multiple Integration Methods** - Works with Git repositories, local directories, or single files
-- 📈 **Export Options** - Save reports as HTML files for sharing and archiving
+- **Smart TODO Detection** - Automatically discovers TODO items across your entire
+  codebase
+- **Date-based Tracking** - Set completion dates and get notified about overdue items
+- **User Assignment** - Assign TODOs to specific team members
+- **Multiple Report Types** - Module-wise, user-wise, and deadline-based summaries
+- **Email Notifications** - Automated email reports with HTML formatting
+- **Flexible Configuration** - Extensive customization options for different workflows
+- **Multiple Integration Methods** - Works with Git repositories, local directories, or
+  single files
+- **Export Options** - Save reports as HTML files for sharing and archiving
 
-## 📦 Installation
+## Installation
 
 ```bash
 pip install todonotifier
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Basic Usage
 
@@ -91,7 +94,7 @@ config = DefaultConfig(
 )
 ```
 
-### 📋 Examples
+### Examples
 
 #### Local Directory Scanning
 
@@ -148,7 +151,7 @@ config = DefaultConfig(
 )
 ```
 
-## 📊 Generated Reports
+## Generated Reports
 
 TODO Notifier generates three types of reports as `.html` files by default if
 `save_html_reports=True` was set in configuration. All reports generated are stored in
@@ -184,7 +187,7 @@ for generator in summary_generators:
 - **Email**: Automatically sent when `notifier` is configured
 - **Programmatic Access**: Available through summary generator objects
 
-## 📝 TODO Format
+## TODO Format
 
 TODO Notifier supports a flexible format for TODO items in your code:
 
@@ -210,7 +213,8 @@ TODO Notifier supports a flexible format for TODO items in your code:
 - `message` - Optional description
 
 **Supported Languages:**
-Works with any programming language that supports comments (Python, JavaScript, Java, C++, etc.)
+Works with any programming language that supports comments (Python, JavaScript, Java,
+C++, etc.)
 
 ## 🔧 Architecture
 
@@ -229,7 +233,7 @@ Works with any programming language that supports comments (Python, JavaScript, 
 - **Summary Generators**: Pluggable report generators with HTML output
 - **Notification System**: Extensible notification framework (Email included)
 
-## 🛠️ Customization
+## Customization
 
 ### Custom Summary Generators
 
@@ -309,7 +313,7 @@ class CustomConfig(BaseConfig):
         # Further Custom configuration code
 ```
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Here's how you can help:
 
@@ -336,10 +340,10 @@ pytest tests
 
 ### Ways to Contribute
 
-- 🐛 **Bug Reports**: Open an issue with details and reproduction steps
-- 💡 **Feature Requests**: Suggest new features or improvements
-- 📝 **Documentation**: Improve docs, examples, or tutorials
-- 🔧 **Code**: Submit pull requests for bug fixes or features
+- **Bug Reports**: Open an issue with details and reproduction steps
+- **Feature Requests**: Suggest new features or improvements
+- **Documentation**: Improve docs, examples, or tutorials
+- **Code**: Submit pull requests for bug fixes or features
 
 ### Guidelines
 
@@ -348,36 +352,38 @@ pytest tests
 - Update documentation for new features
 - Keep commits focused and descriptive
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for
+details.
 
-## 🔗 Links
+## Links
 
-- 📦 [PyPI Package](https://pypi.org/project/todonotifier/)
-- 📚 [Documentation](https://ashu-tosh-kumar.github.io/todo_notifier/)
-- 📖 [Setup Guide](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34)
-- 🐛 [Issue Tracker](https://github.com/ashu-tosh-kumar/todo_notifier/issues)
+- [PyPI Package](https://pypi.org/project/todonotifier/)
+- [Documentation](https://ashu-tosh-kumar.github.io/todo_notifier/)
+- [Setup
+  Guide](https://medium.com/@at-k/streamline-your-todos-with-todo-notifier-for-python-projects-6f95c03a2d34)
+- [Issue Tracker](https://github.com/ashu-tosh-kumar/todo_notifier/issues)
 
-## 📈 Changelog
+## Changelog
 
 ### v1.4.0 (Latest)
 
-- ⚠️ **Breaking Change**: Renamed `CONNECT_METHOD` in in `todonotifier.connect` to
+- **Breaking Change**: Renamed `CONNECT_METHOD` in in `todonotifier.connect` to
   `ConnectMethod`.
-- ♿ Added accessibility captions to HTML reports
-- 🔒 Security improvements and package upgrades
-- 🧹 Code quality improvements
+- Added accessibility captions to HTML reports
+- Security improvements and package upgrades
+- Code quality improvements
 
 ### v1.3.2
 
-- 🐍 Updated minimum Python version to 3.9+
-- 📦 Migrated from setup.py to Poetry
-- 🔄 Package dependency updates
+- Updated minimum Python version to 3.9+
+- Migrated from setup.py to Poetry
+- Package dependency updates
 
 ### v1.3.1
 
-- 🐛 Critical bug fixes (recommended minimum version)
+- Critical bug fixes (recommended minimum version)
 
 ### <v1.3.1
 
