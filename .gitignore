@@ -140,3 +140,6 @@ dmypy.json
 .scannerwork/
 .sonarlint/
 docs/
+
+# AI based support systems
+CLAUDE.md
