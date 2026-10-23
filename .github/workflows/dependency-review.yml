@@ -20,5 +20,3 @@ jobs:
         with:
           fail-on-severity: high
           comment-summary-in-pr: on-failure
-          # black is a dev-only tool; the patched release (26.10.1) needs Python >=3.10 while we still support 3.9
-          allow-ghsas: GHSA-3936-cmfr-pm3m,GHSA-cg8m-r9f2-5wm2
