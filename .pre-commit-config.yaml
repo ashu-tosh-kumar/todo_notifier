@@ -1,30 +1,28 @@
+# Keep the versions of black, flake8 and isort in step with the ones locked in poetry.lock and run by CI (.github/workflows/python-app.yml), so that
+# `pre-commit run --all-files` and CI agree. Black and isort read their settings from pyproject.toml, flake8 from tox.ini.
 repos:
   - repo: https://github.com/psf/black
-    rev: 24.3.0
+    rev: 26.10.1
     hooks:
       - id: black
         args: [--config=./pyproject.toml]
-        language_version: python3.11
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
+    rev: 7.4.1
     hooks:
       - id: flake8
         args: [--config=./tox.ini]
-        language_version: python3.11
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.1.0
     hooks:
       - id: isort
         args: ["--profile", "black", "--filter-files"]
-        language_version: python3.11
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       - id: requirements-txt-fixer
-        language_version: python3.11
       - id: debug-statements
       - id: detect-aws-credentials
       - id: detect-private-key
