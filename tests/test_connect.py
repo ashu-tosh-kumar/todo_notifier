@@ -45,6 +45,19 @@ class TestConnect(unittest.TestCase):
 
         assert expected_value == actual_value
 
+    def test___str___should_not_show_credentials_of_the_url(self):
+        for url, shown in (
+            ("https://user:s3cret-token@github.com/org/repo.git", "https://***@github.com/org/repo.git"),
+            ("https://s3cret-token@github.com/org/repo.git", "https://***@github.com/org/repo.git"),
+            ("git@github.com:org/repo.git", "git@github.com:org/repo.git"),  # No scheme: the user name of an ssh address is no secret
+            ("https://github.com/org/repo@v1", "https://github.com/org/repo@v1"),  # An @ after the host is not a credential
+            ("/local/dir", "/local/dir"),
+        ):
+            connect = Connect(connect_method=ConnectMethod.GIT_CLONE, project_dir_name="p", url=url)
+
+            self.assertTrue(str(connect).endswith(f" url: {shown}"), str(connect))
+            self.assertNotIn("s3cret", str(connect))
+
     @patch("todonotifier.connect.Connect._pull_using_git_clone")
     def test_pull_repository_should_call__pull_using_git_clone_if_set(self, spy__pull_using_https):
         dummy_url = "unittest-url"
