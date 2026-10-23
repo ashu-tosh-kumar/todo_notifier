@@ -337,7 +337,8 @@ class CommentLexer:
 
             after: int = match_index + len(token)
             if token in self._syntax.line_markers:
-                if self._syntax.spaced_line_markers and match_index > 0 and not line[match_index - 1].isspace():
+                # A byte order mark at the start of a file (Windows editors add it to YAML and shell scripts too) is not part of the first word
+                if self._syntax.spaced_line_markers and match_index > 0 and not (line[match_index - 1].isspace() or (match_index == 1 and line[0] == "\ufeff")):
                     position = after
                     continue
                 spans.append((match_index, length))
