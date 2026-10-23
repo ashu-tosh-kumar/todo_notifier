@@ -38,8 +38,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.2 | Config file | `roadmap/0.2-config-file` | [#167](https://github.com/ashu-tosh-kumar/todo_notifier/pull/167) | ✅ done | See "Notes per workstream" below |
 | 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | [#168](https://github.com/ashu-tosh-kumar/todo_notifier/pull/168) | ✅ done | See "Notes per workstream" below |
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | [#169](https://github.com/ashu-tosh-kumar/todo_notifier/pull/169) | ✅ done | See "Notes per workstream" below |
-| 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | ✅ done | See "Notes per workstream" below |
-| 0.6 | CLI | `roadmap/0.6-cli` | | ⬜ todo | |
+| 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | [#170](https://github.com/ashu-tosh-kumar/todo_notifier/pull/170) | ✅ done | See "Notes per workstream" below |
+| 0.6 | CLI | `roadmap/0.6-cli` | | 🟡 in progress | |
 | 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | | ⬜ todo | Tag/publish is a maintainer step |
 | P0 | Phase 0 review | (fixes on the tip branch) | | ⬜ todo | |
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | | ⬜ todo | |
