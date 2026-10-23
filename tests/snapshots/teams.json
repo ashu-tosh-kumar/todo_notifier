@@ -1,0 +1,173 @@
+{
+  "type": "message",
+  "attachments": [
+    {
+      "contentType": "application/vnd.microsoft.card.adaptive",
+      "contentUrl": null,
+      "content": {
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+        "type": "AdaptiveCard",
+        "version": "1.4",
+        "body": [
+          {
+            "type": "TextBlock",
+            "text": "TODO digest 2026-05-01",
+            "weight": "Bolder",
+            "size": "Large",
+            "wrap": true
+          },
+          {
+            "type": "FactSet",
+            "facts": [
+              {
+                "title": "Open",
+                "value": "10"
+              },
+              {
+                "title": "Overdue",
+                "value": "4"
+              },
+              {
+                "title": "Stale",
+                "value": "3"
+              },
+              {
+                "title": "Due this week",
+                "value": "2"
+              },
+              {
+                "title": "Unowned",
+                "value": "4"
+              },
+              {
+                "title": "New",
+                "value": "2"
+              }
+            ]
+          },
+          {
+            "type": "TextBlock",
+            "text": "Overdue (4)",
+            "weight": "Bolder",
+            "size": "Medium",
+            "spacing": "Medium",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "**alice** (2)",
+            "spacing": "Small",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "[src/app.py:10](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/app.py#L10) Remove the legacy path (30 days overdue)",
+            "spacing": "None",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "[src/app.py:99](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/app.py#L99) Handle \\<None\\> \\& empty input (10 days overdue)",
+            "spacing": "None",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "**bob** (1)",
+            "spacing": "Small",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "[src/db.py:5](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/db.py#L5) Add an index (60 days overdue)",
+            "spacing": "None",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "...and 1 more",
+            "isSubtle": true,
+            "spacing": "None",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "Stale (3)",
+            "weight": "Bolder",
+            "size": "Medium",
+            "spacing": "Medium",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "**alice** (1)",
+            "spacing": "Small",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "[src/old.py:3](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/old.py#L3) Rewrite this module (120 days stale)",
+            "spacing": "None",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "**bob** (1)",
+            "spacing": "Small",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "[src/api.py:12](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/api.py#L12) Paginate the list endpoint (11 days stale)",
+            "spacing": "None",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "**Unowned** (1)",
+            "spacing": "Small",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "[src/old.py:40](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/old.py#L40) Split into two functions (20 days stale)",
+            "spacing": "None",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "Due this week (2)",
+            "weight": "Bolder",
+            "size": "Medium",
+            "spacing": "Medium",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "**carol** (1)",
+            "spacing": "Small",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "[src/api.py:80](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/api.py#L80) Cache the lookup (due 2026-05-03)",
+            "spacing": "None",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "**Unowned** (1)",
+            "spacing": "Small",
+            "wrap": true
+          },
+          {
+            "type": "TextBlock",
+            "text": "[docs/guide.md:4](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/docs/guide.md#L4) Document the new flags (due 2026-05-08)",
+            "spacing": "None",
+            "wrap": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -38,7 +38,7 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.2 | Config file | `roadmap/0.2-config-file` | [#167](https://github.com/ashu-tosh-kumar/todo_notifier/pull/167) | ✅ done | See "Notes per workstream" below |
 | 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | [#168](https://github.com/ashu-tosh-kumar/todo_notifier/pull/168) | ✅ done | See "Notes per workstream" below |
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | [#169](https://github.com/ashu-tosh-kumar/todo_notifier/pull/169) | ✅ done | See "Notes per workstream" below |
-| 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | 🟡 in progress | |
+| 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | ✅ done | See "Notes per workstream" below |
 | 0.6 | CLI | `roadmap/0.6-cli` | | ⬜ todo | |
 | 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | | ⬜ todo | Tag/publish is a maintainer step |
 | P0 | Phase 0 review | (fixes on the tip branch) | | ⬜ todo | |
@@ -88,6 +88,13 @@ product and engineering basis. Each one is easy to reverse.
 | A23 | The matched tag is reported as spelled in `tags` (so `todo` is reported as `TODO` with `ignore_case`). Only one item per line: the first tag (inside a comment, when required) wins and the rest of the line is its message. | Stable grouping by tag; the existing one-item-per-line rule. |
 | A24 | With `require_comment`, text in strings (including Python docstrings and other multi-line strings) is not a comment, so TODOs in docstrings are not reported. Markdown fenced code is skipped entirely. A `#` in YAML and shell counts only at the line start or after whitespace. The item text stops at the end of the comment (`*/`, `-->` are not in messages). | Pragmatic precision rules, documented in the `languages.py` docstring. Extra extensions beyond the spec were added to the syntax table (`pyi`, `bash`, `mjs`, `cjs`, `kts`, `cc`, `cxx`, `hh`, `htm`), and `#` for php, `/* */` for sql and `--[[ ]]` for lua. |
 | A25 | `respect_gitignore` runs one `git ls-files -z --cached --others --exclude-standard` per scan directory (cwd = that directory) and one with a pathspec per individually named file; results are intersected with extensions and exclusions (including `ABS_PATH`). Outside a repository, or if git fails or times out (60 s), the tree is walked. `.git` is in `DEFAULT_EXCLUDE_DIRS`. Skipped binary files do not appear in `scanned_files`. | Matches the spec; binary files were never "scanned". |
+| A26 | `notify_result(result, reports)` keeps exactly two parameters. The "new TODOs" count (from `--since`) is passed through the public attribute `DigestNotifier.new_count`, which 0.6 sets on each notifier before sending. | A third parameter would break custom subclasses that override `notify_result` with two. |
+| A27 | `DigestNotifier` (public base: `max_items`, `new_count`, `make_digest`) is the base of `EmailNotifier` and the three HTTP notifiers. `EmailNotifier` gets keyword arguments `starttls`, `username` and `max_items` at the end of its signature. | Config has `username_env` (login differs from the sender) and email needs a digest size. Old positional calls are unchanged. |
+| A28 | Errors: `NotificationError(Exception)` for delivery failures and `NotifierConfigError(ValueError)` for bad notifier settings (missing env var, invalid URL or header). Messages name env var names, never values. 0.6 should map `NotifierConfigError` to exit code 2 and decide whether a `NotificationError` fails the run. | Distinguishes "your config is wrong" from "the network failed". |
+| A29 | Defaults without a port: `smtp_port` / `PORT` is 587 with STARTTLS, else 465. `EmailNotifier.from_env` requires HOST, SENDER, RECIPIENTS, PASSWORD and treats an empty value as missing. The webhook notifier's `headers_env` must hold a JSON object of strings and is required to be set if the key is named. | Sensible defaults; fail loudly when the user named a variable that is not there. |
+| A30 | The digest recomputes overdue/stale/days past due from `due_date`/`due_source` against `today` (default: the date of `generated_at`), instead of trusting the stored flags. "Due this week" is today up to 7 days ahead and does not overlap Overdue or Stale. | Makes `today` meaningful and the digest deterministic in tests. |
+| A31 | Custom headers of `WebhookNotifier` are sent with `Request.add_unredirected_header`, so urllib drops them when a server redirects to another host. Messages from `urlopen` failures that are not HTTP/network errors are replaced by the exception type. | A bearer token must not leak through a redirect or an exception message. |
+| A32 | Untrusted text (TODO messages, file names) is escaped per channel: Slack `& < >`, Markdown/Teams backslash escapes, HTML autoescape. Only http(s) links without whitespace or `<>|` are rendered (`digest.safe_url`). | A scanned repository can contain any text, including `<!channel>` or `[x](http://evil)`. |
 
 ## Notes per workstream
 
@@ -190,3 +197,25 @@ Follow-ups:
 - The legacy `driver.run` path still reports `TODO(owner): msg` with the message `(owner): msg`. Switching it to the extended syntax would be a
   behavior change for existing users (and for the `class TODO:` expectation).
 - `TODO_REGEX_PATTERN` is kept as an unused constant for import compatibility; remove it in a major version.
+
+### 0.5 Chat and webhook notifiers plus the digest
+
+Built: `todonotifier/digest.py` (`build_digest`, `Digest`, `DigestTotals`, `DigestSection`, `OwnerGroup`, `DigestItem`, `render_text`,
+`render_markdown`, `safe_url`, `escape_markdown`, `describe_item`), `BaseNotifier.notify_result`, `DigestNotifier`, `SlackWebhookNotifier`,
+`TeamsWebhookNotifier`, `WebhookNotifier`, the private `_post_json` helper, `EmailNotifier` (`starttls`, `username`, `from_env`, digest email via the new
+`templates/digest_email.html`), `build_notifiers`, `NotificationError`, `NotifierConfigError`, the README "Notifications" section, changelog and
+AGENTS.md. Decisions A26 to A32. `driver.run` and the old `EmailNotifier(...)` behavior are unchanged (old-style subclass and constructor tests).
+No schema change was needed in `settings_file.py`: `build_notifiers` consumes the 0.2 tables as they are (tested against `resolve_project_config`).
+Tests: `tests/test_digest.py`, extended `tests/test_notifier.py`, fixtures `tests/sample_results.py` and `tests/snapshots/`. 100% line coverage of
+`digest.py` and `notifier.py`. A local HTTP server smoke test (503 with `Retry-After`, then 200, custom `Authorization` header) was run once by hand.
+
+Follow-ups:
+- 0.6: call `build_notifiers(project_config.notify)` for `todonotifier notify`, set `notifier.new_count` on every `DigestNotifier` for `--since` runs, call
+  `notifier.notify_result(result, reports)` (the generated reports may be an empty list), map `NotifierConfigError` to exit code 2 and decide how a
+  `NotificationError` of one notifier affects the others and the exit code (suggestion: try all, report each failure, exit non-zero).
+- 1.1: `render_markdown(build_digest(...))` is ready for `$GITHUB_STEP_SUMMARY`; Slack/Teams secrets come in as Action inputs/secrets.
+- ⚠️ Teams: the Workflows payload (`type: message` with an Adaptive Card attachment, version 1.4) follows the documented format from memory and could not be
+  checked against live Microsoft docs in this run. Verify it, and whether the Markdown escapes (`\_`) render correctly in a Teams `TextBlock`, before release.
+- Slack mentions from `author_aliases` (`<@U123>`) are not implemented; owners are shown as plain names.
+- Teams message size (about 28 KB) is not enforced; only `max_items` limits it.
+- Possible: a separate `max_items` for email, `Retry-After` HTTP-date support, discord-native payload.
