@@ -9,17 +9,15 @@ is considered as todo item and the rest are considered as message.
 No. of spaces between todo, date, user, message is NOT important.
 """
 
-import logging
 from datetime import datetime
 from typing import TypeVar
 
 from dateutil import parser
 
 from todonotifier.constants import DEFAULT_COMPLETION_DATE
+from todonotifier.log import get_logger
 
-# logging configuration
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 T = TypeVar("T")
 

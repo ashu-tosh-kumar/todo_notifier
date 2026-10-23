@@ -2,7 +2,6 @@
 cloning the repository to be able to run TODO Notifier.
 """
 
-import logging
 import os
 from enum import Enum
 from shutil import copy, copytree, ignore_patterns
@@ -11,12 +10,11 @@ from typing import TypeVar, Union
 from git.repo import Repo
 
 from todonotifier.constants import DEFAULT_EXCLUDE_DIRS
+from todonotifier.log import get_logger
 
 P = TypeVar("P")
 
-# logging configuration
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ConnectException(Exception):

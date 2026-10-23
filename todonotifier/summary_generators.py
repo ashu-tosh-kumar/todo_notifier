@@ -2,7 +2,6 @@
 summary generator. It also provides three default summary generators.
 """
 
-import logging
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -11,13 +10,12 @@ from typing import Dict, List, TypeVar
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from todonotifier.constants import DEFAULT_SUMMARY_GENERATORS_ENUM, UNKNOWN_USER_NAME
+from todonotifier.log import get_logger
 from todonotifier.models import TODO
 
 T = TypeVar("T")
 
-# logging configuration
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Setup Jinja2 environment
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")

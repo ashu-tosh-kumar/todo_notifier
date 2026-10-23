@@ -1,17 +1,15 @@
 """This module provides utility functions used in the application
 """
 
-import logging
 import os
 import re
 from typing import Dict, List, Tuple
 
+from todonotifier.log import get_logger
 from todonotifier.models import TODO
 from todonotifier.summary_generators import BaseSummaryGenerator
 
-# logging configuration
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class InCompatibleTypesException(Exception):

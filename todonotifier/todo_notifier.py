@@ -1,21 +1,19 @@
 """This module contains the core logic of the application
 """
 
-import logging
 import os
 import re
 from typing import Dict, List
 
 from todonotifier.constants import UNKNOWN_USER_NAME
+from todonotifier.log import get_logger
 from todonotifier.models import POSITION, TODO, USER
 from todonotifier.utils import (
     compute_file_line_no_to_chars_map,
     compute_line_and_pos_given_span,
 )
 
-# logging configuration
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 TODO_REGEX_PATTERN = r"TODO\s*(\{.*\})?\s*(@[^\s]*)?\s*(.*)?"
 
