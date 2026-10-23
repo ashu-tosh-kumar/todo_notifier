@@ -19,7 +19,7 @@ Details that are not obvious from the types:
 
 - `paths` in a config file are relative to the directory of that file. Paths given on the command line are left as given.
 - `extensions` accepts a string or a list, and the name `"common"` expands to `todonotifier.languages.COMMON_EXTENSIONS`.
-- `default_due_days = 0` turns default due dates off (TOML has no null). `ScanSettings.default_due_days` is then `None`.
+- `default_due_days = 0` turns default due dates off (TOML has no null). `ScanSettings.default_due_days` is then `None`. The maximum is 36500 (100 years).
 - `exclude_dirs` and `exclude_files` are tables with the optional lists `name`, `pattern` and `abs_path`. They are added to the built-in
   exclusions, they do not replace them.
 - `fail_on` is `none`, `expired`, `stale` or `any`. It does not change the scan; the command line uses it to choose the exit code.
@@ -67,6 +67,8 @@ CLI_DEFAULTS: dict[str, Any] = {
 }
 """Defaults of the command line and the config file. They sit between the config file and the `ScanSettings` defaults"""
 
+# 100 years. More would only overflow `date + timedelta` (year 9999), and "never" is spelled 0
+MAX_DEFAULT_DUE_DAYS: int = 36500
 FAIL_ON_CHOICES: tuple[str, ...] = ("none", "expired", "stale", "any")
 DEFAULT_FAIL_ON: str = "none"
 
@@ -218,7 +220,7 @@ def _extensions(value: Any, where: str) -> list[str]:
 
 def _default_due_days(value: Any, where: str) -> Optional[int]:
     """Checks `default_due_days`. 0 turns default due dates off, which is `None` in `ScanSettings`"""
-    days: int = _integer(value, where, minimum=0)
+    days: int = _integer(value, where, minimum=0, maximum=MAX_DEFAULT_DUE_DAYS)
     return days or None
 
 

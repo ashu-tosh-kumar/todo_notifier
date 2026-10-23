@@ -299,6 +299,16 @@ class TestFlagsToSettings:
         assert "default_due_days" in err and "command line options" in err
         assert "Traceback" not in err
 
+    def test_a_default_due_days_that_overflows_dates_is_a_config_error_not_a_crash(self, capsys, project):
+        write(project, "a.py", "# TODO x\n")
+
+        for days in ("99999999999", "5000000"):
+            code, _, err = run(capsys, "scan", "--no-blame", "--default-due-days", days)
+
+            assert code == EXIT_USAGE
+            assert "must be between 0 and 36500" in err
+            assert "unexpected" not in err
+
     def test_config_file_is_used_and_flags_beat_it(self, capsys, project, captured):
         write(project, "pyproject.toml", '[tool.todonotifier]\ntags = ["FIXME"]\nextensions = ["py"]\npaths = ["src"]\n')
 
