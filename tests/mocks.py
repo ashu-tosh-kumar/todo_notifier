@@ -1,4 +1,4 @@
-from typing import Dict, List, TypeVar, Union
+from typing import Dict, List, Optional, TypeVar, Union
 
 from todonotifier.config import BaseConfig
 from todonotifier.notifier import BaseNotifier
@@ -19,7 +19,7 @@ class MockTestConfig(BaseConfig):
         save_html_reports: bool = True,
         ignore_todo_case: bool = False,
         notifier: Union[BaseNotifier, None] = None,
-        file_extensions: List[str] = None,
+        file_extensions: Optional[List[str]] = None,
     ) -> None:
         """Initializer for `TestConfig` class
 

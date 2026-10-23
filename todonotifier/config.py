@@ -4,7 +4,7 @@ whistles of defining a configuration while being equally extensible.
 """
 
 from copy import deepcopy
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from todonotifier.constants import DEFAULT_EXCLUDE_DIRS, DEFAULT_EXCLUDE_FILES
 from todonotifier.notifier import BaseNotifier
@@ -143,7 +143,7 @@ class DefaultConfig(BaseConfig):
         save_html_reports: bool = False,
         ignore_todo_case: bool = False,
         notifier: Union[BaseNotifier, None] = None,
-        file_extensions: List[str] = None,
+        file_extensions: Optional[List[str]] = None,
     ) -> None:
         """Initializer for `DefaultConfig` class
 
