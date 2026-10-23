@@ -106,10 +106,12 @@ class TODO:
                 self._completion_date = parser.parse(completion_date_str).date()
             else:
                 self._completion_date = parser.parse(DEFAULT_COMPLETION_DATE).date()
-        except (ValueError, TypeError, parser.ParserError) as e:
+        except (ValueError, TypeError, OverflowError, parser.ParserError) as e:
+            # The date and the path come from a scanned file, so they are shown with `repr` (no raw control characters or escape sequences reach the
+            # terminal), and the dateutil message is left out because it repeats the date
             logger.warning(
-                f"Unable to parse date '{completion_date_str}' for TODO in {module}:{position.line_no}. "
-                f"Using default date {DEFAULT_COMPLETION_DATE}. Error: {e}"
+                f"Unable to parse date {completion_date_str!r} for TODO in {module!r} line {position.line_no} "
+                f"({type(e).__name__}), so it has no due date (internally {DEFAULT_COMPLETION_DATE})"
             )
             self._completion_date = parser.parse(DEFAULT_COMPLETION_DATE).date()
         self._module = module

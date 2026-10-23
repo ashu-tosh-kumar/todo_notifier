@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 import unittest
 from unittest.mock import Mock, patch
 
@@ -202,6 +203,41 @@ class TestComputeLineAndPosGivenSpan(unittest.TestCase):
         actual_value = compute_line_and_pos_given_span(dummy_line_no_to_chars_map, dummy_span)
 
         self.assertEqual(expected_value, actual_value)
+
+
+class TestLineLookupOfAFileWithManyLines(unittest.TestCase):
+    def test_the_lookup_of_a_file_map_should_agree_with_the_plain_dict_algorithm(self):
+        content = "one\n\ntwo words\nthree"  # Includes an empty line and a last line without a newline
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "f.txt")
+            with open(path, "w") as f:
+                f.write(content)
+            file_map = compute_file_line_no_to_chars_map(path)
+
+            for position in range(len(content)):
+                with self.subTest(position=position):
+                    self.assertEqual(
+                        compute_line_and_pos_given_span(dict(file_map), (position, position)),
+                        compute_line_and_pos_given_span(file_map, (position, position)),
+                    )
+                    self.assertEqual(content.count("\n", 0, position) + 1, compute_line_and_pos_given_span(file_map, (position, position)))
+
+    def test_the_lookup_should_not_add_up_every_line_for_every_todo(self):
+        # 20,000 lines and 20,000 lookups: adding up the lines for each lookup took 25 s, with running totals it takes milliseconds
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "f.txt")
+            with open(path, "w") as f:
+                f.write("# TODO some text to fill the line up\n" * 20000)
+            file_map = compute_file_line_no_to_chars_map(path)
+            line_length = len("# TODO some text to fill the line up\n")
+
+            started = time.perf_counter()
+            lines = [compute_line_and_pos_given_span(file_map, (line_no * line_length + 2, 0)) for line_no in range(20000)]
+            elapsed = time.perf_counter() - started
+
+        self.assertEqual(list(range(1, 20001)), lines)
+        self.assertLess(elapsed, 5)
 
 
 class TestGenerateSummary(unittest.TestCase):

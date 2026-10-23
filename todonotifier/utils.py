@@ -2,6 +2,8 @@
 
 import os
 import re
+from bisect import bisect_right
+from itertools import accumulate
 from typing import Dict, List, Tuple
 
 from todonotifier.log import get_logger
@@ -18,6 +20,18 @@ class InCompatibleTypesException(Exception):
     """
 
     pass
+
+
+class _LineLengths(Dict[int, int]):
+    """The line number to line length map of a file, which also keeps the running totals so that a line can be found without adding up every line
+
+    Attributes:
+        cumulative (List[int]): `cumulative[i]` is the number of characters of lines `1` to `i + 1`
+    """
+
+    def __init__(self, lengths: Dict[int, int]) -> None:
+        super().__init__(lengths)
+        self.cumulative: List[int] = list(accumulate(lengths[line_no] for line_no in sorted(lengths)))
 
 
 def _ignore_dir_or_file(dir_or_file_path: str, exclude_dirs_or_files: dict) -> bool:
@@ -112,7 +126,7 @@ def compute_file_line_no_to_chars_map(file: str) -> Dict[int, int]:
         for line_no, line in enumerate(f.readlines()):
             line_no_to_chars_map[line_no + 1] = len(line)
 
-    return line_no_to_chars_map
+    return _LineLengths(line_no_to_chars_map)
 
 
 def compute_line_and_pos_given_span(line_no_to_chars_map: dict, span: Tuple[int, int]) -> int:
@@ -125,6 +139,9 @@ def compute_line_and_pos_given_span(line_no_to_chars_map: dict, span: Tuple[int,
     Returns:
         int: Line no. of the character at `start_idx` in file `file`. First line is considered as
     """
+    if isinstance(line_no_to_chars_map, _LineLengths):  # The map of `compute_file_line_no_to_chars_map`: a file with thousands of TODOs must not be quadratic
+        return bisect_right(line_no_to_chars_map.cumulative, span[0]) + 1
+
     curr_count = 0
     for line_no in range(len(line_no_to_chars_map)):
         curr_count += line_no_to_chars_map[line_no + 1]
