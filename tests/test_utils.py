@@ -145,6 +145,51 @@ class TestGetFilesInDir(unittest.TestCase):
             actual_value = set(get_files_in_dir(temp_dir, [dummy_extension], {}, {}))
             self.assertEqual(expected_value, actual_value)
 
+    def _symlink(self, target: str, link: str) -> None:
+        try:
+            os.symlink(target, link, target_is_directory=True)
+        except (OSError, NotImplementedError):  # Windows without the privilege to create links
+            self.skipTest("symbolic links are not available")
+
+    def test_get_files_in_dir_should_not_follow_a_link_to_a_parent_in_a_loop(self):
+        # `up -> ..` made every file show up once per level until the operating system stopped the nesting (41 times)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            os.makedirs(os.path.join(temp_dir, "d"))
+            with open(os.path.join(temp_dir, "d", "a.py"), "w") as f:
+                f.write("x")
+            self._symlink("..", os.path.join(temp_dir, "d", "up"))
+
+            actual_value = get_files_in_dir(temp_dir, ["py"], {}, {})
+
+        self.assertEqual([os.path.join(temp_dir, "d", "a.py")], actual_value)
+
+    def test_get_files_in_dir_should_not_loop_through_two_links_either(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for name in ("a", "b"):
+                os.makedirs(os.path.join(temp_dir, name))
+            with open(os.path.join(temp_dir, "a", "one.py"), "w") as f:
+                f.write("x")
+            self._symlink(os.path.join(temp_dir, "b"), os.path.join(temp_dir, "a", "to_b"))
+            self._symlink(os.path.join(temp_dir, "a"), os.path.join(temp_dir, "b", "to_a"))
+
+            actual_value = get_files_in_dir(temp_dir, ["py"], {}, {})
+
+        # Every link that would come back to a directory that is being walked is cut, so the walk ends: one.py is seen directly and through b/to_a
+        self.assertEqual(
+            sorted([os.path.join(temp_dir, "a", "one.py"), os.path.join(temp_dir, "b", "to_a", "one.py")]),
+            sorted(actual_value),
+        )
+
+    def test_get_files_in_dir_should_still_follow_a_link_to_another_directory(self):
+        with tempfile.TemporaryDirectory() as temp_dir, tempfile.TemporaryDirectory() as elsewhere:
+            with open(os.path.join(elsewhere, "linked.py"), "w") as f:
+                f.write("x")
+            self._symlink(elsewhere, os.path.join(temp_dir, "linked_dir"))
+
+            actual_value = get_files_in_dir(temp_dir, ["py"], {}, {})
+
+        self.assertEqual([os.path.join(temp_dir, "linked_dir", "linked.py")], actual_value)
+
     @patch("todonotifier.utils._ignore_dir_or_file")
     def test_get_files_in_dir_should_not_throw_exception_if_caught_any(self, stub__ignore_dir_or_file):
         dummy_extension = "py"

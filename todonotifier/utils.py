@@ -4,7 +4,7 @@ import os
 import re
 from bisect import bisect_right
 from itertools import accumulate
-from typing import Dict, List, Tuple
+from typing import Dict, FrozenSet, List, Tuple
 
 from todonotifier.log import get_logger
 from todonotifier.models import TODO
@@ -59,25 +59,31 @@ def _ignore_dir_or_file(dir_or_file_path: str, exclude_dirs_or_files: dict) -> b
     return False
 
 
-def get_files_in_dir(dir_path: str, extensions: List[str], exclude_subdirs: dict, exclude_files: dict) -> List[str]:
+def get_files_in_dir(dir_path: str, extensions: List[str], exclude_subdirs: dict, exclude_files: dict, _walking: FrozenSet[str] = frozenset()) -> List[str]:
     """Provides a list of files in the give directory `path` and its subdirectories
+
+    A symbolic link to a directory that is being walked at that moment (a link to a parent, or a cycle of links) is not followed again.
 
     Args:
         dir_path (str): Path of the directory
         extensions (List[str]): List of file extensions that need to be looked for e.g. ["py", "js"] (without dot)
         exclude_subdirs (dict): Sub directories of `parent_dir_name` that shouldn't be considered
         exclude_files (dict): Files in directory `parent_dir_name` or its sub-directories that shouldn't be considered
+        _walking (FrozenSet[str], optional): Internal. The resolved paths of the directories above `dir_path`, to recognise a symbolic link cycle
     """
     all_files = []
     file_extensions = tuple(f".{ext}" for ext in extensions)
+    walking = _walking | {os.path.realpath(dir_path)}
 
     for sub_dir_or_file in os.listdir(dir_path):
         try:
             sub_dir_or_file_path = os.path.join(dir_path, sub_dir_or_file)
 
             if os.path.isdir(sub_dir_or_file_path):
-                if not _ignore_dir_or_file(sub_dir_or_file_path, exclude_subdirs):
-                    sub_dir_all_files = get_files_in_dir(sub_dir_or_file_path, extensions, exclude_subdirs, exclude_files)
+                if os.path.islink(sub_dir_or_file_path) and os.path.realpath(sub_dir_or_file_path) in walking:
+                    logger.debug(f"Skipping symbolic link to a directory that is already being scanned (a loop): {sub_dir_or_file_path}")
+                elif not _ignore_dir_or_file(sub_dir_or_file_path, exclude_subdirs):
+                    sub_dir_all_files = get_files_in_dir(sub_dir_or_file_path, extensions, exclude_subdirs, exclude_files, walking)
                     all_files.extend(sub_dir_all_files)
             elif os.path.isfile(sub_dir_or_file_path):
                 if sub_dir_or_file_path.endswith(file_extensions) and not _ignore_dir_or_file(sub_dir_or_file_path, exclude_files):

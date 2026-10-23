@@ -158,6 +158,12 @@ class TestCommentLexer(unittest.TestCase):
         self.assertEqual([[(0, 6)]], spans_of("yaml", "# TODO"))
         self.assertEqual([[(7, 13)]], spans_of("yaml", "key: v # TODO"))
 
+    def test_a_byte_order_mark_should_not_hide_a_comment_on_the_first_line(self):
+        # Windows editors put a BOM at the start of YAML and shell files, and "\ufeff#" is not a "# after whitespace"
+        self.assertEqual([[(1, 7)]], spans_of("yaml", "\ufeff# TODO"))
+        self.assertEqual([[(1, 7)]], spans_of("sh", "\ufeff# TODO"))
+        self.assertEqual([[]], spans_of("yaml", "x\ufeff# TODO"))  # Only the mark itself counts as a separator, not the text before it
+
     def test_markdown_fence_should_hide_comments(self):
         spans = spans_of("md", "<!-- a -->", "```html", "<!-- TODO -->", "```", "<!-- b -->", "~~~", "<!-- c -->", "~~~", "<!-- d -->")
 
