@@ -42,7 +42,7 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.6 | CLI | `roadmap/0.6-cli` | [#171](https://github.com/ashu-tosh-kumar/todo_notifier/pull/171) | ✅ done | See "Notes per workstream" below |
 | 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | [#172](https://github.com/ashu-tosh-kumar/todo_notifier/pull/172) | ✅ done | Tag and publish pending maintainer, see [RELEASING.md](../RELEASING.md) and "Notes per workstream" below |
 | P0 | Phase 0 review | `roadmap/p0-review` | [#173](https://github.com/ashu-tosh-kumar/todo_notifier/pull/173) | ✅ done | [Phase 0 review notes](#phase-0-review): requirement table, 7 known issues and 13 new findings fixed, what was left |
-| 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | | 🟡 in progress | |
+| 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | | ✅ done | See "Notes per workstream" (1.4); maintainer GitHub settings checklist there |
 | 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | | ⬜ todo | |
 | 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | | ⬜ todo | See decision A3 |
 | 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | | ⬜ todo | |
@@ -117,6 +117,11 @@ product and engineering basis. Each one is easy to reverse.
 | A52 | `.pre-commit-config.yaml` pins black 26.10.1, flake8 7.4.1 and isort 6.1.0 (the versions of `poetry.lock`/CI) and no `language_version`; `tox.ini` ignores W503; the dead Python <3.10 black constraint and the two GHSA allowances (and the 3.9 comment) of `dependency-review.yml` were removed (the lock holds black 26.10.1 only). | `pre-commit run --all-files` must agree with CI. |
 | A53 | `default_due_days` is limited to 0 to 36500 (100 years) in the config file and on the command line. | Larger values overflow `date + timedelta` and crashed with exit 3. |
 | A54 | The starter written by `todonotifier init` contains none of the default tags (not even in comments, and not "todo@example.com" for case-insensitive scans). | The first scan after `init` reported the config file's own comments as TODOs. |
+| A55 | `Development Status :: 5 - Production/Stable`. | The package has had several 1.x releases on PyPI, has 716 tests at 100% line coverage and a stable CLI/API contract; "Beta" would undersell it. The classifier set also has `Environment :: Console`, `Intended Audience :: Developers`, `Operating System :: OS Independent` (as asked; only Linux was tested here) and the two Topic classifiers of the spec. |
+| A56 | The `[tool.poetry]` layout stays; `homepage`, `repository` and `documentation` moved into `[tool.poetry.urls]` (Homepage, Repository, Documentation, plus Changelog and Issue Tracker). `poetry check` passes (exit 0) but still prints deprecation warnings for the whole `[tool.poetry]` table (name, description, license, authors, keywords, urls, scripts, "License classifiers"). | Moving to `[project]` would change how Poetry fills classifiers and also needs the `License ::` classifier, scripts and dependencies moved and re-checked with `poetry build`; it is a release-engineering change, not a quick win. Left for the maintainer (follow-up below). |
+| A57 | The PyPI `description` does not mention the GitHub Action or pre-commit hook of the spec's example. | Neither exists yet (1.1, 1.2); metadata must not promise them. Update the description when they ship. |
+| A58 | Badges: PyPI version uses shields.io (`pypi/v`) and links to PyPI; Downloads uses `static.pepy.tech/badge/todonotifier` and links to `pepy.tech/projects/todonotifier`. | `pepy.tech/badge/...` answers with a 308 redirect to the static host; using the final URLs avoids a hop that has broken before. All other badge URLs were requested and returned 200 (CI badge reads `passing`, Scorecard badge shows a score). |
+| A59 | The comparison table uses `❌` for "not described in the source" and says so under the table; `⚠️ unverified` where a claim could not be confirmed. | A README not mentioning a feature is weaker evidence than a doc saying it is absent. |
 
 ## Notes per workstream
 
@@ -412,3 +417,32 @@ New findings:
 
 716 tests pass (670 before the review); `coverage report` is 100% (2541 statements, `fail_under = 100` holds); `black --check .`, `isort --check-only .`,
 `flake8 . --config ./tox.ini` and `pre-commit run --all-files` are clean; `todonotifier scan . --fail-on expired --format github` on this repo exits 0.
+
+### 1.4 Discoverability quick wins
+
+**Built:**
+- `pyproject.toml`: new `description` (116 characters), 12 `keywords`, 14 `classifiers`, and `[tool.poetry.urls]` (Homepage, Repository, Documentation, Changelog = `README#changelog`, Issue Tracker). `poetry check` exits 0; `poetry build` works and `unzip -p dist/*.whl '*/METADATA'` shows `Summary`, `Keywords`, every `Classifier` and the five `Project-URL` lines. `dist/` was deleted afterwards (decisions A55 to A57).
+- README: SEO paragraph under the title, a "How it compares" section (decision A59), fixed badges (A58), a short Contributing section that links to `CONTRIBUTING.md`, and a changelog bullet. The README badge row had no literal `\n` left (0.7); every badge and badge link was requested and returned 200 (or the one redirect described in A58).
+- `CONTRIBUTING.md` (setup, checks, hooks, tests and 100% coverage, commit style, adding a language, adding a notifier), `.github/ISSUE_TEMPLATE/{bug_report,feature_request,config}.yml`, `.github/pull_request_template.md`. `AGENTS.md` links to CONTRIBUTING.md and notes why the `[tool.poetry]` layout stays.
+- `roadmap/good-first-issues.md`: 9 issues ready to paste (title, labels, body, acceptance criteria), taken from the "left unfixed" list and the workstream follow-ups.
+
+**Competitor claims, checked 2026-10-23 with four fetches** (todo-to-issue-action README, Todo Tree README, Ruff rules page, Ruff docs home). What was verified: todo-to-issue-action creates, updates and closes issues from TODOs in a push diff, assigns them from `TODO(@user)` or `assignees:`, lists 62 languages, and its README describes no deadlines, overdue alerts, digests or PR checks. Todo Tree is a ripgrep based tree view with highlighting, status bar counts, JSON export and a configurable regex; its README describes no deadlines, owners, notifications, CI or issue creation. Ruff TD001 to TD007 are format and presence rules (tag, author, issue link, colon, description, capitalization, space after colon), none about dates; Ruff describes itself as a Python linter with VS Code integration. **Unverified:** whether Ruff's own docs describe CI/PR use (the pages read do not), and Todo Tree's exact language coverage (README gives no list). Both are marked in the table. Absence in a README is shown as `❌ not described`, with a note that it is not proof.
+
+**Deviation:** the spec's example description names the GitHub Action and pre-commit hook; they do not exist yet, so the description does not (A57). `Typing :: Typed` was not added: the package ships no `py.typed`.
+
+**Manual GitHub settings for the maintainer** (repository Settings, none of this can be done from code):
+- [ ] **About box, Website:** `https://ashu-tosh-kumar.github.io/todo_notifier/` (or the PyPI page until the docs site is the landing page).
+- [ ] **About box, Description:** `Track TODO and FIXME comments with deadlines and owners. Overdue TODO reminders via CLI, CI, Slack, Teams and email.`
+- [ ] **Topics:** `todo`, `fixme`, `technical-debt`, `code-quality`, `developer-tools`, `github-actions`, `pre-commit`, `python`, `cli`, `todo-comments`, `reminder`, `slack` (GitHub allows up to 20; drop `github-actions` and `pre-commit` until 1.1 and 1.2 ship if you want the topics to be strictly true).
+- [ ] **Social preview image:** Settings, General, "Social preview", upload a 1280 x 640 px PNG or JPG (under 1 MB) with the name, the one-line value proposition and a table screenshot (a safe margin of 40 px).
+- [ ] **Discussions:** Settings, General, Features, tick "Discussions", then create the categories "Q&A", "Ideas" and "Show and tell". The issue form contact links and the README point to `/discussions`; they 404 until this is on.
+- [ ] **Labels:** create `good first issue` (and `enhancement`, `bug`, `documentation`, `detection`, `cli`, `notifications`, `owners` if missing), then create the issues from `roadmap/good-first-issues.md`.
+- [ ] **Security policy:** check that Settings, Code security, "Private vulnerability reporting" is on, because the issue chooser links to the security policy.
+- [ ] **PyPI:** after `v2.1.0` is published, the README renders on the project page with the new keywords, classifiers and links; check "Project links" shows Changelog, Documentation, Issue Tracker. The Python-versions badge shows 3.10+ only after that release.
+- [ ] **OpenSSF Best Practices badge** (commented out in the README): register at bestpractices.dev, then enable the line.
+- [ ] Optional: re-check the comparison table's sources before each launch post (1.5), because the tools change.
+
+**Follow-ups:**
+- Move `pyproject.toml` to `[project]` metadata (Poetry 2 deprecation warnings), as its own change, and re-check the `poetry build` METADATA diff (A56).
+- Docs site (1.3): move the comparison table there; the README keeps a short version. Ship `py.typed` if the project wants `Typing :: Typed`.
+- Update the PyPI description when the GitHub Action (1.1) and the pre-commit hook (1.2) are released, and replace "coming soon" in the README intro.

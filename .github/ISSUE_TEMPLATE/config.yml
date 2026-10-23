@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea (Discussions)
+    url: https://github.com/ashu-tosh-kumar/todo_notifier/discussions
+    about: Ask how to use TODO Notifier, share a setup or float an idea before opening a feature request.
+  - name: Report a security vulnerability
+    url: https://github.com/ashu-tosh-kumar/todo_notifier/security/policy
+    about: Please do not open a public issue for a vulnerability. Follow the security policy (SECURITY.md).
