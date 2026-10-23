@@ -43,7 +43,7 @@ def run(connect: Connect, config: BaseConfig = default_config) -> None:
             connect.pull_repository(target_dir=project_dir)
 
             all_files_in_project_dir = get_files_in_dir(
-                dir_path=project_dir, extension="py", exclude_subdirs=config.exclude_dirs, exclude_files=config.exclude_files
+                dir_path=project_dir, extensions=config.file_extensions, exclude_subdirs=config.exclude_dirs, exclude_files=config.exclude_files
             )
 
             ignore_todo_case = config.ignore_todo_case

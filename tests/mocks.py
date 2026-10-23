@@ -19,6 +19,7 @@ class MockTestConfig(BaseConfig):
         save_html_reports: bool = True,
         ignore_todo_case: bool = False,
         notifier: Union[BaseNotifier, None] = None,
+        file_extensions: List[str] = None,
     ) -> None:
         """Initializer for `TestConfig` class
 
@@ -29,8 +30,18 @@ class MockTestConfig(BaseConfig):
             generate_html (bool, optional): Boolean controlling whether to generate HTML report for each summary generator. Defaults to True
             save_html_reports (bool, optional): Boolean controlling whether to store the generated HTML reports by each summary generator. Defaults to True
             ignore_todo_case (bool, optional): Boolean controlling whether to skip considering the case of todo like whether to consider Todo, todo etc.
+            file_extensions (List[str], optional): List of file extensions to parse (without leading dot). Defaults to ["py"]
         """
-        super().__init__(exclude_dirs or {}, exclude_files or {}, summary_generators or [], generate_html, save_html_reports, ignore_todo_case, notifier)
+        super().__init__(
+            exclude_dirs or {},
+            exclude_files or {},
+            summary_generators or [],
+            generate_html,
+            save_html_reports,
+            ignore_todo_case,
+            notifier,
+            file_extensions or ["py"],
+        )
 
 
 class MockSummaryGenerator:

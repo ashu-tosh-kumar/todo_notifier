@@ -141,7 +141,7 @@ class TestGetFilesInDir(unittest.TestCase):
                 with open(file, "w") as f:
                     f.write("unittest-nested-content")
 
-            actual_value = set(get_files_in_dir(temp_dir, dummy_extension, {}, {}))
+            actual_value = set(get_files_in_dir(temp_dir, [dummy_extension], {}, {}))
             self.assertEqual(expected_value, actual_value)
 
     @patch("todonotifier.utils._ignore_dir_or_file")
@@ -155,7 +155,7 @@ class TestGetFilesInDir(unittest.TestCase):
                 with open(file, "w") as f:
                     f.write("unittest-content")
 
-            actual_value = set(get_files_in_dir(temp_dir, dummy_extension, {}, {}))
+            actual_value = set(get_files_in_dir(temp_dir, [dummy_extension], {}, {}))
             self.assertEqual(1, len(actual_value))
 
 

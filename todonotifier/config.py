@@ -29,6 +29,7 @@ class BaseConfig:
         save_html_reports: bool,
         ignore_todo_case: bool,
         notifier: Union[BaseNotifier, None],
+        file_extensions: List[str],
     ) -> None:
         """Initializer for `BaseConfig` class
 
@@ -40,6 +41,7 @@ class BaseConfig:
             save_html_reports (bool): Boolean to control whether to save html reports. Works only if `generate_html` is `True`
             ignore_todo_case (bool): Boolean whether to look for case insensitive todo items like todo, Todo etc.
             notifier (Union[BaseNotifier, None], optional): Object of class `BaseNotifier` to deal with sending notifications. Defaults to None
+            file_extensions (List[str]): List of file extensions to parse (e.g., ["py", "js", "ts"]). Extensions should be without the leading dot.
         """
         self._exclude_dirs = exclude_dirs
         self._exclude_files = exclude_files
@@ -48,6 +50,7 @@ class BaseConfig:
         self._save_html_reports = save_html_reports
         self._ignore_todo_case = ignore_todo_case
         self._notifier = notifier
+        self._file_extensions = file_extensions
 
     @property
     def exclude_dirs(self) -> Dict[str, List[str]]:
@@ -112,6 +115,15 @@ class BaseConfig:
         """
         return self._notifier
 
+    @property
+    def file_extensions(self) -> List[str]:
+        """Getter for `file_extensions`
+
+        Returns:
+            List[str]: List of file extensions to parse (without leading dot)
+        """
+        return self._file_extensions
+
 
 class DefaultConfig(BaseConfig):
     """Allows easy way to setup config by allowing to pass new dirs/files to exclude along with default ones
@@ -131,6 +143,7 @@ class DefaultConfig(BaseConfig):
         save_html_reports: bool = False,
         ignore_todo_case: bool = False,
         notifier: Union[BaseNotifier, None] = None,
+        file_extensions: List[str] = None,
     ) -> None:
         """Initializer for `DefaultConfig` class
 
@@ -146,10 +159,12 @@ class DefaultConfig(BaseConfig):
             save_html_reports (bool, optional): Boolean controlling whether to store the generated HTML reports by each summary generator. Defaults to False
             ignore_todo_case (bool, optional): Boolean whether to look for case insensitive todo items like todo, Todo etc. Defaults to False
             notifier (Union[BaseNotifier, None], optional): Object of class `BaseNotifier` to deal with sending notifications. Defaults to None
+            file_extensions (List[str], optional): List of file extensions to parse (without leading dot). Defaults to ["py"]
         """
         exclude_dirs = exclude_dirs or {}
         exclude_files = exclude_files or {}
         summary_generators = summary_generators or []
+        file_extensions = file_extensions or ["py"]
 
         if flag_default_exclude_dirs:
             # Means include the default exclude list of directories
@@ -175,7 +190,7 @@ class DefaultConfig(BaseConfig):
             default_summary_generators.extend(summary_generators)
             summary_generators = default_summary_generators
 
-        super().__init__(exclude_dirs, exclude_files, summary_generators, generate_html, save_html_reports, ignore_todo_case, notifier)
+        super().__init__(exclude_dirs, exclude_files, summary_generators, generate_html, save_html_reports, ignore_todo_case, notifier, file_extensions)
 
 
 default_config = DefaultConfig()
