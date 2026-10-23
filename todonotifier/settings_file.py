@@ -48,9 +48,10 @@ from typing import Any, Callable, Optional
 from todonotifier.languages import expand_extensions
 from todonotifier.settings import ScanSettings
 
-if sys.version_info >= (3, 11):  # pragma: no cover - tomllib only exists on Python 3.11+, the dev env runs 3.10 and covers the tomli branch
+# Exactly one branch runs on a given Python version, so neither counts towards coverage (CI runs 3.10 to 3.14)
+if sys.version_info >= (3, 11):  # pragma: no cover - tomllib only exists on Python 3.11+
     import tomllib
-else:
+else:  # pragma: no cover - tomli is the backport used on Python 3.10
     import tomli as tomllib
 
 DOT_FILE_NAME: str = ".todonotifier.toml"
