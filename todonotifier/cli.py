@@ -41,7 +41,12 @@ from todonotifier.notifier import (
     NotifierConfigError,
     build_notifiers,
 )
-from todonotifier.results import ScanResult
+from todonotifier.results import (
+    AUTHOR_SOURCE_ANNOTATION,
+    DUE_SOURCE_EXPLICIT,
+    ScanResult,
+    TodoItem,
+)
 from todonotifier.scanner import ScanException, scan
 from todonotifier.settings_file import (
     DOT_FILE_NAME,
@@ -93,7 +98,8 @@ _STARTER_BODY: str = """\
 # Fill authors and ages from git blame. An undated item turns "stale" this many days after it was added (0 turns this off).
 # use_git_blame = true
 # default_due_days = 90
-# When `todonotifier scan` exits with 1: "none", "expired" (a {{date}} has passed), "stale" (also default due dates) or "any".
+# When `todonotifier scan` exits with 1: "none", "expired" (a {{date}} has passed), "stale" (also default due dates), "any" or
+# "incomplete" (an item has no owner written in the comment, or no explicit {{date}}).
 # fail_on = "none"
 
 # Exclusions are added to the built-in ones.
@@ -212,11 +218,24 @@ def _add_common_options(parser: argparse.ArgumentParser) -> None:
     scanning.add_argument("--ignore-case", action="store_const", const=True, default=None, help="match tags case insensitively (todo, Todo)")
     scanning.add_argument("--no-require-comment", action="store_const", const=False, default=None, help="also report tags that are not in a comment")
     scanning.add_argument("--no-gitignore", action="store_const", const=False, default=None, help="also scan files that .gitignore excludes")
-    scanning.add_argument("--no-blame", action="store_const", const=False, default=None, help="do not run git blame (no authors, ages or default due dates)")
+    scanning.add_argument(
+        "--no-blame", dest="blame", action="store_const", const=False, default=None, help="do not run git blame (no authors, ages or default due dates)"
+    )
+    scanning.add_argument(
+        "--blame",
+        dest="blame",
+        action="store_const",
+        const=True,
+        default=None,
+        help="run git blame; the last of --blame and --no-blame on the command line wins",
+    )
     scanning.add_argument("--default-due-days", type=int, metavar="N", help="an undated TODO turns stale N days after it was added; 0 disables (default: 90)")
     scanning.add_argument("--since", metavar="GIT_REF", help="only report TODOs on lines added or changed since GIT_REF, e.g. HEAD~1 or origin/main")
     scanning.add_argument(
-        "--fail-on", choices=FAIL_ON_CHOICES, help="exit with 1 if such a TODO exists: expired (explicit date passed), stale (also default dates), any"
+        "--fail-on",
+        choices=FAIL_ON_CHOICES,
+        help="exit with 1 if such a TODO exists: expired (explicit date passed), stale (also default dates), any, "
+        "incomplete (no owner like @user or TODO(user), or no explicit {date})",
     )
 
     verbosity = parser.add_mutually_exclusive_group()
@@ -357,6 +376,24 @@ def _plural(count: int, singular: str, plural: str) -> str:
     return singular if count == 1 else plural
 
 
+def _config_start(paths: list[str]) -> str:
+    """The path that config file discovery starts from
+
+    Normally the first PATH argument. But when files are named (pre-commit passes the staged files, relative to the repository root) and all paths
+    are inside the current directory, it is the current directory: the config of the repository applies to every file, whichever directory the
+    first one is in.
+    """
+    if not paths:
+        return "."
+
+    cwd: str = os.getcwd()
+    absolute: list[str] = [os.path.abspath(path) for path in paths]
+    if any(os.path.isfile(path) for path in absolute) and all(os.path.commonpath([cwd, path]) == cwd for path in absolute):
+        return cwd
+
+    return paths[0]
+
+
 def _load_project(args: argparse.Namespace) -> ProjectConfig:
     """Merges the flags with the config file and the defaults"""
     overrides: dict[str, Any] = {
@@ -365,12 +402,12 @@ def _load_project(args: argparse.Namespace) -> ProjectConfig:
         "ignore_case": args.ignore_case,
         "require_comment": args.no_require_comment,
         "respect_gitignore": args.no_gitignore,
-        "use_git_blame": args.no_blame,
+        "use_git_blame": args.blame,
         "default_due_days": args.default_due_days,
         "fail_on": args.fail_on,
         "paths": args.paths or None,
     }
-    return resolve_project_config(overrides, args.config, start=args.paths[0] if args.paths else ".")
+    return resolve_project_config(overrides, args.config, start=_config_start(args.paths))
 
 
 def _only_changed_lines(result: ScanResult, ref: str) -> ScanResult:
@@ -435,17 +472,26 @@ def _show_result(args: argparse.Namespace, result: ScanResult, today: date) -> N
         print(f"Wrote the {fmt} output to {args.output}", file=sys.stderr)
 
 
+def _is_incomplete(item: TodoItem) -> bool:
+    """Whether a TODO lacks an owner written in the comment (`@user`, `TODO(user)`) or a date written in the comment. An owner found by git blame and a
+    default due date do not count: `--fail-on incomplete` asks for what the author wrote"""
+    return item.author_source != AUTHOR_SOURCE_ANNOTATION or item.due_source != DUE_SOURCE_EXPLICIT
+
+
 def _fail_on_message(result: ScanResult, fail_on: str) -> Optional[str]:
     """Explains why `--fail-on` is met, or returns None if it is not"""
     overdue: int = len(result.overdue())
     stale: int = len(result.stale())
     total: int = len(result.items)
+    incomplete: int = sum(1 for item in result.items if _is_incomplete(item))
     if fail_on == "expired" and overdue:
         return f"{overdue} overdue {_plural(overdue, 'TODO', 'TODOs')} (an explicit date has passed)"
     if fail_on == "stale" and overdue + stale:
         return f"{overdue} overdue and {stale} stale {_plural(overdue + stale, 'TODO', 'TODOs')}"
     if fail_on == "any" and total:
         return f"{total} {_plural(total, 'TODO', 'TODOs')} found"
+    if fail_on == "incomplete" and incomplete:
+        return f"{incomplete} {_plural(incomplete, 'TODO', 'TODOs')} without an owner (@user or TODO(user)) or an explicit {{date}}"
 
     return None
 

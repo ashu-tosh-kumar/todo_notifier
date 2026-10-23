@@ -497,6 +497,216 @@ class TestFailOn:
         assert (old_problem, since) == (EXIT_FAIL_ON, EXIT_OK)
 
 
+class TestFailOnIncomplete:
+    @pytest.mark.parametrize(
+        "line, complete",
+        [
+            ("# TODO {2999-01-01} @alice owner and date", True),
+            ("# TODO(alice) {2999-01-01} owner in the Google style", True),
+            ("# TODO(alice): {2999-01-01} with a colon", True),
+            ("# TODO {2999-01-01} date only", False),
+            ("# TODO @alice owner only", False),
+            ("# TODO(alice): owner only, Google style", False),
+            ("# TODO nothing at all", False),
+        ],
+    )
+    def test_an_item_needs_both_an_owner_annotation_and_an_explicit_date(self, capsys, project, line, complete):
+        write(project, "a.py", line + "\n")
+
+        code, _, err = run(capsys, "scan", ".", "--no-blame", "--fail-on", "incomplete")
+
+        assert code == (EXIT_OK if complete else EXIT_FAIL_ON)
+        assert err == ("" if complete else "todonotifier: --fail-on incomplete: 1 TODO without an owner (@user or TODO(user)) or an explicit {date}\n")
+
+    def test_the_message_counts_the_incomplete_items(self, capsys, project):
+        write(project, "a.py", "# TODO one\n# TODO {2999-01-01} @bob fine\n# TODO {2999-01-01} two\n")
+
+        code, _, err = run(capsys, "scan", ".", "--no-blame", "--fail-on", "incomplete")
+
+        assert code == EXIT_FAIL_ON
+        assert err.startswith("todonotifier: --fail-on incomplete: 2 TODOs without an owner")
+
+    def test_no_items_and_a_complete_item_pass(self, capsys, project):
+        write(project, "a.py", "x = 1\n")
+        write(project, "b.py", "# TODO {2999-01-01} @bob fine\n")
+
+        assert main(["scan", ".", "--no-blame", "--fail-on", "incomplete"]) == EXIT_OK
+
+    @needs_git
+    def test_an_owner_from_git_blame_and_a_default_date_do_not_count(self, capsys, repo):
+        code, _, err = run(capsys, "scan", "app.py", "--fail-on", "incomplete")
+
+        assert code == EXIT_FAIL_ON
+        # The first item has both in its comment. Blame knows Alice Anderson and the undated item gets a default date, but the comment has neither
+        assert "2 TODOs without an owner" in err
+
+    def test_it_can_come_from_the_config_file(self, capsys, project):
+        write(project, "pyproject.toml", '[tool.todonotifier]\nfail_on = "incomplete"\n')
+        write(project, "a.py", "# TODO no owner\n")
+
+        assert main(["scan", ".", "--no-blame"]) == EXIT_FAIL_ON
+        assert main(["scan", ".", "--no-blame", "--fail-on", "expired"]) == EXIT_OK
+
+    def test_the_help_and_the_starter_config_mention_it(self, capsys):
+        _, out, _ = run(capsys, "scan", "--help")
+
+        assert "incomplete" in out
+        assert "incomplete" in starter_config(pyproject=True)
+
+
+class TestBlameFlag:
+    @pytest.fixture
+    def captured(self, project, monkeypatch):
+        seen: dict = {}
+
+        def fake_scan(settings, today=None):
+            seen["use_git_blame"] = settings.use_git_blame
+            return ScanResult(root=str(project))
+
+        monkeypatch.setattr(cli, "scan", fake_scan)
+        return seen
+
+    @pytest.mark.parametrize(
+        "flags, expected",
+        [
+            ([], True),
+            (["--blame"], True),
+            (["--no-blame"], False),
+            (["--no-blame", "--blame"], True),
+            (["--blame", "--no-blame"], False),
+            (["--fail-on", "expired", "--no-blame", "--blame"], True),  # what pre-commit builds: entry, then the `args` of the consumer
+        ],
+    )
+    def test_the_last_of_blame_and_no_blame_wins(self, capsys, captured, flags, expected):
+        assert main(["scan", *flags]) == EXIT_OK
+
+        assert captured["use_git_blame"] is expected
+
+    def test_blame_beats_a_config_file_that_turns_it_off(self, capsys, project, captured):
+        write(project, "pyproject.toml", "[tool.todonotifier]\nuse_git_blame = false\n")
+
+        main(["scan"])
+        off = captured["use_git_blame"]
+        main(["scan", "--blame"])
+
+        assert (off, captured["use_git_blame"]) == (False, True)
+
+    def test_blame_is_listed_in_the_help(self, capsys):
+        _, out, _ = run(capsys, "scan", "--help")
+
+        assert "--blame" in out and "the last of --blame and --no-blame" in out
+
+    @needs_git
+    def test_blame_after_no_blame_fills_the_owner_from_git(self, capsys, repo):
+        _, without, _ = run(capsys, "scan", "app.py", "--no-blame", "--format", "json")
+        _, with_blame, _ = run(capsys, "scan", "app.py", "--no-blame", "--blame", "--format", "json")
+
+        assert {item["author_source"] for item in json.loads(without)["items"]} == {"annotation", "unknown"}
+        assert "git_blame" in {item["author_source"] for item in json.loads(with_blame)["items"]}
+
+
+class TestExplicitFiles:
+    """What pre-commit does: repo-relative staged files, from the root of the repository"""
+
+    @needs_git
+    def test_scanning_files_needs_one_ls_files_call_and_no_blame(self, capsys, project):
+        init_repo(project)
+        files = [write(project, f"src/f{number}.py", f"# TODO {{2020-01-01}} number {number}\n") for number in range(10)]
+        git(str(project), "add", "-A")
+        real_run = subprocess.run
+        calls = []
+
+        def spy(command, *args, **kwargs):
+            calls.append(command)
+            return real_run(command, *args, **kwargs)
+
+        with patch("todonotifier.git_meta.subprocess.run", side_effect=spy):
+            code, out, _ = run(capsys, "scan", *[os.path.relpath(path) for path in files], "--fail-on", "expired", "--no-blame")
+
+        assert code == EXIT_FAIL_ON
+        assert "10 TODOs" in out
+        assert sum(1 for command in calls if "ls-files" in command) == 1
+        assert sum(1 for command in calls if "blame" in command) == 0
+        assert len(calls) <= 4, calls  # rev-parse and ls-files for the files, and the repository root for the paths in the table
+
+    def test_the_config_of_the_repository_root_applies_to_files_in_subdirectories(self, capsys, project):
+        write(project, "pyproject.toml", '[tool.todonotifier]\ntags = ["NOTE"]\n')
+        write(project, "pkg/inner.py", "# NOTE a note\n# TODO not a tag here\n")
+        write(project, "pkg/pyproject.toml", '[tool.todonotifier]\ntags = ["TODO"]\n')
+
+        code, out, _ = run(capsys, "scan", "pkg/inner.py", "--no-blame", "--format", "json")
+
+        assert code == EXIT_OK
+        assert [item["tag"] for item in json.loads(out)["items"]] == ["NOTE"]
+
+    def test_a_directory_argument_still_finds_the_config_next_to_it(self, capsys, project):
+        write(project, "pyproject.toml", '[tool.todonotifier]\ntags = ["NOTE"]\n')
+        write(project, "pkg/inner.py", "# NOTE a note\n# TODO not a tag here\n")
+        write(project, "pkg/.todonotifier.toml", 'tags = ["TODO"]\n')
+
+        _, out, _ = run(capsys, "scan", "pkg", "--no-blame", "--format", "json")
+
+        assert [item["tag"] for item in json.loads(out)["items"]] == ["TODO"]
+
+    def test_files_outside_the_current_directory_use_the_config_of_the_first_file(self, capsys, project, tmp_path_factory, monkeypatch):
+        elsewhere = tmp_path_factory.mktemp("elsewhere")
+        write(elsewhere, ".todonotifier.toml", 'tags = ["NOTE"]\n')
+        outside = write(elsewhere, "x.py", "# NOTE a note\n# TODO not a tag here\n")
+        monkeypatch.chdir(project)
+
+        _, out, _ = run(capsys, "scan", outside, "--no-blame", "--format", "json")
+
+        assert [item["tag"] for item in json.loads(out)["items"]] == ["NOTE"]
+
+    def test_exclude_dirs_and_exclude_files_of_the_config_apply_to_named_files(self, capsys, project):
+        write(project, "pyproject.toml", '[tool.todonotifier.exclude_dirs]\nname = ["tests"]\n[tool.todonotifier.exclude_files]\nname = ["skip.py"]\n')
+        for path in ("tests/t.py", "tests/deep/d.py", "src/skip.py", "src/keep.py", "build/b.py"):
+            write(project, path, "# TODO {2020-01-01} old\n")
+
+        code, out, _ = run(capsys, "scan", "tests/t.py", "tests/deep/d.py", "src/skip.py", "src/keep.py", "build/b.py", "--no-blame", "--format", "json")
+
+        assert code == EXIT_OK
+        assert [item["file"] for item in json.loads(out)["items"]] == ["src/keep.py"]  # build is a built-in exclusion
+
+    def test_the_same_files_fail_when_the_config_does_not_exclude_them(self, capsys, project):
+        write(project, "tests/t.py", "# TODO {2020-01-01} old\n")
+
+        assert main(["scan", "tests/t.py", "--no-blame", "--fail-on", "expired"]) == EXIT_FAIL_ON
+
+    def test_a_directory_above_the_scan_root_is_not_an_exclusion(self, capsys, tmp_path, monkeypatch):
+        inside = tmp_path / "build" / "proj"
+        write(inside, "a.py", "# TODO {2020-01-01} old\n")
+        monkeypatch.chdir(inside)
+
+        assert main(["scan", "a.py", "--no-blame", "--fail-on", "expired"]) == EXIT_FAIL_ON
+
+    def test_unknown_extensions_and_binary_files_are_skipped_silently(self, capsys, project):
+        write(project, "notes.unknown", "TODO {2020-01-01} old\n")
+        write(project, "Makefile", "# TODO {2020-01-01} old\n")
+        (project / "image.png").write_bytes(b"\x89PNG\r\n\x00\x00 TODO {2020-01-01}")
+        (project / "blob.py").write_bytes(b"\x00\x01\x02 # TODO {2020-01-01} old\n")
+
+        code, out, err = run(capsys, "scan", "notes.unknown", "Makefile", "image.png", "blob.py", "--no-blame", "--fail-on", "expired")
+
+        assert code == EXIT_OK
+        assert err == ""
+        assert out.startswith("No files were scanned.") and out.count("\n") == 1  # one summary line, nothing else
+
+    def test_no_matching_files_is_a_quiet_success(self, capsys, project):
+        write(project, "tests/t.py", "# TODO {2020-01-01} old\n")
+        write(project, "pyproject.toml", '[tool.todonotifier.exclude_dirs]\nname = ["tests"]\n')
+
+        code, out, err = run(capsys, "scan", "tests/t.py", "--no-blame", "--fail-on", "expired")
+
+        assert (code, err) == (EXIT_OK, "")
+        assert out.startswith("No files were scanned.") and out.count("\n") == 1  # only the summary line
+
+    def test_no_files_at_all_is_not_the_pre_commit_case_but_scans_the_current_directory(self, capsys, project):
+        write(project, "a.py", "# TODO {2020-01-01} old\n")
+
+        assert main(["scan", "--no-blame", "--fail-on", "expired"]) == EXIT_FAIL_ON
+
+
 class TestFormats:
     def test_json_validates_against_the_schema(self, capsys, repo):
         code, out, _ = run(capsys, "scan", ".", "--format", "json")
