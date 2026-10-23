@@ -37,8 +37,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.1 | Foundation | `roadmap/0.1-foundation` | [#166](https://github.com/ashu-tosh-kumar/todo_notifier/pull/166) | ✅ done | See "Notes per workstream" below |
 | 0.2 | Config file | `roadmap/0.2-config-file` | [#167](https://github.com/ashu-tosh-kumar/todo_notifier/pull/167) | ✅ done | See "Notes per workstream" below |
 | 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | [#168](https://github.com/ashu-tosh-kumar/todo_notifier/pull/168) | ✅ done | See "Notes per workstream" below |
-| 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | | ✅ done | See "Notes per workstream" below |
-| 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | ⬜ todo | |
+| 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | [#169](https://github.com/ashu-tosh-kumar/todo_notifier/pull/169) | ✅ done | See "Notes per workstream" below |
+| 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | 🟡 in progress | |
 | 0.6 | CLI | `roadmap/0.6-cli` | | ⬜ todo | |
 | 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | | ⬜ todo | Tag/publish is a maintainer step |
 | P0 | Phase 0 review | (fixes on the tip branch) | | ⬜ todo | |
