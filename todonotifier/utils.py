@@ -156,13 +156,16 @@ def generate_summary(all_todos_objs: Dict[str, List[TODO]], summary_generators: 
             logger.exception(f"Error in generating summary from: {summary_generator_class_instance}")
 
 
-def store_html(html: str, report_name: str, target_dir: str = None) -> None:
+def store_html(html: str, report_name: str, target_dir: str = None) -> str:
     """Function to store html report into files in location `target_dir`
 
     Args:
         html (str): HTML content of the report
         report_name (str): Name with which `html` content needs to be stored into a file with/without extension. Default extension is `.html`
         target_dir (str, optional): Target location(absolute path) where file needs to be stored. Defaults to folder `.reports` in current location.
+
+    Returns:
+        str: Path of the file that was written
     """
     default_folder_name = ".report"
     if not target_dir:
@@ -180,5 +183,7 @@ def store_html(html: str, report_name: str, target_dir: str = None) -> None:
 
     file_path = os.path.join(target_dir, report_name)
 
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write(html)
+
+    return file_path

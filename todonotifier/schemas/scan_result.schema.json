@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TODO Notifier scan result",
+  "description": "Output of `todonotifier scan --format json` (the dictionary returned by `ScanResult.to_dict()`). New optional properties may be added without changing `schema_version`; incompatible changes bump it.",
+  "type": "object",
+  "required": ["schema_version", "root", "generated_at", "scanned_files", "items"],
+  "properties": {
+    "schema_version": {
+      "description": "Version of this format.",
+      "const": 1
+    },
+    "root": {
+      "description": "Absolute path of the directory that the file paths of the items are relative to.",
+      "type": "string"
+    },
+    "generated_at": {
+      "description": "When the scan ran (ISO 8601, with a UTC offset). Its date is the reference day of the status fields of the items.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "scanned_files": {
+      "description": "POSIX paths, relative to `root`, of every file that was scanned, including files without TODOs.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "items": {
+      "description": "The TODOs found, ordered by file and line.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/item" }
+    }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "required": [
+        "file",
+        "line",
+        "tag",
+        "message",
+        "author",
+        "author_source",
+        "due_date",
+        "due_source",
+        "created_date",
+        "is_overdue",
+        "is_stale",
+        "days_past_due",
+        "web_url"
+      ],
+      "properties": {
+        "file": {
+          "description": "POSIX path of the file, relative to `root`.",
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "description": "1-indexed line number.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "tag": {
+          "description": "The tag that was matched, as spelled in the `tags` setting, e.g. TODO or FIXME.",
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "description": "Text after the tag, owner and due date. Untrusted text from the scanned file.",
+          "type": "string"
+        },
+        "author": {
+          "description": "Person responsible: the `@user` or `TAG(owner)` annotation, else the git blame author. Null if unknown.",
+          "type": ["string", "null"]
+        },
+        "author_source": {
+          "description": "Where `author` came from.",
+          "enum": ["annotation", "git_blame", "unknown"]
+        },
+        "due_date": {
+          "description": "Due date (YYYY-MM-DD), or null if there is none.",
+          "type": ["string", "null"],
+          "format": "date"
+        },
+        "due_source": {
+          "description": "Where `due_date` came from: written in the comment as {date} (explicit), computed as the creation date plus `default_due_days` (default), or there is none.",
+          "enum": ["explicit", "default", "none"]
+        },
+        "created_date": {
+          "description": "Date (YYYY-MM-DD, UTC) the line was introduced, from git blame. Null if blame was not available.",
+          "type": ["string", "null"],
+          "format": "date"
+        },
+        "is_overdue": {
+          "description": "True if the explicit due date has passed.",
+          "type": "boolean"
+        },
+        "is_stale": {
+          "description": "True if the default (computed) due date has passed.",
+          "type": "boolean"
+        },
+        "days_past_due": {
+          "description": "Days since the due date if the item is overdue or stale, else 0.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "web_url": {
+          "description": "Link to the line in the repository's web UI, or null if the repository URL or the commit is unknown.",
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}
