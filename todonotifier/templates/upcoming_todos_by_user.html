@@ -1,0 +1,22 @@
+{% for user_name, todos in container.items() %}
+<h3>Upcoming TODOs for {{ user_name }}</h3>
+<p>
+    <table>
+        <caption>User wise summary of upcoming todo items</caption>
+        <tr>
+            <th>Message</th>
+            <th>Module</th>
+            <th>Line No.</th>
+            <th>Completion Date</th>
+        </tr>
+        {% for todo_item in todos %}
+        <tr>
+            <td>{{ todo_item[0] }}</td>
+            <td>{{ todo_item[1] }}</td>
+            <td>{{ todo_item[2] }}</td>
+            <td>{{ todo_item[3] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</p><br>
+{% endfor %}

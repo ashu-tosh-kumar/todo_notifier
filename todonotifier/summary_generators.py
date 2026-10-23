@@ -3,9 +3,12 @@ summary generator. It also provides three default summary generators.
 """
 
 import logging
+import os
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Dict, List, TypeVar
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from todonotifier.constants import DEFAULT_SUMMARY_GENERATORS_ENUM, UNKNOWN_USER_NAME
 from todonotifier.models import TODO
@@ -16,9 +19,14 @@ T = TypeVar("T")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-TABLE_CLOSE_TAG = """
-            </table>
-            """
+# Setup Jinja2 environment
+TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")
+jinja_env = Environment(
+    loader=FileSystemLoader(TEMPLATES_DIR),
+    autoescape=select_autoescape(["html", "xml"]),
+    trim_blocks=True,
+    lstrip_blocks=True,
+)
 
 
 class BaseSummaryGenerator(ABC):
@@ -124,39 +132,10 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
         """Generates the html representation showing module wise summary of todo items"""
         logger.info(f"Generating html for: {self.name}")
 
-        tables = ""
-        for module in self._container:
-            table = """
-            <table>
-                <caption>Module wise summary</caption>
-            <tr>
-                <th>User Name</th>
-                <th>Message</th>
-                <th>Line No.</th>
-                <th>Completion Date</th>
-            </tr>
-            """
+        template = jinja_env.get_template("by_module_summary.html")
+        self._html = template.render(container=self._container)
 
-            for todo_item in self._container[module]:
-                table += f"""
-                <tr>
-                    <td>{todo_item[0]}</td>
-                    <td>{todo_item[1]}</td>
-                    <td>{todo_item[2]}</td>
-                    <td>{todo_item[3]}</td>
-                </tr>
-                """
-            table += TABLE_CLOSE_TAG
-
-            tables += f"""
-            <h3>TODOs for module {module}</h3>
-            <p>
-                {table}
-            </p><br>
-            """
-
-        logger.info(f"HTML generated: {tables}")
-        self._html = tables
+        logger.info(f"HTML generated: {self._html}")
 
 
 class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
@@ -211,39 +190,10 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
         """Generates the html representation of the user-wise summary of expired todo items for all users"""
         logger.info(f"Generating html for: {self.name}")
 
-        tables = ""
-        for user_name in self._container:
-            table = """
-            <table>
-                <caption>User wise summary of expired todo item</caption>
-            <tr>
-                <th>Message</th>
-                <th>Module</th>
-                <th>Line No.</th>
-                <th>Completion Date</th>
-            </tr>
-            """
+        template = jinja_env.get_template("expired_todos_by_user.html")
+        self._html = template.render(container=self._container)
 
-            for todo_item in self._container[user_name]:
-                table += f"""
-                    <tr>
-                        <td>{todo_item[0]}</td>
-                        <td>{todo_item[1]}</td>
-                        <td>{todo_item[2]}</td>
-                        <td>{todo_item[3]}</td>
-                    </tr>
-                    """
-            table += TABLE_CLOSE_TAG
-
-            tables += f"""
-            <h3>Expired TODOs for {user_name}</h3>
-            <p>
-                {table}
-            </p><br>
-            """
-
-        logger.info(f"HTML generated: {tables}")
-        self._html = tables
+        logger.info(f"HTML generated: {self._html}")
 
 
 class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
@@ -297,36 +247,7 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
         """Generates the html representation of the user-wise summary of the upcoming (within a week) todo items for all users"""
         logger.info(f"Generating html for: {self.name}")
 
-        tables = ""
-        for user_name in self._container:
-            table = """
-            <table>
-                <caption>User wise summary of upcoming todo items</caption>
-            <tr>
-                <th>Message</th>
-                <th>Module</th>
-                <th>Line No.</th>
-                <th>Completion Date</th>
-            </tr>
-            """
+        template = jinja_env.get_template("upcoming_todos_by_user.html")
+        self._html = template.render(container=self._container)
 
-            for todo_item in self._container.get(user_name):
-                table += f"""
-                    <tr>
-                        <td>{todo_item[0]}</td>
-                        <td>{todo_item[1]}</td>
-                        <td>{todo_item[2]}</td>
-                        <td>{todo_item[3]}</td>
-                    </tr>
-                    """
-            table += TABLE_CLOSE_TAG
-
-            tables += f"""
-            <h3>Upcoming TODOs for {user_name}</h3>
-            <p>
-                {table}
-            </p><br>
-            """
-
-        logger.info(f"HTML generated: {tables}")
-        self._html = tables
+        logger.info(f"HTML generated: {self._html}")
