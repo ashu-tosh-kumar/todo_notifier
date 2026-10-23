@@ -1,5 +1,4 @@
-"""This module provides utility functions used in the application
-"""
+"""This module provides utility functions used in the application"""
 
 import os
 import re
