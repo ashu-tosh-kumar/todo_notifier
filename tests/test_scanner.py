@@ -261,3 +261,18 @@ class TestScanResultFields(ScannerTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestScanGitHook(ScannerTestCase):
+    def test_scan_should_call_git_enrichment_only_when_use_git_blame_is_on(self):
+        path = self.write("a.py", "# TODO one\n")
+
+        with patch("todonotifier.scanner.enrich_with_git", side_effect=lambda items, settings, root, today: items) as spy:
+            scan(ScanSettings(paths=[path]), today=TODAY)
+            spy.assert_not_called()
+
+            scan(ScanSettings(paths=[path], use_git_blame=True), today=TODAY)
+
+        spy.assert_called_once()
+        self.assertEqual(os.path.dirname(path), spy.call_args.args[2])
+        self.assertEqual(TODAY, spy.call_args.args[3])
