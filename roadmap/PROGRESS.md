@@ -43,7 +43,7 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | [#172](https://github.com/ashu-tosh-kumar/todo_notifier/pull/172) | ✅ done | Tag and publish pending maintainer, see [RELEASING.md](../RELEASING.md) and "Notes per workstream" below |
 | P0 | Phase 0 review | `roadmap/p0-review` | [#173](https://github.com/ashu-tosh-kumar/todo_notifier/pull/173) | ✅ done | [Phase 0 review notes](#phase-0-review): requirement table, 7 known issues and 13 new findings fixed, what was left |
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | [#174](https://github.com/ashu-tosh-kumar/todo_notifier/pull/174) | ✅ done | See "Notes per workstream" (1.4); maintainer GitHub settings checklist there |
-| 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | | 🟡 in progress | |
+| 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | | ✅ done | See "Notes per workstream" (1.2); decisions A60 to A63 |
 | 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | | ⬜ todo | See decision A3 |
 | 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | | ⬜ todo | |
 | 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | | ⬜ todo | Posting is a maintainer step |
@@ -122,6 +122,10 @@ product and engineering basis. Each one is easy to reverse.
 | A57 | The PyPI `description` does not mention the GitHub Action or pre-commit hook of the spec's example. | Neither exists yet (1.1, 1.2); metadata must not promise them. Update the description when they ship. |
 | A58 | Badges: PyPI version uses shields.io (`pypi/v`) and links to PyPI; Downloads uses `static.pepy.tech/badge/todonotifier` and links to `pepy.tech/projects/todonotifier`. | `pepy.tech/badge/...` answers with a 308 redirect to the static host; using the final URLs avoids a hop that has broken before. All other badge URLs were requested and returned 200 (CI badge reads `passing`, Scorecard badge shows a score). |
 | A59 | The comparison table uses `❌` for "not described in the source" and says so under the table; `⚠️ unverified` where a claim could not be confirmed. | A README not mentioning a feature is weaker evidence than a doc saying it is absent. |
+| A60 | `--fail-on incomplete` is met by an item with `author_source != "annotation"` or `due_source != "explicit"`: the owner must be written in the comment (`@user` or `TODO(user)`) and the date as `{date}`. A `git blame` author and a default due date do not count. It is a valid `fail_on` in the config file too (`FAIL_ON_CHOICES`). The message counts the items. | The strict hook asks for what the author wrote; blame is off in the hook anyway. |
+| A61 | `--blame` was added; `--no-blame` and `--blame` share `dest="blame"` (last one wins, neither is exclusive). | pre-commit appends `args` after `entry`, and a flag in `entry` cannot be removed, so the hook ships `--no-blame` and a consumer undoes it with `args: [--blame]`. A later `--fail-on` wins by argparse's normal rule. |
+| A62 | Files named on the command line obey `exclude_dirs` (the directories between the file and the scan root) as well as `exclude_files`, through the same `_is_excluded` as the directory listing. When files are named and every path is inside the current directory, config discovery starts at the current directory instead of the first path. | Before this, `scan tests/x.py` ignored `exclude_dirs = ["tests"]`, and pre-commit would have flagged files a plain `scan .` skips. Passing a file from a nested package could silently use that package's config for all files. Paths outside the current directory keep the old behavior (first path). |
+| A63 | A pre-commit run with nothing to scan (all files excluded, binary or of an unknown extension) prints the existing one-line `No files were scanned...` hint and exits 0; it was not made silent. | pre-commit hides the output of a passing hook, and the hint is useful for `scan wrongdir`. |
 
 ## Notes per workstream
 
@@ -417,6 +421,41 @@ New findings:
 
 716 tests pass (670 before the review); `coverage report` is 100% (2541 statements, `fail_under = 100` holds); `black --check .`, `isort --check-only .`,
 `flake8 . --config ./tox.ini` and `pre-commit run --all-files` are clean; `todonotifier scan . --fail-on expired --format github` on this repo exits 0.
+
+### 1.2 pre-commit hook
+
+Built: `.pre-commit-hooks.yaml` (hooks `todonotifier`: `scan --fail-on expired --no-blame`, and `todonotifier-strict`: `scan --fail-on incomplete --no-blame`; both
+`language: python`, `types: [text]`, `pass_filenames`, `require_serial`), `--fail-on incomplete`, `--blame`, `exclude_dirs` for named files and
+config discovery from the current directory for named files (A60 to A63), README "pre-commit" section (copy-paste config with `rev: v2.1.0`,
+`args` customisation, Ruff TD note) and changelog, AGENTS.md. Tests: `tests/test_pre_commit_hooks.py` (loads the YAML with PyYAML, which comes with
+`pre-commit` in the dev environment, so no new dependency; asserts ids, entries, settings and runs each entry through `main`), and in
+`tests/test_cli.py` the classes `TestFailOnIncomplete`, `TestBlameFlag`, `TestExplicitFiles` (subprocess call count for 10 files: one `ls-files`, no
+blame; config from the root; exclusions; unknown extensions and binary files; zero files). 758 tests, 100% line coverage, black, isort, flake8 and
+`pre-commit run --all-files` clean; `todonotifier scan . --fail-on expired` exits 0.
+
+Acceptance (pre-commit 4.3.0, network available, 2026-10-23):
+- `pre-commit try-repo . todonotifier --files tests/sample_test_file.py` in this repo (committed HEAD): `todonotifier (overdue TODOs)....Passed`, exit 0, because
+  this repo's config excludes `tests`.
+- The same from a throw-away git repo that holds only `tests/sample_test_file.py` and no config (`pre-commit try-repo <this repo> todonotifier --files ...`):
+  `Failed`, exit 1, with a table of 35 TODOs of which 14 are overdue (the sample has explicit dates in 2022 and 2026). `todonotifier-strict` fails too (exit 1).
+  The failure output is the full table of the staged files plus the `--fail-on` line, and two warnings for the sample's unparseable dates.
+- Timing, 10 files (6 modules of the package, `README.md`, `pyproject.toml`, `AGENTS.md`, `CONTRIBUTING.md`; 4,689 lines), best of 5:
+  `todonotifier scan --fail-on expired --no-blame <10 files>` **0.19 s** (0.19 to 0.29); with `--blame` 0.22 s (fresh one-commit repo, so blame is cheap here);
+  `pre-commit run todonotifier --files <10 files>` with the hook environment already installed **0.39 s** (0.39 to 0.45; 0.39 s with `args: [--blame, --fail-on, stale]`).
+  `pre-commit try-repo` takes about 5 s because it clones and installs the environment on every call; the first normal run installs the environment once (a few seconds).
+  The target of 2 s is met by a wide margin.
+
+Deviations and notes:
+- The brief names `Claude Opus 5.5` in the commit trailer; the session's own attribution reminder says `Claude Sonnet 5.5`, which is used.
+- `todonotifier-strict` fails on items it does not need to show: the table lists every TODO in the staged files, not only the incomplete ones. Fine for a hook (the exit line says how many), but a `--only-failing` output option could be a follow-up.
+- Ruff `TD002`/`TD003` overlap is explained in the README; no code depends on Ruff.
+- `pyyaml` is not a declared dev dependency (it arrives with `pre-commit`, already a dev dependency); declare it if `pre-commit` is ever dropped.
+
+Follow-ups:
+- 1.3 (docs): the quickstart step "add the pre-commit hook" can link the README section (`#pre-commit`). The PyPI `description` (A57) can now mention the hook; the GitHub Action (1.1) is still to come.
+- The maintainer must tag `v2.1.0` before `rev: v2.1.0` in the README resolves (RELEASING.md); until then use the commit SHA.
+- This repository does not use its own hook in `.pre-commit-config.yaml` (it would need `repo: local` or a published tag); consider it after the release.
+- The hook scans whole files, not only the staged lines (`--since` needs a ref; `HEAD` would also count unstaged edits). Staged-lines-only would be a separate feature.
 
 ### 1.4 Discoverability quick wins
 

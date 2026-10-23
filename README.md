@@ -232,8 +232,8 @@ repos:
 Both hooks scan only the files pre-commit passes (one process, one `git ls-files` call, no walk of the repository). Binary files and files with
 an unknown extension are skipped, and so is anything your config excludes (`exclude_dirs`, `exclude_files`, `.gitignore`). The config file of the
 repository root (`[tool.todonotifier]` in `pyproject.toml`, or `.todonotifier.toml`) applies as usual, so `tags`, `extensions` and
-`require_comment` work in the hooks too. The first run installs the tool in a pre-commit environment; after that the hook takes well under a
-second for a typical commit (measured on about 10 files). Only the TODOs in the staged files are looked at, but the whole file counts, not only the
+`require_comment` work in the hooks too. The first run installs the tool in a pre-commit environment; after that the hook takes about 0.4 s for a
+commit of 10 files (measured, `pre-commit run`, blame off). Only the TODOs in the staged files are looked at, but the whole file counts, not only the
 lines you changed.
 
 **Blame is off by default** so the hook stays fast. The expired check only uses dates written in the comment, so it does not need blame. Turn blame on
