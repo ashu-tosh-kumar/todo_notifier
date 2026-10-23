@@ -1,0 +1,40 @@
+{
+  "text": "TODO digest: 10 open, 4 overdue, 3 stale, 2 due this week, 4 unowned, 2 new",
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "TODO digest 2026-05-01"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*10* open  |  *4* overdue  |  *3* stale  |  *2* due this week  |  *4* unowned  |  *2* new"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Overdue (4)*\n*alice* (2)\n• <https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/app.py#L10|src/app.py:10> Remove the legacy path (30 days overdue)\n• <https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/app.py#L99|src/app.py:99> Handle &lt;None&gt; &amp; empty input (10 days overdue)\n*bob* (1)\n• <https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/db.py#L5|src/db.py:5> Add an index (60 days overdue)\n_...and 1 more_"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Stale (3)*\n*alice* (1)\n• <https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/old.py#L3|src/old.py:3> Rewrite this module (120 days stale)\n*bob* (1)\n• <https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/api.py#L12|src/api.py:12> Paginate the list endpoint (11 days stale)\n*Unowned* (1)\n• <https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/old.py#L40|src/old.py:40> Split into two functions (20 days stale)"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Due this week (2)*\n*carol* (1)\n• <https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/api.py#L80|src/api.py:80> Cache the lookup (due 2026-05-03)\n*Unowned* (1)\n• <https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/docs/guide.md#L4|docs/guide.md:4> Document the new flags (due 2026-05-08)"
+      }
+    }
+  ]
+}
