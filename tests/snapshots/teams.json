@@ -67,7 +67,7 @@
           },
           {
             "type": "TextBlock",
-            "text": "[src/app.py:99](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/app.py#L99) Handle \\<None\\> \\& empty input (10 days overdue)",
+            "text": "[src/app.py:99](https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/app.py#L99) Handle <None> & empty input (10 days overdue)",
             "spacing": "None",
             "wrap": true
           },

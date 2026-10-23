@@ -334,8 +334,37 @@ class TestTeamsPayload(HttpNotifierTestCase):
 
         body = self._body(ScanResult(items=[item], generated_at=make_scan_result().generated_at))
 
-        self.assertIn("a.py:1 \\[click\\](https://evil.test)", body[-1]["text"].replace("\\\\", "\\"))
-        self.assertNotIn("[click](", body[-1]["text"])
+        self.assertEqual("a.py:1 \uff3bclick\uff3d(https://evil.test) (365 days overdue)", body[-1]["text"])
+        self.assertNotIn("[", body[-1]["text"])
+        self.assertNotIn("\\", body[-1]["text"])  # A backslash escape would be shown as it is
+
+    def test_markdown_in_untrusted_text_is_neutralised_not_backslash_escaped(self):
+        item = make_item("pkg/__init__.py", 4, "**bold** _italic_ `code` my_var_name", "ev*il_", TODAY.replace(year=2025), linked=False)
+
+        body = self._body(ScanResult(items=[item], generated_at=make_scan_result().generated_at))
+        texts = [block["text"] for block in body if "text" in block]
+
+        self.assertIn("**ev\u2217il\uff3f** (1)", texts)  # Our own bold markers stay, the author's characters do not act as Markdown
+        item_text = next(text for text in texts if "init" in text)
+        self.assertEqual(
+            "pkg/\uff3f\uff3finit\uff3f\uff3f.py:4 \u2217\u2217bold\u2217\u2217 \uff3fitalic\uff3f \u02cbcode\u02cb my_var_name (365 days overdue)", item_text
+        )
+
+    def test_links_to_the_line_keep_working(self):
+        item = make_item("src/my_module[1].py", 7, "x", "amy", TODAY.replace(year=2025))
+        item.web_url = "https://github.com/acme/widgets/blob/abc/src/my_module%5B1%5D.py#L7"
+
+        body = self._body(ScanResult(items=[item], generated_at=make_scan_result().generated_at))
+
+        self.assertIn("[src/my_module\uff3b1\uff3d.py:7](https://github.com/acme/widgets/blob/abc/src/my_module%5B1%5D.py#L7) x", body[-1]["text"])
+
+    def test_the_names_of_the_reports_are_neutralised_too(self):
+        notifier = self._prepare(TeamsWebhookNotifier(SECRET_URL))
+
+        notifier.notify([("A_*[b]*_", "<p>x</p>")])
+
+        text = _sent_json(self.urlopen)["attachments"][0]["content"]["body"][0]["text"]
+        self.assertEqual("TODO Notifier generated reports: A\uff3f\u2217\uff3bb\uff3d\u2217\uff3f", text)
 
     def test_new_fact_and_empty_result(self):
         notifier = self._prepare(TeamsWebhookNotifier(SECRET_URL))
