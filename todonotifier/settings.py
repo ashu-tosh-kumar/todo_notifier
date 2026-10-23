@@ -48,6 +48,8 @@ class ScanSettings:
         respect_gitignore (bool): Whether to skip files ignored by git. Defaults to False. Reserved for the detection workstream
         repo_web_url (str | None): Web URL of the repository (e.g. https://github.com/org/repo), used with `commit_sha` to build deep links. Defaults to None
         commit_sha (str | None): Commit the scanned tree corresponds to, used with `repo_web_url` to build deep links. Defaults to None
+        author_aliases (dict[str, str]): Maps git author emails (lower case) to the handle to show instead, filled from `[tool.todonotifier.authors]`
+            in the config file. Defaults to an empty dict. Reserved for the git workstream
     """
 
     paths: list[str] = field(default_factory=lambda: ["."])
@@ -62,6 +64,7 @@ class ScanSettings:
     respect_gitignore: bool = False
     repo_web_url: str | None = None
     commit_sha: str | None = None
+    author_aliases: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Normalizes `extensions` by stripping leading dots, so both "py" and ".py" are accepted"""
