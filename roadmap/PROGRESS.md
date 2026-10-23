@@ -40,8 +40,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | [#169](https://github.com/ashu-tosh-kumar/todo_notifier/pull/169) | ✅ done | See "Notes per workstream" below |
 | 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | [#170](https://github.com/ashu-tosh-kumar/todo_notifier/pull/170) | ✅ done | See "Notes per workstream" below |
 | 0.6 | CLI | `roadmap/0.6-cli` | [#171](https://github.com/ashu-tosh-kumar/todo_notifier/pull/171) | ✅ done | See "Notes per workstream" below |
-| 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | | ✅ done | Tag and publish pending maintainer, see [RELEASING.md](../RELEASING.md) and "Notes per workstream" below |
-| P0 | Phase 0 review | (fixes on the tip branch) | | ⬜ todo | |
+| 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | [#172](https://github.com/ashu-tosh-kumar/todo_notifier/pull/172) | ✅ done | Tag and publish pending maintainer, see [RELEASING.md](../RELEASING.md) and "Notes per workstream" below |
+| P0 | Phase 0 review | `roadmap/p0-review` | | 🟡 in progress | |
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | | ⬜ todo | |
 | 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | | ⬜ todo | |
 | 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | | ⬜ todo | See decision A3 |
