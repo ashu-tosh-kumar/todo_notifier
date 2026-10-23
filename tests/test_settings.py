@@ -22,6 +22,7 @@ class TestScanSettings(unittest.TestCase):
         self.assertFalse(settings.respect_gitignore)
         self.assertIsNone(settings.repo_web_url)
         self.assertIsNone(settings.commit_sha)
+        self.assertEqual({}, settings.author_aliases)
 
     def test_mutable_defaults_should_not_be_shared_between_instances(self):
         first = ScanSettings()
@@ -30,12 +31,14 @@ class TestScanSettings(unittest.TestCase):
         first.paths.append("src")
         first.extensions.append("js")
         first.tags.append("FIXME")
+        first.author_aliases["a@x.com"] = "ashu"
         first.exclude_dirs["NAME"].append("unittest-dir")
         first.exclude_files["NAME"].append("unittest-file")
 
         self.assertEqual(["."], second.paths)
         self.assertEqual(["py"], second.extensions)
         self.assertEqual(["TODO"], second.tags)
+        self.assertEqual({}, second.author_aliases)
         self.assertNotIn("unittest-dir", second.exclude_dirs["NAME"])
         self.assertNotIn("unittest-file", second.exclude_files["NAME"])
         self.assertNotIn("unittest-dir", DEFAULT_EXCLUDE_DIRS["NAME"])
