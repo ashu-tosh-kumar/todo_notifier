@@ -29,6 +29,7 @@ clearance.
 | Rank | Name | Story / tagline | Strengths | Risks found |
 |---|---|---|---|---|
 | 1 (working name) | **Mendo** | *mend* + *do*: "Mend your tech debt." | Invented word, 2 syllables, spelled as said in most languages, sounds like a friendly brand. No developer tool found with this name. | Japanese *mendō* (面倒) means "hassle". That could work as an in-joke (tech debt *is* a hassle), but test it with Japanese speakers. A small Android publisher "Mendo Company" exists in an unrelated field. |
+| 1 (co-candidate, proposed by the maintainer) | **Fragmo** | From *phragmosis*: ant soldiers that block the nest entrance with their heads. "Gatekeeper for your codebase: stop tech debt at the door." | Invented spelling, 2 syllables, written as it sounds, a memorable founder story. Fits the PR-check and gatekeeping feature well. | "Frag" means "kill" in gaming slang, and it suggests *fragment* / *fragile*, which is awkward for a code-health brand. The name needs its story explained before it means anything. One letter away from **FragMob**, a mobile sales-app company with 2015 trademark filings ([Justia](https://trademarks.justia.com/owners/fragmob-llc-3046182)), so check for confusion in class 9. Hearers may spell it "Phragmo". |
 | 2 | **Paydown** | Finance term for repaying debt: "Pay down your tech debt." | Instantly explains the product to English speakers. No software product found with the name. | Descriptive, so harder to trademark. English-centric. A compound word is weaker on "spell in any language". |
 | 3 | **Mora** | Latin and Romance-language term for late payment or default (debt "in mora"). | 4 letters, pronounced the same nearly everywhere, a strong story for overdue debt. No developer tool found with the name. | A common word in several languages (it also means blackberry in Spanish), so `.com` and trademarks are likely crowded. It needs a modifier such as `getmora` or `mora.dev`. |
 
@@ -38,7 +39,8 @@ startup, and easily confused with "duly"), **Cruft** (clashes with the `cruft` P
 for cookiecutter templates), and **Pendo** (an established product analytics company).
 
 ### Scope
-For each shortlisted name, in rank order, stop at the first name that passes every check:
+Run every check on **both** Mendo and Fragmo, and compare them side by side in the recall
+test (step 5). Then continue down the list only if both fail. For each name:
 1. **Trademark:** search classes 9 (software) and 42 (SaaS) in
    [IP India public search](https://ipindiaservices.gov.in/eregister/), the USPTO and the
    WIPO Global Brand Database. Record exact and similar marks. ⚠️ Before spending money on
