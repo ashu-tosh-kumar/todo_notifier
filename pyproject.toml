@@ -26,9 +26,20 @@ skip = ["migrations", ".env", "venv", ".local", ".history", ".vscode"]
 source = ["todonotifier"]
 branch = false
 
+[tool.coverage.report]
+# The package is at 100% line coverage; keep it there (see AGENTS.md).
+fail_under = 100
+
+# This project scans itself in CI (`todonotifier scan . --fail-on expired --format github`).
+# The tests and their fixtures hold deliberate markers, so they are excluded.
+[tool.todonotifier]
+
+[tool.todonotifier.exclude_dirs]
+name = ["tests", "sample_reports"]
+
 [tool.poetry]
 name = "todonotifier"
-version = "2.0.0"
+version = "2.1.0"
 description = "Library to setup automatic TODO Notifications in code"
 authors = ["Ashutosh <37182127+ashu-tosh-kumar@users.noreply.github.com>"]
 license = "MIT"

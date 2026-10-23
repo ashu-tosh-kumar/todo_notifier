@@ -143,3 +143,6 @@ docs/
 .todo
 
 # AI based support systems
+
+# Reports written by `todonotifier report` / `driver.run`
+.report/
