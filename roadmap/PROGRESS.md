@@ -28,10 +28,13 @@ at the end of every workstream, in the same branch as the work.
 
 ## Status
 
+Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
+
+
 | # | Workstream | Branch | PR | Status | Notes |
 |---|---|---|---|---|---|
-| - | Roadmap docs + progress file | `claude/serene-hopper-qkult2` | | 🟡 in progress | Merged latest `development` |
-| 0.1 | Foundation | `roadmap/0.1-foundation` | | ⬜ todo | |
+| - | Roadmap docs + progress file | `claude/serene-hopper-qkult2` | [#165](https://github.com/ashu-tosh-kumar/todo_notifier/pull/165) | ✅ done | Merged latest `development` |
+| 0.1 | Foundation | `roadmap/0.1-foundation` | | 🟡 in progress | |
 | 0.2 | Config file | `roadmap/0.2-config-file` | | ⬜ todo | |
 | 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | | ⬜ todo | |
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | | ⬜ todo | |
