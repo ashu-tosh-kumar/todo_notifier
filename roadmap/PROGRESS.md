@@ -43,8 +43,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | [#172](https://github.com/ashu-tosh-kumar/todo_notifier/pull/172) | ✅ done | Tag and publish pending maintainer, see [RELEASING.md](../RELEASING.md) and "Notes per workstream" below |
 | P0 | Phase 0 review | `roadmap/p0-review` | [#173](https://github.com/ashu-tosh-kumar/todo_notifier/pull/173) | ✅ done | [Phase 0 review notes](#phase-0-review): requirement table, 7 known issues and 13 new findings fixed, what was left |
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | [#174](https://github.com/ashu-tosh-kumar/todo_notifier/pull/174) | ✅ done | See "Notes per workstream" (1.4); maintainer GitHub settings checklist there |
-| 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | | ✅ done | See "Notes per workstream" (1.2); decisions A60 to A63 |
-| 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | | ⬜ todo | See decision A3 |
+| 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | [#175](https://github.com/ashu-tosh-kumar/todo_notifier/pull/175) | ✅ done | See "Notes per workstream" (1.2); decisions A60 to A63 |
+| 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | | 🟡 in progress | See decision A3 |
 | 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | | ⬜ todo | |
 | 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | | ⬜ todo | Posting is a maintainer step |
 | P1 | Phase 1 review | | | ⬜ todo | |
