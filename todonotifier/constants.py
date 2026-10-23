@@ -8,6 +8,7 @@ DEFAULT_EXCLUDE_DIRS = {
     ],
     "NAME": [
         "__pycache__",
+        ".git",  # Version control
         ".env",  # Environments
         ".venv",  # Environments
         "env",  # Environments
@@ -89,6 +90,8 @@ DEFAULT_EXCLUDE_FILES = {
 UNKNOWN_USER_NAME = "JANE_DOE"
 
 DEFAULT_COMPLETION_DATE = "9999-12-25"
+
+DEFAULT_TAG = "TODO"
 
 
 class DEFAULT_SUMMARY_GENERATORS_ENUM:

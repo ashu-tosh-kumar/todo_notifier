@@ -37,7 +37,7 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.1 | Foundation | `roadmap/0.1-foundation` | [#166](https://github.com/ashu-tosh-kumar/todo_notifier/pull/166) | ✅ done | See "Notes per workstream" below |
 | 0.2 | Config file | `roadmap/0.2-config-file` | [#167](https://github.com/ashu-tosh-kumar/todo_notifier/pull/167) | ✅ done | See "Notes per workstream" below |
 | 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | [#168](https://github.com/ashu-tosh-kumar/todo_notifier/pull/168) | ✅ done | See "Notes per workstream" below |
-| 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | | 🟡 in progress | |
+| 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | | ✅ done | See "Notes per workstream" below |
 | 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | ⬜ todo | |
 | 0.6 | CLI | `roadmap/0.6-cli` | | ⬜ todo | |
 | 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | | ⬜ todo | Tag/publish is a maintainer step |
@@ -83,6 +83,11 @@ product and engineering basis. Each one is easy to reverse.
 | A18 | Repo web URL and commit SHA are detected (`GITHUB_*` env vars, then `origin` / `HEAD`) per value, only when `ScanSettings.repo_web_url` / `commit_sha` is None and `use_git_blame` is on. With blame on, `web_url` is always rebuilt from the repo-relative path. Non-hosted remotes (local paths, `file://`) give no URL. | Deep links with zero config; correct when scanning a subdirectory. |
 | A19 | Blame is limited to the TODO lines with repeated `-L n,n` (whole-file blame above 200 TODO lines in one file). `blame_file(root, rel_path, lines=None, today=None)`; `blame_files(root, rel_paths, max_workers=8, lines_by_file=None, today=None)`. Only the repository containing the scan root is used: files in a nested repo or submodule are treated as uncommitted. | Measured: `-L` is 25% faster on 1,500-line files. |
 | A20 | If blame has no author name, the author email is used; items on uncommitted lines keep `author=None`, `author_source="unknown"` but get `created_date=today` and a default due date (D4 only withholds it when blame is unavailable). `GITHUB_SHA` is used only if it is a 40 or 64 digit hex string. | Matches the brief; avoids garbage in deep links. |
+| A21 | `TAG(owner)` (Google style, Ruff TD002) is accepted as an owner annotation equal to `@owner` (`author_source="annotation"`), and one `:` between the tag, owner, date or user and the message is dropped. This "extended syntax" is a keyword-only `extended_syntax` argument of `parse_files_for_todo_items`, on in `scan()` and off in `driver.run` and for direct callers. | `class TODO:` in `tests/sample_test_file.py` is asserted to give the message `:`; dropping the colon changes it to an empty message. Off keeps the legacy path byte-compatible. An owner must start with a letter, so `TODO(#123)` or `TODO(crbug.com/1)` stay in the message. If both `(owner)` and `@user` are present, the owner in parentheses wins. |
+| A22 | `CLI_DEFAULTS` gets `require_comment = True` (the library default stays False). | Precision on first run matters more than recall for adoption, and Markdown prose or fenced samples (or strings) should not be reported. Users can set `require_comment = false`. |
+| A23 | The matched tag is reported as spelled in `tags` (so `todo` is reported as `TODO` with `ignore_case`). Only one item per line: the first tag (inside a comment, when required) wins and the rest of the line is its message. | Stable grouping by tag; the existing one-item-per-line rule. |
+| A24 | With `require_comment`, text in strings (including Python docstrings and other multi-line strings) is not a comment, so TODOs in docstrings are not reported. Markdown fenced code is skipped entirely. A `#` in YAML and shell counts only at the line start or after whitespace. The item text stops at the end of the comment (`*/`, `-->` are not in messages). | Pragmatic precision rules, documented in the `languages.py` docstring. Extra extensions beyond the spec were added to the syntax table (`pyi`, `bash`, `mjs`, `cjs`, `kts`, `cc`, `cxx`, `hh`, `htm`), and `#` for php, `/* */` for sql and `--[[ ]]` for lua. |
+| A25 | `respect_gitignore` runs one `git ls-files -z --cached --others --exclude-standard` per scan directory (cwd = that directory) and one with a pathspec per individually named file; results are intersected with extensions and exclusions (including `ABS_PATH`). Outside a repository, or if git fails or times out (60 s), the tree is walked. `.git` is in `DEFAULT_EXCLUDE_DIRS`. Skipped binary files do not appear in `scanned_files`. | Matches the spec; binary files were never "scanned". |
 
 ## Notes per workstream
 
@@ -154,3 +159,34 @@ Follow-ups:
 - 1.1 (Action): reuse `git_meta.WARNING_SHALLOW_CLONE` text, and set `fetch-depth: 0` in the Action docs. Safe-directory problems in containers ("dubious ownership") make git fail, which currently shows as the "not a git repository" warning; the Action should run `git config --global --add safe.directory`.
 - 0.6 CLI: set `ScanSettings.use_git_blame` / `default_due_days` from `CLI_DEFAULTS` (already done by `resolve_settings`); `--fail-on stale` should use `TodoItem.is_stale`.
 - Submodules and nested repos are not blamed with their own repository (A19).
+
+### 0.4 Tags, languages and detection accuracy
+
+Built: word-boundary tag matching (one compiled regex per tag set, escaped, longest first, `_` is a word character) in
+`todo_notifier.py`; `tags` / `require_comment` / `extended_syntax` arguments on `parse_files_for_todo_items` (old positional signature unchanged);
+`models.TODO.tag` and `TodoItem.from_legacy` using it; `languages.COMMENT_SYNTAX`, `get_comment_syntax`, `CommentLexer`, `CommentIndex`;
+`git_meta.list_git_files`; scanner wiring for `tags`, `ignore_case`, `require_comment` and `respect_gitignore`; `.git` in `DEFAULT_EXCLUDE_DIRS`; binary
+skip and `errors="replace"`; `tests/fixtures/languages/` (10 languages: py, js, ts, go, java, sql, html, md, rs, yaml; 41 expected items). Decisions A21 to A25.
+
+Existing tests touched (not silently):
+- `tests/test_scanner.py::test_scan_should_find_the_same_todos_as_parse_files_for_todo_items` compared `scan()` with the legacy parser over
+  `tests/sample_test_file.py`. They now differ on exactly one line, `class TODO:` (line 47): legacy message `:`, extended message `""`. The test now calls
+  the parser with `extended_syntax=True`, so it still checks that `scan` uses the shared parser.
+- `tests/test_settings_file.py` (two tests) asserted the 0.2 `CLI_DEFAULTS`; `require_comment: True` was added to the expected values (decision A22).
+- `tests/test_todo_notifier.py::...streaming_parser_should_handle_exception_in_reading_file` still passes, but it now fails earlier (in the binary check)
+  instead of in the streaming parser's own `open`; a new test covers that handler by patching `CommentLexer`.
+All other existing tests pass unchanged. `DEFAULT_EXCLUDE_DIRS` is not asserted exactly anywhere.
+
+Self-scan (`scan(resolve_settings({}, None, start="."))`, 80 files): 80 items, 79 in `tests/` (35 + 2 from `sample_test_file*.py`, 41 from the language
+fixtures, 1 from a comment in `test_scanner.py` that mentions the tag in prose) and 1 in `todonotifier/todo_notifier.py` (also a comment that mentioned the tag
+in prose; both comments were reworded). No hits in the README, AGENTS.md or `roadmap/*.md`. A tag in the middle of a comment sentence is reported by design.
+
+Follow-ups:
+- 0.6 CLI: `--tags`, `--ignore-case`, `--no-require-comment` and `--no-gitignore` flags map onto the `ScanSettings` fields (`resolve_settings` overrides).
+  `scan()` raises `ScanException` for invalid tags.
+- A pre-commit run with many staged files runs one `git ls-files` per file (about 4 ms each); batching them by directory is possible if it matters.
+- Known heuristic gaps (see the `languages.py` docstring): nested block comments (Rust, Swift, Scala), Ruby `=begin`/`=end`, heredocs, `<script>`/`<style>`
+  inside HTML, Python docstrings are not reported with `require_comment` (decision A24; revisit if users write TODOs in docstrings).
+- The legacy `driver.run` path still reports `TODO(owner): msg` with the message `(owner): msg`. Switching it to the extended syntax would be a
+  behavior change for existing users (and for the `class TODO:` expectation).
+- `TODO_REGEX_PATTERN` is kept as an unused constant for import compatibility; remove it in a major version.

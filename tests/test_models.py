@@ -62,6 +62,15 @@ class TestTodo(unittest.TestCase):
     def test_module_should_return_correct_module(self):
         self.assertAlmostEqual(self._dummy_module, self._todo.module)
 
+    def test_tag_should_default_to_todo_and_not_change_the_str_representation(self):
+        todo = TODO("msg", USER("u"), "", "m", POSITION(1))
+        fixme = TODO("msg", USER("u"), "", "m", POSITION(1), tag="FIXME")
+
+        self.assertEqual("TODO", todo.tag)
+        self.assertEqual("FIXME", fixme.tag)
+        self.assertTrue(str(fixme).startswith("TODO: "))
+        self.assertNotIn("FIXME", str(fixme))
+
     def test_position_should_return_correct_position(self):
         self.assertAlmostEqual(self._dummy_position, self._todo.position)
 

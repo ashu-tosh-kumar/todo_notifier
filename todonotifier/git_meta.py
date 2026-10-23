@@ -31,6 +31,7 @@ logger = get_logger(__name__)
 
 BLAME_TIMEOUT_SECONDS = 60
 GIT_TIMEOUT_SECONDS = 10
+LIST_FILES_TIMEOUT_SECONDS = 60
 DEFAULT_BLAME_WORKERS = 8
 # Above this many lines in one file, a plain whole-file blame is used instead of one `-L` range per line, to keep the command line short
 MAX_BLAME_RANGES = 200
@@ -143,6 +144,37 @@ def find_git_root(path: str) -> Optional[str]:
         str | None: Absolute path of the repository root, or None if `path` is not in a repository, git is not installed or it timed out
     """
     return _locate_git_root(path)[0]
+
+
+def list_git_files(directory: str, pathspec: Optional[str] = None) -> Optional[list[str]]:
+    """Lists the files below `directory` that git does not ignore: tracked files plus untracked ones that `.gitignore` does not exclude
+
+    This is `git ls-files -z --cached --others --exclude-standard` run in `directory`, so only the files of that directory and its subdirectories
+    are listed. Files that are tracked but deleted from disk are left out.
+
+    Args:
+        directory (str): Directory inside a git repository
+        pathspec (str | None, optional): Limits the listing to this one path relative to `directory`, e.g. a file name. Defaults to None
+
+    Returns:
+        list[str] | None: Sorted absolute paths of the files, or None if `directory` is not in a repository, git is not installed, or the command
+            failed or timed out. In that case callers should fall back to walking the directory tree
+    """
+    if find_git_root(directory) is None:
+        return None
+
+    args: list[str] = ["ls-files", "-z", "--cached", "--others", "--exclude-standard"]
+    if pathspec is not None:
+        args += ["--", pathspec]
+
+    process = _run_git(args, directory, LIST_FILES_TIMEOUT_SECONDS)
+    if process is None or process.returncode != 0:
+        return None
+
+    relative_paths: list[str] = [os.fsdecode(entry) for entry in process.stdout.split(b"\0") if entry]
+    absolute_paths: set[str] = {os.path.join(directory, relative_path) for relative_path in relative_paths}
+
+    return sorted(path for path in absolute_paths if os.path.isfile(path))
 
 
 def is_shallow_repository(root: str) -> bool:
