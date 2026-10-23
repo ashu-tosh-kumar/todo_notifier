@@ -2,12 +2,12 @@
 
 This is the canonical, vendor-neutral instruction set for any AI agent working in this repository. Tool-specific adapter files (for example `CLAUDE.md`) only point here.
 
-`todonotifier` is a small, published PyPI library and command line tool (Poetry, Python `^3.10`) that scans a codebase for `TODO` comments and produces HTML reports and optional email, chat and webhook notifications. For features, usage, and the user-facing changelog, read [README.md](README.md); do not restate them here.
+`todonotifier` is a small, published PyPI library and command line tool (Poetry, Python `^3.10`) that scans a codebase for `TODO` comments and produces HTML reports and optional email, chat and webhook notifications. For features, usage, and the user-facing changelog, read [README.md](README.md); for the contributor setup, the checks, the commit style and how to add a language or a notifier, read [CONTRIBUTING.md](CONTRIBUTING.md). Do not restate either here.
 
 ## Commands
 
 ```bash
-poetry install --with dev        # set up (README suggests a pyenv virtualenv on 3.10)
+poetry install --with dev        # set up (see CONTRIBUTING.md; a pyenv virtualenv on 3.10 is suggested)
 pre-commit install               # black, flake8, isort, and a few hygiene hooks
 
 pytest tests                                          # full suite
@@ -64,6 +64,7 @@ Connect.pull_repository  →  utils.get_files_in_dir  →  todo_notifier.parse_f
 - `sample_reports/` is tracked HTML output. Do not hand-edit it; regenerate it only on purpose. `.report/` (the default output folder of `driver.run` and `todonotifier report`) is git-ignored: never commit it.
 - This repository scans itself: `[tool.todonotifier]` in `pyproject.toml` excludes `tests/` and `sample_reports/` (deliberate TODOs), so a real TODO added anywhere else shows up in `todonotifier scan .`, and an expired one fails CI. Keep the package at 100% line coverage (`fail_under = 100`).
 - 2.0.0 was never published (PyPI has 1.4.0 as the latest release); its notes are merged into the `v2.1.0` changelog section, which carries the breaking changes (`BaseConfig` requires `file_extensions`; `get_files_in_dir` takes `extensions: List[str]`). Record user-visible or API changes in the README changelog under the current unreleased version, and bump `pyproject.toml` only when asked. Tags and releases are maintainer steps ([RELEASING.md](RELEASING.md)).
+- `pyproject.toml` keeps the classic `[tool.poetry]` layout on purpose: Poetry 2 prints deprecation warnings for it (`poetry check` still passes), but moving to `[project]` also changes classifier enrichment and `poetry build` output, so do it as its own change. PyPI metadata (description, keywords, classifiers, `[tool.poetry.urls]`) is checked with `poetry build` and `unzip -p dist/*.whl '*/METADATA'`; delete `dist/` afterwards.
 - `tests/test_git_meta.py` builds real temporary git repos with fixed `GIT_AUTHOR_*`/`GIT_COMMITTER_*` and `GIT_CONFIG_GLOBAL=/dev/null`, and clears `GITHUB_SERVER_URL`/`GITHUB_REPOSITORY`/`GITHUB_SHA` (CI sets them). It is skipped when `git` is not on PATH. The `todonotifier` logger has `propagate = False`, so assert logs with `assertLogs("todonotifier.git_meta")`, not on the root logger.
 - `tests/fixtures/languages/` holds one sample file per language with real TODOs and decoys. Their line numbers are asserted on in `tests/test_languages.py`; `.py` files in there are formatted by black and flake8 like any other, and they are scanned by self-scans of the repository.
 - Notifier secrets rule: a webhook URL, a header value, a password or a response body must never reach a log message, an exception message or a `repr`. `_post_json` raises `NotificationError` outside the `except` block (no chained cause) and logs only the notifier label, status and attempt. Tests assert this with `assertLogs("todonotifier.notifier")`. Custom headers are added with `add_unredirected_header` so they are not forwarded on redirects. Keep it that way when adding a notifier.

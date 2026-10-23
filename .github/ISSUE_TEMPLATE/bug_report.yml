@@ -1,0 +1,75 @@
+name: Bug report
+description: Something is wrong, a TODO is missed or wrongly reported, or a command fails.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please check the [README](https://github.com/ashu-tosh-kumar/todo_notifier#readme) and the open issues first.
+        **Never paste secrets** (webhook URLs, passwords, tokens). Config files only hold the *names* of environment variables.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you run, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The smallest example that shows the problem, ideally the command and a few lines of the file with the TODO.
+      placeholder: |
+        1. A file `app.py` containing `# TODO {2020-01-01} @alice fix this`
+        2. `todonotifier scan . --fail-on expired`
+        3. Exit code is 0 but I expected 1
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output or error
+      description: The command output, and the output with `-v` if it helps. Remove anything private.
+      render: shell
+  - type: textarea
+    id: config
+    attributes:
+      label: Config file
+      description: The `[tool.todonotifier]` table or `.todonotifier.toml`, if you use one. Remove anything private.
+      render: toml
+  - type: input
+    id: version
+    attributes:
+      label: TODO Notifier version
+      description: Output of `todonotifier --version`
+      placeholder: todonotifier 2.1.0
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version and operating system
+      placeholder: Python 3.12, Ubuntu 24.04
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where does it run?
+      options:
+        - Local terminal
+        - GitHub Actions
+        - Other CI
+        - pre-commit
+        - Python API
+        - Other
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues
+          required: true
+        - label: I removed secrets and private data from this report
+          required: true
