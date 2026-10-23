@@ -6,18 +6,20 @@
 [![Python Support](https://img.shields.io/pypi/pyversions/todonotifier.svg)](https://pypi.org/project/todonotifier/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Downloads](https://pepy.tech/badge/todonotifier)](https://pepy.tech/project/todonotifier)
-[![CI](https://img.shields.io/github/actions/workflow/status/ashu-tosh-kumar/todo_notifier/python-app.yml?label=CI)](https://github.com/ashu-tosh-kumar/todo_notifier/actions/workflows/python-app.yml)\n[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ashu-tosh-kumar/todo_notifier?label=openssf%20scorecard)](https://scorecard.dev/viewer/?uri=github.com/ashu-tosh-kumar/todo_notifier)\n[![Code style: black](https://img.shields.io/badge/code%20style-black-000000)](https://github.com/psf/black)\n[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![CI](https://img.shields.io/github/actions/workflow/status/ashu-tosh-kumar/todo_notifier/python-app.yml?label=CI)](https://github.com/ashu-tosh-kumar/todo_notifier/actions/workflows/python-app.yml)
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ashu-tosh-kumar/todo_notifier?label=openssf%20scorecard)](https://scorecard.dev/viewer/?uri=github.com/ashu-tosh-kumar/todo_notifier)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000)](https://github.com/psf/black)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 <!-- OpenSSF Best Practices: register at https://www.bestpractices.dev/en/projects/new then add: [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/PROJECT_ID/badge)](https://www.bestpractices.dev/projects/PROJECT_ID) -->
 <!-- [![GitHub stars](https://img.shields.io/github/stars/ashu-tosh-kumar/todo_notifier.svg)](https://github.com/ashu-tosh-kumar/todo_notifier/stargazers) -->
 
-**Automated TODO tracking and notifications for your codebase**
+**Find every TODO in your code, see who owns it and how old it is, and fail CI when one expires.**
 
-Never forget a TODO again! Automatically parse, track, and get notified about TODO items
-in your code.
-
-[Installation](#installation) •
+[Quick Start](#quick-start) •
 [Command line](#command-line) •
-[Quick Start](#quick-start-python-api) •
+[Configuration](#configuration-file) •
+[Notifications](#notifications) •
+[Python API](#python-api) •
 [Documentation](https://ashu-tosh-kumar.github.io/todo_notifier/) •
 [Contributing](#contributing)
 
@@ -42,35 +44,65 @@ src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f
   single files
 - **Export Options** - Save reports as HTML files for sharing and archiving
 
-## Installation
+## Quick Start
 
-```bash
-pipx install todonotifier        # the command line tool, in its own environment
-# or
-pip install todonotifier         # also gives you the Python API
-```
+1. **Install** the command line tool in its own environment (`pip install todonotifier` also works and gives you the
+   [Python API](#python-api)):
+
+   ```bash
+   pipx install todonotifier
+   ```
+
+2. **Scan** your code. It needs no config: it finds `TODO`, `FIXME`, `HACK` and `XXX` in comments of the common languages,
+   skips what `.gitignore` excludes, and asks `git blame` who wrote each line and when.
+
+   ```text
+   $ todonotifier scan .
+   LOCATION          TAG   OWNER  DUE                     MESSAGE
+   src/app.py:10     TODO  alice  2026-04-01 overdue 30d  Remove the legacy path
+   src/old.py:3      TODO  alice  2026-01-01 stale 120d   Rewrite this module
+   src/api.py:80     TODO  carol  2026-05-03 due in 2d    Cache the lookup
+   src/misc.py:1     TODO  -      -                       Think about naming
+
+   4 TODOs · 1 overdue · 1 stale · 1 unowned
+   ```
+
+3. **Configure** (optional): write a commented starter config, then edit it (see [Configuration file](#configuration-file)).
+
+   ```bash
+   todonotifier init
+   ```
+
+4. **Run it in CI** and fail the build when a TODO has expired, with annotations on the pull request. A minimal GitHub
+   Actions workflow (`fetch-depth: 0` is needed for `git blame`):
+
+   ```yaml
+   name: TODOs
+   on: [push, pull_request]
+   permissions:
+     contents: read
+   jobs:
+     todos:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v7
+           with:
+             fetch-depth: 0
+         - uses: actions/setup-python@v6
+           with:
+             python-version: "3.12"
+         - run: pip install todonotifier
+         - run: todonotifier scan . --fail-on expired --format github
+   ```
+
+   An undated TODO becomes **stale** 90 days after it was added; a TODO whose `{date}` has passed is **overdue**.
+   `--fail-on expired` fails on overdue TODOs only. See [Command line](#command-line) for all flags and formats.
 
 ## Command line
 
-```bash
-todonotifier scan .              # every TODO, FIXME, HACK and XXX in your code, with owners and ages
-todonotifier init                # optional: write a commented starter config
-```
-
-`todonotifier scan .` needs no config. It scans the common languages (see "Configuration file"), skips what
+`todonotifier scan .` needs no config (see [Quick Start](#quick-start)). It scans the common languages (see "Configuration file"), skips what
 `.gitignore` excludes, only counts tags inside comments, and asks `git blame` who wrote each line and when. An
 undated TODO becomes **stale** 90 days after it was added; a TODO whose `{date}` has passed is **overdue**.
-
-```text
-$ todonotifier scan .
-LOCATION          TAG   OWNER  DUE                     MESSAGE
-src/app.py:10     TODO  alice  2026-04-01 overdue 30d  Remove the legacy path
-src/old.py:3      TODO  alice  2026-01-01 stale 120d   Rewrite this module
-src/api.py:80     TODO  carol  2026-05-03 due in 2d    Cache the lookup
-src/misc.py:1     TODO  -      -                       Think about naming
-
-4 TODOs · 1 overdue · 1 stale · 1 unowned
-```
 
 Colors are used only when stdout is a terminal, `NO_COLOR` is unset and there is no `--output`.
 
@@ -84,7 +116,7 @@ Colors are used only when stdout is a terminal, `NO_COLOR` is unset and there is
 | `todonotifier init [--pyproject \| --standalone]` | Append a commented `[tool.todonotifier]` section to `pyproject.toml` (if it exists and has none), else create `.todonotifier.toml`. Never overwrites anything. |
 | `todonotifier --version` | Print the version. |
 
-`python -m todonotifier ...` does the same as the `todonotifier` command.
+`python -m todonotifier ...` does the same as the `todonotifier` command. The exit codes are listed under [Exit codes](#exit-codes).
 
 ### Flags
 
@@ -138,256 +170,6 @@ In a GitHub Actions step (`fetch-depth: 0` is needed for `git blame` and `--sinc
 ```
 
 GitHub shows at most 10 error, 10 warning and 10 notice annotations per step, so `--since` keeps pull requests readable.
-
-### Exit codes
-
-| Code | Meaning |
-|---|---|
-| `0` | OK |
-| `1` | The `--fail-on` condition was met (for `notify`, this wins over a failed notification) |
-| `2` | Usage or config error: a bad flag or config file, a path that does not exist, an unknown `--since` ref or no git repository for it, no notifier configured |
-| `3` | Unexpected runtime error (the traceback is shown with `-v`), or a notification could not be delivered |
-
-Errors are one line on stderr, for example `todonotifier: error: Unknown key 'tagz' in pyproject.toml [tool.todonotifier]. Did you mean 'tags'?`.
-
-## Quick Start (Python API)
-
-### Basic Usage
-
-```python
-from todonotifier.config import DefaultConfig
-from todonotifier.connect import ConnectMethod, Connect
-from todonotifier.driver import run as driver_run
-
-# Configure for a Git repository
-git_url = "https://github.com/your-username/your-repo.git"
-# Suggested to keep same as project name
-project_name = "your-project"
-
-connect = Connect(
-    connect_method=ConnectMethod.GIT_CLONE,
-    project_dir_name=project_name,
-    url=git_url,
-    branch_name="main"
-)
-
-config = DefaultConfig(
-    save_html_reports=True,
-    ignore_todo_case=True
-)
-
-# Generate TODO reports
-# It will generate 3 files by default in folder .report under the current working directory.
-driver_run(connect=connect, config=config)
-```
-
-### With Email Notifications
-
-```python
-from todonotifier.notifier import EmailNotifier
-
-# Set up email notifications
-notifier = EmailNotifier(
-    sender_email="your-email@gmail.com",
-    password="your-app-password",
-    host="smtp.gmail.com",
-    port=465,
-    receivers=["team@company.com"]
-)
-
-config = DefaultConfig(
-    save_html_reports=True,
-    ignore_todo_case=True,
-    notifier=notifier
-)
-```
-
-### Examples
-
-#### Local Directory Scanning
-
-```python
-from todonotifier.config import DefaultConfig
-from todonotifier.connect import ConnectMethod, Connect
-from todonotifier.driver import run as driver_run
-
-# Scan a local project directory
-connect = Connect(
-    connect_method=ConnectMethod.DRY_RUN_DIR,
-    project_dir_name="my-project",
-    url="/path/to/your/project"
-)
-
-driver_run(connect=connect, config=DefaultConfig())
-```
-
-To scan the directory in place, without copying it into a temporary directory, use
-`ConnectMethod.LOCAL` instead of `DRY_RUN_DIR`.
-
-#### Structured Scan Results
-
-`scan` is a pure function: it scans in place, writes and sends nothing, and returns a
-`ScanResult` that round-trips through JSON.
-
-```python
-import json
-from todonotifier.scanner import scan
-from todonotifier.settings import ScanSettings
-
-result = scan(ScanSettings(paths=["src"], extensions=["py"]))
-for item in result.overdue():
-    print(item.file, item.line, item.author, item.message)
-
-payload = json.dumps(result.to_dict())
-```
-
-#### Single File Analysis
-
-```python
-from todonotifier.connect import ConnectMethod, Connect
-
-# Analyze a single file
-connect = Connect(
-    connect_method=ConnectMethod.DRY_RUN_FILE,
-    project_dir_name="single-file",
-    url="/path/to/your/file.py"
-)
-```
-
-### Advanced Configuration
-
-```python
-from todonotifier.config import DefaultConfig
-# Import it from where it's implemented
-from my_summary import CustomSummaryGenerator
-
-config = DefaultConfig(
-    # Exclude specific directories
-    exclude_dirs={"regex": [r".*/__pycache__/.*", r".*/\.git/.*"]},
-    
-    # Exclude specific files
-    exclude_files={"regex": [r".*\.pyc$", r".*\.log$"]},
-    
-    # Scan these file extensions (without leading dot). Defaults to ["py"]
-    file_extensions=["py", "js", "ts"],
-
-    # Custom settings
-    ignore_todo_case=True,
-    save_html_reports=True,
-    generate_html=True,
-    
-    # Add custom summary generators
-    summary_generators=[CustomSummaryGenerator()],
-    flag_default_summary_generators=True
-)
-```
-
-## Generated Reports
-
-TODO Notifier generates three types of reports as `.html` files by default if
-`save_html_reports=True` was set in configuration. All reports generated are stored in
-the `.report` directory in the current working directory.
-
-### 1. **Module-wise Summary**
-
-Lists all TODO items organized by file/module for easy code navigation.
-
-### 2. **Expired TODOs by User**
-
-Highlights overdue TODO items assigned to each team member.
-
-### 3. **Upcoming Week TODOs**
-
-Shows TODO items due within the next 7 days.
-
-### Accessing Report Data Programmatically
-
-```python
-# After running driver_run(), access the generated data
-summary_generators = config.summary_generators
-
-for generator in summary_generators:
-    print(f"Report: {generator.name}")
-    print(f"HTML: {generator.html}")
-    print(f"Data: {generator.container}")
-```
-
-### Report Storage
-
-- **HTML Files**: Saved to `.report/` directory when `save_html_reports=True`
-- **Email**: Automatically sent when `notifier` is configured
-- **Programmatic Access**: Available through summary generator objects
-
-## TODO Format
-
-TODO Notifier supports a flexible format for TODO items in your code:
-
-```python
-# Full format with all components
-# TODO {2024-12-31} @john_doe Implement user authentication
-
-# Date only
-# TODO {2024-12-31} Add error handling
-
-# User only
-# TODO @jane_smith Review this logic
-
-# Owner in parentheses (Google style), the same as @user
-# TODO(jane_smith): Review this logic
-# FIXME(jane_smith) {2024-12-31} Handle the empty case
-
-# Other tags work the same way
-# FIXME: Crashes on empty input
-# HACK @john_doe {2024-12-31} Remove after the migration
-
-# Simple TODO
-# TODO Fix this bug
-```
-
-**Format Components:**
-
-- `TODO` - The tag. `TODO` by default; set `tags` (for example `["TODO", "FIXME", "HACK", "XXX"]`)
-  to look for more. Tags are matched as whole words, so `TODO_LIST`, `TODOS` and `todonotifier`
-  are not tags, but `TODO:` and `TODO(` are. `ignore_case` also matches `todo` and `Todo`.
-- `(owner)` - Optional owner right after the tag, the same as `@owner`
-- `{YYYY-MM-DD}` - Optional completion date
-- `@username` - Optional assignee
-- `:` - One optional colon after the tag, owner, date or user is dropped from the message,
-  so `# TODO: fix this` has the message `fix this`
-- `message` - Optional description
-
-`scan()` (and the command line) read the full format above. `driver.run` keeps the original
-format, in which `TODO(owner)` and the colon stay part of the message. Only the word-boundary
-fix applies to both.
-
-**Supported Languages:**
-Works with any programming language that supports comments. With `require_comment` a tag counts
-only when it is inside a comment, which TODO Notifier knows for these extensions: `py`, `sh`, `rb`,
-`yaml`, `yml`, `toml` (`#`), `js`, `jsx`, `ts`, `tsx`, `java`, `kt`, `go`, `c`, `h`, `cpp`, `hpp`, `cs`,
-`swift`, `rs`, `php`, `scala`, `scss` (`//` and `/* */`), `css` (`/* */`), `sql`, `lua` (`--`) and
-`html`, `md` (`<!-- -->`). Files with another extension are searched everywhere.
-
-`require_comment` is a heuristic, not a parser (see the `todonotifier.languages` docstring for the
-limits). A tag in a string, such as `print("TODO list")`, is ignored; so is a tag in a docstring,
-since a docstring is a string. Code fences in Markdown are skipped. It is on by default in the
-command line and config file, and off in the library (`ScanSettings`, `DefaultConfig`).
-
-## 🔧 Architecture
-
-### How It Works
-
-1. **Repository Access**: Safely clones/accesses your repository in a temporary location
-2. **File Scanning**: Recursively scans all files for TODO patterns using regex
-3. **Data Processing**: Parses TODO items extracting dates, assignees, and messages  
-4. **Report Generation**: Creates customizable HTML reports and data structures
-5. **Notifications**: Sends email notifications with formatted reports
-
-### Key Components
-
-- **Connect Layer**: Handles different source types (Git, local directory, single file)
-- **Configuration System**: Flexible settings for scanning, filtering, and reporting
-- **Summary Generators**: Pluggable report generators with HTML output
-- **Notification System**: Extensible notification framework (Email, Slack, Teams and webhook included)
 
 ## Configuration file
 
@@ -591,6 +373,244 @@ password_env = "TODO_SMTP_PASSWORD"
 `notify(reports)`, so notifiers written for earlier versions keep working. Subclass `DigestNotifier` (it provides `max_items`, `new_count` and
 `make_digest(result)`) to build your own digest based notifier.
 
+## TODO Format
+
+TODO Notifier supports a flexible format for TODO items in your code:
+
+```python
+# Full format with all components
+# TODO {2024-12-31} @john_doe Implement user authentication
+
+# Date only
+# TODO {2024-12-31} Add error handling
+
+# User only
+# TODO @jane_smith Review this logic
+
+# Owner in parentheses (Google style), the same as @user
+# TODO(jane_smith): Review this logic
+# FIXME(jane_smith) {2024-12-31} Handle the empty case
+
+# Other tags work the same way
+# FIXME: Crashes on empty input
+# HACK @john_doe {2024-12-31} Remove after the migration
+
+# Simple TODO
+# TODO Fix this bug
+```
+
+**Format Components:**
+
+- `TODO` - The tag. `TODO` by default; set `tags` (for example `["TODO", "FIXME", "HACK", "XXX"]`)
+  to look for more. Tags are matched as whole words, so `TODO_LIST`, `TODOS` and `todonotifier`
+  are not tags, but `TODO:` and `TODO(` are. `ignore_case` also matches `todo` and `Todo`.
+- `(owner)` - Optional owner right after the tag, the same as `@owner`
+- `{YYYY-MM-DD}` - Optional completion date
+- `@username` - Optional assignee
+- `:` - One optional colon after the tag, owner, date or user is dropped from the message,
+  so `# TODO: fix this` has the message `fix this`
+- `message` - Optional description
+
+`scan()` (and the command line) read the full format above. `driver.run` keeps the original
+format, in which `TODO(owner)` and the colon stay part of the message. Only the word-boundary
+fix applies to both.
+
+**Supported Languages:**
+Works with any programming language that supports comments. With `require_comment` a tag counts
+only when it is inside a comment, which TODO Notifier knows for these extensions: `py`, `sh`, `rb`,
+`yaml`, `yml`, `toml` (`#`), `js`, `jsx`, `ts`, `tsx`, `java`, `kt`, `go`, `c`, `h`, `cpp`, `hpp`, `cs`,
+`swift`, `rs`, `php`, `scala`, `scss` (`//` and `/* */`), `css` (`/* */`), `sql`, `lua` (`--`) and
+`html`, `md` (`<!-- -->`). Files with another extension are searched everywhere.
+
+`require_comment` is a heuristic, not a parser (see the `todonotifier.languages` docstring for the
+limits). A tag in a string, such as `print("TODO list")`, is ignored; so is a tag in a docstring,
+since a docstring is a string. Code fences in Markdown are skipped. It is on by default in the
+command line and config file, and off in the library (`ScanSettings`, `DefaultConfig`).
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | OK |
+| `1` | The `--fail-on` condition was met (for `notify`, this wins over a failed notification) |
+| `2` | Usage or config error: a bad flag or config file, a path that does not exist, an unknown `--since` ref or no git repository for it, no notifier configured |
+| `3` | Unexpected runtime error (the traceback is shown with `-v`), or a notification could not be delivered |
+
+Errors are one line on stderr, for example `todonotifier: error: Unknown key 'tagz' in pyproject.toml [tool.todonotifier]. Did you mean 'tags'?`.
+
+## Python API
+
+Before the command line tool existed, TODO Notifier was a Python library, and that API is still supported. Use it to
+embed a scan in your own program (`scan()` returns structured results) or to run the original `driver.run` with
+custom summary generators and notifiers. `examples/python_api_example.py` is a legacy example script that you can
+copy and edit.
+
+### Basic Usage
+
+```python
+from todonotifier.config import DefaultConfig
+from todonotifier.connect import ConnectMethod, Connect
+from todonotifier.driver import run as driver_run
+
+# Configure for a Git repository
+git_url = "https://github.com/your-username/your-repo.git"
+# Suggested to keep same as project name
+project_name = "your-project"
+
+connect = Connect(
+    connect_method=ConnectMethod.GIT_CLONE,
+    project_dir_name=project_name,
+    url=git_url,
+    branch_name="main"
+)
+
+config = DefaultConfig(
+    save_html_reports=True,
+    ignore_todo_case=True
+)
+
+# Generate TODO reports
+# It will generate 3 files by default in folder .report under the current working directory.
+driver_run(connect=connect, config=config)
+```
+
+### With Email Notifications
+
+```python
+from todonotifier.notifier import EmailNotifier
+
+# Set up email notifications
+notifier = EmailNotifier(
+    sender_email="your-email@gmail.com",
+    password="your-app-password",
+    host="smtp.gmail.com",
+    port=465,
+    receivers=["team@company.com"]
+)
+
+config = DefaultConfig(
+    save_html_reports=True,
+    ignore_todo_case=True,
+    notifier=notifier
+)
+```
+
+### Examples
+
+#### Local Directory Scanning
+
+```python
+from todonotifier.config import DefaultConfig
+from todonotifier.connect import ConnectMethod, Connect
+from todonotifier.driver import run as driver_run
+
+# Scan a local project directory
+connect = Connect(
+    connect_method=ConnectMethod.DRY_RUN_DIR,
+    project_dir_name="my-project",
+    url="/path/to/your/project"
+)
+
+driver_run(connect=connect, config=DefaultConfig())
+```
+
+To scan the directory in place, without copying it into a temporary directory, use
+`ConnectMethod.LOCAL` instead of `DRY_RUN_DIR`.
+
+#### Structured Scan Results
+
+`scan` is a pure function: it scans in place, writes and sends nothing, and returns a
+`ScanResult` that round-trips through JSON.
+
+```python
+import json
+from todonotifier.scanner import scan
+from todonotifier.settings import ScanSettings
+
+result = scan(ScanSettings(paths=["src"], extensions=["py"]))
+for item in result.overdue():
+    print(item.file, item.line, item.author, item.message)
+
+payload = json.dumps(result.to_dict())
+```
+
+#### Single File Analysis
+
+```python
+from todonotifier.connect import ConnectMethod, Connect
+
+# Analyze a single file
+connect = Connect(
+    connect_method=ConnectMethod.DRY_RUN_FILE,
+    project_dir_name="single-file",
+    url="/path/to/your/file.py"
+)
+```
+
+### Advanced Configuration
+
+```python
+from todonotifier.config import DefaultConfig
+# Import it from where it's implemented
+from my_summary import CustomSummaryGenerator
+
+config = DefaultConfig(
+    # Exclude specific directories
+    exclude_dirs={"regex": [r".*/__pycache__/.*", r".*/\.git/.*"]},
+    
+    # Exclude specific files
+    exclude_files={"regex": [r".*\.pyc$", r".*\.log$"]},
+    
+    # Scan these file extensions (without leading dot). Defaults to ["py"]
+    file_extensions=["py", "js", "ts"],
+
+    # Custom settings
+    ignore_todo_case=True,
+    save_html_reports=True,
+    generate_html=True,
+    
+    # Add custom summary generators
+    summary_generators=[CustomSummaryGenerator()],
+    flag_default_summary_generators=True
+)
+```
+
+## Generated Reports
+
+TODO Notifier generates three types of reports as `.html` files by default if
+`save_html_reports=True` was set in configuration. All reports generated are stored in
+the `.report` directory in the current working directory.
+
+### 1. **Module-wise Summary**
+
+Lists all TODO items organized by file/module for easy code navigation.
+
+### 2. **Expired TODOs by User**
+
+Highlights overdue TODO items assigned to each team member.
+
+### 3. **Upcoming Week TODOs**
+
+Shows TODO items due within the next 7 days.
+
+### Accessing Report Data Programmatically
+
+```python
+# After running driver_run(), access the generated data
+summary_generators = config.summary_generators
+
+for generator in summary_generators:
+    print(f"Report: {generator.name}")
+    print(f"HTML: {generator.html}")
+    print(f"Data: {generator.container}")
+```
+
+### Report Storage
+
+- **HTML Files**: Saved to `.report/` directory when `save_html_reports=True`
+- **Email**: Automatically sent when `notifier` is configured
+- **Programmatic Access**: Available through summary generator objects
+
 ## Customization
 
 ### Custom Summary Generators
@@ -676,7 +696,7 @@ config = DefaultConfig(file_extensions=["py", "js", "ts"])
 Most of the features are configurable while instantiating configuration class. But users
 are free to write another configuration class or simply inherit from `DefaultConfig`.
 However, configuration class should be a child of `BaseConfig` in
-`todonotifier/config.py`. Note that `BaseConfig` requires `file_extensions` since v2.0.0.
+`todonotifier/config.py`. Note that `BaseConfig` requires `file_extensions` since v2.1.0 (the first release after 1.4.0).
 
 ```python
 from todonotifier.config import BaseConfig
@@ -687,6 +707,23 @@ class CustomConfig(BaseConfig):
 
         # Further Custom configuration code
 ```
+
+## 🔧 Architecture
+
+### How It Works
+
+1. **Repository Access**: Safely clones/accesses your repository in a temporary location
+2. **File Scanning**: Recursively scans all files for TODO patterns using regex
+3. **Data Processing**: Parses TODO items extracting dates, assignees, and messages  
+4. **Report Generation**: Creates customizable HTML reports and data structures
+5. **Notifications**: Sends email notifications with formatted reports
+
+### Key Components
+
+- **Connect Layer**: Handles different source types (Git, local directory, single file)
+- **Configuration System**: Flexible settings for scanning, filtering, and reporting
+- **Summary Generators**: Pluggable report generators with HTML output
+- **Notification System**: Extensible notification framework (Email, Slack, Teams and webhook included)
 
 ## Contributing
 
@@ -742,9 +779,25 @@ details.
 
 ## Changelog
 
-### v2.1.0 (Unreleased)
+### v2.1.0
 
-- **Requires Python ≥ 3.10. Python 3.9 users stay on 2.0.x.**
+- **Requires Python ≥ 3.10. Python 3.9 users stay on 1.x** (1.4.0 is the last release for 3.9).
+- **2.0.0 was never released to PyPI** (the latest release before this one is 1.4.0). Its changes are part of this
+  release, and so are its breaking changes, which are listed first. Upgrading from 1.x, read them.
+- **Breaking Change**: `BaseConfig.__init__` has a new required argument
+  `file_extensions` (list of extensions without the leading dot). Custom subclasses of
+  `BaseConfig` that call `super().__init__()` must now pass it. `DefaultConfig` is
+  unaffected and defaults to `["py"]`.
+- **Breaking Change**: `todonotifier.utils.get_files_in_dir` now takes `extensions:
+  List[str]` instead of `extension: str`.
+- **Behavior Change**: HTML reports are now rendered with Jinja2 templates (new runtime
+  dependency `jinja2`) with autoescaping, so characters like `<`, `>` and `&` in TODO
+  messages are escaped. Whitespace in the generated HTML also differs.
+- Added `file_extensions` config option to scan files other than `.py`
+- Files larger than 10 MB are parsed line by line instead of being loaded into memory
+- Unparseable completion dates now log a warning with module and line number
+- The library no longer calls `logging.basicConfig` on the root logger; only the
+  `todonotifier` logger is configured (see `todonotifier/log.py`)
 - Added `todonotifier.scanner.scan(settings)`, a side-effect-free scan that works in place
   and returns a structured, JSON-serializable `ScanResult` (`todonotifier.results`) made of
   `TodoItem`s. "No date" is `due_date=None` instead of the `9999-12-25` sentinel.
@@ -804,22 +857,11 @@ details.
   and `git_meta.filter_git_listed`. Passing many files to `scan()` (pre-commit) now takes one `git ls-files` call instead of two per file.
   `utils.store_html` returns the path it wrote and writes UTF-8. Development: `jsonschema` is a new dev dependency.
 
-### v2.0.0 (Unreleased)
-
-- **Breaking Change**: `BaseConfig.__init__` has a new required argument
-  `file_extensions` (list of extensions without the leading dot). Custom subclasses of
-  `BaseConfig` that call `super().__init__()` must now pass it. `DefaultConfig` is
-  unaffected and defaults to `["py"]`.
-- **Breaking Change**: `todonotifier.utils.get_files_in_dir` now takes `extensions:
-  List[str]` instead of `extension: str`.
-- **Behavior Change**: HTML reports are now rendered with Jinja2 templates (new runtime
-  dependency `jinja2`) with autoescaping, so characters like `<`, `>` and `&` in TODO
-  messages are escaped. Whitespace in the generated HTML also differs.
-- Added `file_extensions` config option to scan files other than `.py`
-- Files larger than 10 MB are parsed line by line instead of being loaded into memory
-- Unparseable completion dates now log a warning with module and line number
-- The library no longer calls `logging.basicConfig` on the root logger; only the
-  `todonotifier` logger is configured (see `todonotifier/log.py`)
+- Release and project housekeeping: CI runs on Python 3.10 to 3.14 with `black`, `isort`, `flake8`, 100% coverage
+  and a self-check (`todonotifier scan . --fail-on expired`); `.github/workflows/release.yml` publishes tagged
+  releases to PyPI with Trusted Publishing and creates the GitHub Release; this repository's own config is in
+  `[tool.todonotifier]`; the legacy `user_driver.py` moved to `examples/python_api_example.py`; the committed
+  `.report/` output was removed and is git-ignored.
 
 ### v1.4.0
 

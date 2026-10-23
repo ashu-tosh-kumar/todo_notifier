@@ -1,4 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# Lint, test and self-check on every supported Python version (3.10 to 3.14).
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
 name: Python application
@@ -6,81 +6,57 @@ name: Python application
 on:
   push:
     branches: ["main", "development"]
+  # No branch filter: stacked pull requests target other branches (for example `roadmap/*`).
   pull_request:
-    branches: ["main", "development"]
 
 permissions:
   contents: read
 
 jobs:
-  build3_9:
+  build:
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v6
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.9"
+          # Full history: the self-check below runs `git blame`.
+          fetch-depth: 0
+          persist-credentials: false
+      # Poetry goes in before setup-python so that `cache: poetry` can find it.
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry self add "poetry-plugin-export<1.10"
-          poetry export -f requirements.txt --with dev >> requirements.txt
-          pip install -r requirements.txt
-      - name: Lint with flake8
+          poetry env use "$(which python)"
+          poetry install --with dev
+      - name: Check formatting (black)
+        run: poetry run black --check .
+      - name: Check import order (isort)
+        run: poetry run isort --check-only .
+      - name: Lint (flake8)
+        run: poetry run flake8 . --config ./tox.ini
+      - name: Test with coverage
+        run: poetry run coverage run -m pytest
+      - name: Coverage report
+        run: poetry run coverage report -m
+      - name: Coverage summary
+        if: always()
         run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry self add "poetry-plugin-export<1.10"
-          poetry export -f requirements.txt --with dev >> requirements.txt
-          pip install -r requirements.txt
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --config ./tox.ini
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --config ./tox.ini
-      - name: Test with pytest
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry self add "poetry-plugin-export<1.10"
-          poetry export -f requirements.txt --with dev >> requirements.txt
-          pip install -r requirements.txt
-          pytest
-
-  build3_13:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v7
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry self add poetry-plugin-export
-          poetry export -f requirements.txt --with dev >> requirements.txt
-          pip install -r requirements.txt
-      - name: Lint with flake8
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry self add poetry-plugin-export
-          poetry export -f requirements.txt --with dev >> requirements.txt
-          pip install -r requirements.txt
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --config ./tox.ini
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --config ./tox.ini
-      - name: Test with pytest
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry self add poetry-plugin-export
-          poetry export -f requirements.txt --with dev >> requirements.txt
-          pip install -r requirements.txt
-          pytest
+          {
+            echo "### Coverage, Python ${{ matrix.python-version }}"
+            echo
+            poetry run coverage report --format=markdown --fail-under=0
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Self-check (scan this repository for expired TODOs)
+        run: poetry run todonotifier scan . --fail-on expired --format github

@@ -1,0 +1,101 @@
+# Release: on a `vX.Y.Z` tag, build with Poetry, publish to PyPI with Trusted Publishing (OIDC, no API
+# token) and create a GitHub Release with the changelog section from the README.
+#
+# One-time maintainer setup (see RELEASING.md):
+#   1. PyPI: project `todonotifier` > Publishing > add a trusted publisher
+#      (owner `ashu-tosh-kumar`, repository `todo_notifier`, workflow `release.yml`, environment `pypi`).
+#   2. GitHub: Settings > Environments > create the environment `pypi` (optionally with required reviewers).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install build tools
+        run: pip install poetry twine
+      - name: Check that the tag matches the version in pyproject.toml
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="$(poetry version --short)"
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::Tag $TAG does not match the version $VERSION in pyproject.toml"
+            exit 1
+          fi
+      - name: Build
+        run: poetry build
+      - name: Check the distributions
+        run: twine check dist/*
+      - name: Upload dist
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # Trusted Publishing (OIDC)
+    steps:
+      - name: Download dist
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+
+  github-release:
+    name: GitHub Release
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Download dist
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - name: Extract the changelog section
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python .github/scripts/changelog_section.py "$TAG" README.md > release-notes.md
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          PRERELEASE=""
+          # A version with letters (v2.2.0rc1, v2.2.0b2) is a pre-release.
+          if [[ ! "$TAG" =~ ^v[0-9]+(\.[0-9]+)*$ ]]; then PRERELEASE="--prerelease"; fi
+          gh release create "$TAG" dist/* --title "$TAG" --notes-file release-notes.md --verify-tag $PRERELEASE
