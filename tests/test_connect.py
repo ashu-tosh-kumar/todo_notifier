@@ -106,7 +106,7 @@ class TestConnect(unittest.TestCase):
     def test__pull_using_git_clone_should_pull_git_repository_with_given_branch(self):
         dummy_url = "https://github.com/ashu-tosh-kumar/Interesting-ML-Models.git"
         dummy_project_dir_name = "interesting-ml-models"
-        dummy_branch_name = "master"
+        dummy_branch_name = "main"
 
         with tempfile.TemporaryDirectory() as temp_dir:
             expected_dir_path = temp_dir
