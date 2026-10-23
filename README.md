@@ -16,7 +16,8 @@ Never forget a TODO again! Automatically parse, track, and get notified about TO
 in your code.
 
 [Installation](#installation) •
-[Quick Start](#quick-start) •
+[Command line](#command-line) •
+[Quick Start](#quick-start-python-api) •
 [Documentation](https://ashu-tosh-kumar.github.io/todo_notifier/) •
 [Contributing](#contributing)
 
@@ -27,6 +28,8 @@ src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f
 
 ## Features
 
+- **Command Line Tool** - `todonotifier scan .` works with zero config: table, JSON, GitHub
+  annotations, SARIF and Markdown output, `--fail-on` for CI and `--since` for pull requests
 - **Smart TODO Detection** - Automatically discovers TODO items across your entire
   codebase
 - **Date-based Tracking** - Set completion dates and get notified about overdue items
@@ -42,10 +45,112 @@ src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f
 ## Installation
 
 ```bash
-pip install todonotifier
+pipx install todonotifier        # the command line tool, in its own environment
+# or
+pip install todonotifier         # also gives you the Python API
 ```
 
-## Quick Start
+## Command line
+
+```bash
+todonotifier scan .              # every TODO, FIXME, HACK and XXX in your code, with owners and ages
+todonotifier init                # optional: write a commented starter config
+```
+
+`todonotifier scan .` needs no config. It scans the common languages (see "Configuration file"), skips what
+`.gitignore` excludes, only counts tags inside comments, and asks `git blame` who wrote each line and when. An
+undated TODO becomes **stale** 90 days after it was added; a TODO whose `{date}` has passed is **overdue**.
+
+```text
+$ todonotifier scan .
+LOCATION          TAG   OWNER  DUE                     MESSAGE
+src/app.py:10     TODO  alice  2026-04-01 overdue 30d  Remove the legacy path
+src/old.py:3      TODO  alice  2026-01-01 stale 120d   Rewrite this module
+src/api.py:80     TODO  carol  2026-05-03 due in 2d    Cache the lookup
+src/misc.py:1     TODO  -      -                       Think about naming
+
+4 TODOs · 1 overdue · 1 stale · 1 unowned
+```
+
+Colors are used only when stdout is a terminal, `NO_COLOR` is unset and there is no `--output`.
+
+### Commands
+
+| Command | What it does |
+|---|---|
+| `todonotifier scan [PATH ...]` | Scan and print the TODOs (default path `.`, or the `paths` of the config file). Paths may be files, e.g. the staged files from pre-commit. |
+| `todonotifier report [PATH ...] [--out DIR]` | Write the HTML reports (module-wise, expired by user, upcoming week) to `DIR` (default `.report`) and print their paths. Same as `scan --format html`. |
+| `todonotifier notify [PATH ...]` | Scan, then send the digest to every notifier of the config file (Slack, Teams, webhook, email, see "Notifications"). All notifiers are tried and every failure is printed. |
+| `todonotifier init [--pyproject \| --standalone]` | Append a commented `[tool.todonotifier]` section to `pyproject.toml` (if it exists and has none), else create `.todonotifier.toml`. Never overwrites anything. |
+| `todonotifier --version` | Print the version. |
+
+`python -m todonotifier ...` does the same as the `todonotifier` command.
+
+### Flags
+
+`scan`, `report` and `notify` share these. A flag beats the config file, which beats the built-in defaults.
+
+| Flag | Meaning |
+|---|---|
+| `--config PATH` | Use this config file instead of looking for `.todonotifier.toml` / `pyproject.toml` |
+| `--tags TODO,FIXME` | Comma separated tags (default `TODO,FIXME,HACK,XXX`) |
+| `--ext py,js` | Comma separated file extensions; `common` is the preset of common languages (default) |
+| `--ignore-case` | Match tags case insensitively |
+| `--no-blame` | Do not run `git blame`: no authors, ages or default due dates |
+| `--default-due-days N` | An undated TODO turns stale `N` days after it was added (default 90, `0` disables) |
+| `--no-require-comment` | Also report tags that are not inside a comment |
+| `--no-gitignore` | Also scan files that `.gitignore` excludes |
+| `--since GIT_REF` | Only report TODOs on lines added or changed since `GIT_REF` (e.g. `HEAD~1`, `origin/main`). Needs a git repository; new files count in full |
+| `--fail-on {none,expired,stale,any}` | Exit with 1 if such a TODO exists (default `none`, or `fail_on` of the config file). `expired`: an explicit `{date}` has passed. `stale`: also default due dates. `any`: any TODO. Judged after `--since` |
+| `--format {table,json,github,markdown,sarif,html}` | Output format (default `table`; `html` for `report`; `notify` prints nothing unless given) |
+| `--output FILE` | Write the result to `FILE` instead of stdout (for `html`: the directory for the report files) |
+| `-q`, `--quiet` / `-v`, `--verbose` | Log errors only / debug logs and tracebacks. Logs go to stderr, results to stdout |
+
+### Output formats
+
+- `table`: aligned columns and a summary line (shown above).
+- `json`: `ScanResult.to_dict()`, documented by the JSON Schema
+  [`todonotifier/schemas/scan_result.schema.json`](todonotifier/schemas/scan_result.schema.json) (draft 2020-12, shipped
+  in the package; `todonotifier.formatters.SCHEMA_PATH` is its path). Dates are ISO strings, "no due date" is `null`.
+  New optional properties can appear without a version change; incompatible changes bump `schema_version`.
+- `github`: [workflow commands](https://docs.github.com/actions/reference/workflow-commands-for-github-actions) that GitHub
+  shows as annotations on the pull request. Overdue TODOs are errors, stale ones and those due within 7 days are warnings,
+  the rest are notices. Paths are relative to the repository root, even if you scan a subdirectory.
+- `markdown`: the digest of the "Notifications" section, e.g. for `$GITHUB_STEP_SUMMARY`.
+- `sarif`: SARIF 2.1.0 for GitHub code scanning (one rule per tag, same levels as `github`).
+- `html`: the three built-in reports as files.
+
+```text
+$ todonotifier scan . --format github --since origin/main
+::error file=src/app.py,line=10,title=TODO overdue by 30d::Remove the legacy path (@alice, due 2026-04-01)
+::warning file=src/old.py,line=3,title=TODO stale by 120d::Rewrite this module (@alice, default due 2026-01-01)
+::notice file=src/misc.py,line=1,title=TODO::Think about naming
+4 TODOs: 1 overdue, 1 stale, 1 unowned
+```
+
+In a GitHub Actions step (`fetch-depth: 0` is needed for `git blame` and `--since`):
+
+```yaml
+- uses: actions/checkout@v4
+  with: { fetch-depth: 0 }
+- run: pipx install todonotifier
+- run: todonotifier scan . --format github --since origin/${{ github.base_ref }} --fail-on expired
+```
+
+GitHub shows at most 10 error, 10 warning and 10 notice annotations per step, so `--since` keeps pull requests readable.
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | OK |
+| `1` | The `--fail-on` condition was met (for `notify`, this wins over a failed notification) |
+| `2` | Usage or config error: a bad flag or config file, a path that does not exist, an unknown `--since` ref or no git repository for it, no notifier configured |
+| `3` | Unexpected runtime error (the traceback is shown with `-v`), or a notification could not be delivered |
+
+Errors are one line on stderr, for example `todonotifier: error: Unknown key 'tagz' in pyproject.toml [tool.todonotifier]. Did you mean 'tags'?`.
+
+## Quick Start (Python API)
 
 ### Basic Usage
 
@@ -690,6 +795,14 @@ details.
   `BaseNotifier.notify_result(result, reports)` (default: calls `notify(reports)`, so existing notifiers are unchanged), `EmailNotifier`
   gets `starttls`, `username`, `from_env()` and a digest email, and `build_notifiers()` creates notifiers from the config file's
   `[notify.*]` tables.
+
+- Added the `todonotifier` command line tool (also `python -m todonotifier`), see "Command line": `scan`, `report`, `notify` and `init`,
+  with flags for tags, extensions, blame, default due days, `--since GIT_REF` (only TODOs on changed lines), `--fail-on`
+  (`none`/`expired`/`stale`/`any`), `--format` (`table`, `json`, `github` annotations, `markdown`, `sarif`, `html`) and `--output`. Exit codes:
+  0 OK, 1 `--fail-on` met, 2 usage or config error, 3 unexpected error. The JSON output has a JSON Schema,
+  `todonotifier/schemas/scan_result.schema.json`. New modules `todonotifier.cli` and `todonotifier.formatters`; `git_meta.changed_lines`
+  and `git_meta.filter_git_listed`. Passing many files to `scan()` (pre-commit) now takes one `git ls-files` call instead of two per file.
+  `utils.store_html` returns the path it wrote and writes UTF-8. Development: `jsonschema` is a new dev dependency.
 
 ### v2.0.0 (Unreleased)
 

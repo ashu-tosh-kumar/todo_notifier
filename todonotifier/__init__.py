@@ -88,6 +88,8 @@ The system consists of several key components:
 - **summary_generators.py** - Pluggable summary generators (by module, expired TODOs,
   upcoming TODOs)
 - **notifier.py** - Notification system with email support and extensible base classes
+- **cli.py** and **formatters.py** - The `todonotifier` command (`scan`, `report`, `notify`,
+  `init`) and its output formats (table, JSON, GitHub annotations, Markdown, SARIF, HTML)
 
 ## Generated Reports
 

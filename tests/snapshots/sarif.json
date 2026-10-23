@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "todonotifier",
+          "informationUri": "https://github.com/ashu-tosh-kumar/todo_notifier",
+          "rules": [
+            {
+              "id": "TODO",
+              "name": "TODO",
+              "shortDescription": {
+                "text": "TODO comment"
+              },
+              "fullDescription": {
+                "text": "A TODO comment left in the code. Error: its explicit due date has passed. Warning: it is stale or due soon."
+              },
+              "helpUri": "https://github.com/ashu-tosh-kumar/todo_notifier",
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "TODO overdue by 30d: Remove the legacy path (@alice, due 2026-04-01)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/app.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 10
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "explicit",
+            "owner": "alice",
+            "dueDate": "2026-04-01"
+          }
+        },
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "TODO overdue by 10d: Handle <None> & empty input (@alice, due 2026-04-21)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/app.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 99
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "explicit",
+            "owner": "alice",
+            "dueDate": "2026-04-21"
+          }
+        },
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "TODO overdue by 60d: Add an index (@bob, due 2026-03-02)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/db.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 5
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "explicit",
+            "owner": "bob",
+            "dueDate": "2026-03-02"
+          }
+        },
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "TODO overdue by 1d: Delete after the migration (due 2026-04-30)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/util.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "explicit",
+            "dueDate": "2026-04-30"
+          }
+        },
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "TODO stale by 120d: Rewrite this module (@alice, default due 2026-01-01)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/old.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 3
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "default",
+            "owner": "alice",
+            "dueDate": "2026-01-01"
+          }
+        },
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "TODO stale by 20d: Split into two functions (default due 2026-04-11)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/old.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 40
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "default",
+            "dueDate": "2026-04-11"
+          }
+        },
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "TODO stale by 11d: Paginate the list endpoint (@bob, default due 2026-04-20)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/api.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 12
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "default",
+            "owner": "bob",
+            "dueDate": "2026-04-20"
+          }
+        },
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "TODO due in 2d: Cache the lookup (@carol, due 2026-05-03)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/api.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 80
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "explicit",
+            "owner": "carol",
+            "dueDate": "2026-05-03"
+          }
+        },
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "TODO due in 7d: Document the new flags (due 2026-05-08)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "docs/guide.md",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 4
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "explicit",
+            "dueDate": "2026-05-08"
+          }
+        },
+        {
+          "ruleId": "TODO",
+          "ruleIndex": 0,
+          "level": "note",
+          "message": {
+            "text": "TODO: Think about naming"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/misc.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "dueSource": "none"
+          }
+        }
+      ]
+    }
+  ]
+}

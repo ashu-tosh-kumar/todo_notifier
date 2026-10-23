@@ -15,16 +15,22 @@ from todonotifier.git_meta import (
     WARNING_NOT_A_GIT_REPO,
     WARNING_SHALLOW_CLONE,
     BlameLine,
+    GitError,
+    _unquote_diff_path,
     blame_file,
     blame_files,
+    changed_lines,
     detect_commit_sha,
     detect_repo_web_url,
     enrich_with_git,
+    filter_git_listed,
     find_git_root,
     is_shallow_repository,
     list_git_files,
     normalize_remote_url,
     parse_blame_porcelain,
+    parse_changed_lines,
+    to_repo_path,
 )
 from todonotifier.results import TodoItem
 from todonotifier.scanner import scan
@@ -635,6 +641,262 @@ class TestEnrichWithGit(GitTestCase):
             enrich_with_git([item], ScanSettings(use_git_blame=True), self.tmp, TODAY)
 
         self.assertEqual((None, "unknown", OLD_DAY), (item.author, item.author_source, item.created_date))
+
+
+DIFF = """\
+diff --git a/src/a.py b/src/a.py
+index 1111111..2222222 100644
+--- a/src/a.py
++++ b/src/a.py
+@@ -3 +3,2 @@ def f():
+-old
++new one
++new two
+@@ -10,2 +11,0 @@ def g():
+-gone 1
+-gone 2
+@@ -20,0 +20,3 @@
++x
++y
++z
+\\ No newline at end of file
+diff --git a/src/my file.py b/src/my file.py
+index 1111111..2222222 100644
+--- a/src/my file.py\t
++++ b/src/my file.py\t
+@@ -1 +1 @@
+-a
++b
+diff --git a/old.py b/new.py
+similarity index 90%
+rename from old.py
+rename to new.py
+--- a/old.py
++++ b/new.py
+@@ -5 +5 @@
+-a
++b
+diff --git a/gone.py b/gone.py
+deleted file mode 100644
+--- a/gone.py
++++ /dev/null
+@@ -1,2 +0,0 @@
+-a
+-b
+diff --git "a/caf\\303\\251.py" "b/caf\\303\\251.py"
+--- "a/caf\\303\\251.py"
++++ "b/caf\\303\\251.py"
+@@ -1,0 +2 @@
++added
+diff --git a/tricky.py b/tricky.py
+--- a/tricky.py
++++ b/tricky.py
+@@ -1 +1 @@
+-x
++++ b/not-a-header
+diff --git a/img.png b/img.png
+Binary files a/img.png and b/img.png differ
+"""
+
+
+class TestParseChangedLines(unittest.TestCase):
+    def test_should_collect_added_and_changed_lines_per_file(self):
+        changed = parse_changed_lines(DIFF)
+
+        self.assertEqual({3, 4, 20, 21, 22}, changed["src/a.py"])
+        self.assertEqual({1}, changed["src/my file.py"])
+        self.assertEqual({5}, changed["new.py"])
+        self.assertEqual({2}, changed["café.py"])
+
+    def test_should_not_mistake_an_added_line_that_looks_like_a_header_for_a_file(self):
+        changed = parse_changed_lines(DIFF)
+
+        self.assertEqual({1}, changed["tricky.py"])
+        self.assertNotIn("not-a-header", changed)
+
+    def test_should_ignore_deleted_files_pure_deletions_and_binary_files(self):
+        changed = parse_changed_lines(DIFF)
+
+        self.assertNotIn("gone.py", changed)
+        self.assertNotIn("old.py", changed)
+        self.assertNotIn("img.png", changed)
+        self.assertEqual({"src/a.py", "src/my file.py", "new.py", "café.py", "tricky.py"}, set(changed))
+
+    def test_should_return_nothing_for_an_empty_diff(self):
+        self.assertEqual({}, parse_changed_lines(""))
+
+    def test_unquote_diff_path(self):
+        cases = {
+            "plain.py": "plain.py",
+            '"a\\tb"': "a\tb",
+            '"caf\\303\\251"': "café",
+            '"say \\"hi\\""': 'say "hi"',
+            '"back\\\\slash"': "back\\slash",
+            '"bad\\9escape"': "bad\\9escape",
+            '"ends\\"': "ends\\",
+            '"': '"',
+        }
+        for raw, expected in cases.items():
+            with self.subTest(raw=raw):
+                self.assertEqual(expected, _unquote_diff_path(raw))
+
+
+class TestToRepoPath(unittest.TestCase):
+    def test_should_make_scan_root_relative_paths_repo_relative(self):
+        self.assertEqual("src/pkg/a.py", to_repo_path("pkg/a.py", "/repo/src", "/repo"))
+        self.assertEqual("a.py", to_repo_path("a.py", "/repo", "/repo"))
+        self.assertEqual("../outside/a.py", to_repo_path("a.py", "/outside", "/repo"))
+
+
+@unittest.skipUnless(GIT_AVAILABLE, "git is not installed")
+class TestChangedLines(GitTestCase):
+    def make_repo(self) -> None:
+        self.init_repo()
+        self.write("a.py", "one\ntwo\nthree\nfour\n")
+        self.write("old name.py", "".join(f"line {number}\n" for number in range(1, 21)))
+        self.write("gone.py", "bye\n")
+        self.write("keep.py", "same\n")
+        commit_all(self.tmp, ALICE, OLD_DAY)
+
+    def test_should_report_changed_lines_of_modified_files(self):
+        self.make_repo()
+        self.write("a.py", "one\nTWO\nthree\nnew\nfour\n")
+        commit_all(self.tmp, BOB, RECENT_DAY)
+        self.write("a.py", "one\nTWO\nthree\nnew\nfour\nlast")  # Not committed: working tree against the ref
+
+        self.assertEqual({"a.py": {2, 4, 6}}, changed_lines(self.tmp, "HEAD~1"))
+        self.assertEqual({"a.py": {6}}, changed_lines(self.tmp, "HEAD"))
+
+    def test_should_follow_renames_and_skip_deletions(self):
+        self.make_repo()
+        os.remove(os.path.join(self.tmp, "gone.py"))
+        os.rename(os.path.join(self.tmp, "old name.py"), os.path.join(self.tmp, "new name.py"))
+        self.write("new name.py", "".join(f"line {number}\n" if number != 7 else "changed\n" for number in range(1, 21)))
+        run_git(self.tmp, "add", "-A")
+
+        self.assertEqual({"new name.py": {7}}, changed_lines(self.tmp, "HEAD"))
+
+    def test_should_count_untracked_files_as_fully_changed_but_not_ignored_ones(self):
+        self.make_repo()
+        self.write(".gitignore", "ignored.py\n")
+        self.write("ignored.py", "# TODO ignored\n")
+        self.write("fresh.py", "a\nb\nc")  # No trailing newline
+        self.write("empty.py", "")
+        self.write("sub dir/inner.py", "x\n")
+        nested = self.init_repo(os.path.join(self.tmp, "nested"))
+        self.write("n.py", "x\n", base=nested)
+
+        changed = changed_lines(self.tmp, "HEAD")
+
+        self.assertEqual({".gitignore": {1}, "fresh.py": {1, 2, 3}, "sub dir/inner.py": {1}}, changed)
+
+    def test_should_handle_non_ascii_names(self):
+        self.make_repo()
+        self.write("café.py", "# TODO\n")
+        commit_all(self.tmp, ALICE, RECENT_DAY)
+        self.write("café.py", "# TODO\n# TODO again\n")
+
+        self.assertEqual({"café.py": {2}}, changed_lines(self.tmp, "HEAD"))
+
+    def test_should_be_independent_of_diff_prefix_config(self):
+        self.make_repo()
+        run_git(self.tmp, "config", "diff.noprefix", "true")
+        self.write("a.py", "one\nTWO\nthree\nfour\n")
+
+        self.assertEqual({"a.py": {2}}, changed_lines(self.tmp, "HEAD"))
+
+    def test_unknown_ref_should_raise_a_helpful_error(self):
+        self.make_repo()
+
+        with self.assertRaises(GitError) as context:
+            changed_lines(self.tmp, "no-such-branch")
+
+        self.assertIn("Unknown git ref 'no-such-branch'", str(context.exception))
+        self.assertIn("fetch-depth", str(context.exception))
+
+    def test_ref_that_looks_like_an_option_should_be_rejected(self):
+        self.make_repo()
+
+        for ref in ("--output=/tmp/evil", "-p", ""):
+            with self.subTest(ref=ref), self.assertRaises(GitError):
+                changed_lines(self.tmp, ref)
+        self.assertFalse(os.path.exists("/tmp/evil"))
+
+    def test_should_raise_if_git_is_missing_or_fails(self):
+        self.make_repo()
+
+        with patch("todonotifier.git_meta.subprocess.run", side_effect=FileNotFoundError), self.assertRaises(GitError) as context:
+            changed_lines(self.tmp, "HEAD")
+        self.assertIn("git executable", str(context.exception))
+
+        failed = subprocess.CompletedProcess(["git"], 128, stdout=b"", stderr=b"fatal")
+        ok = subprocess.CompletedProcess(["git"], 0, stdout=b"", stderr=b"")
+        for responses in ([ok, failed], [ok, ok, failed], [ok, None]):
+            with self.subTest(responses=len(responses)), patch("todonotifier.git_meta._run_git", side_effect=responses), self.assertRaises(GitError):
+                changed_lines(self.tmp, "HEAD")
+
+
+@unittest.skipUnless(GIT_AVAILABLE, "git is not installed")
+class TestFilterGitListed(GitTestCase):
+    def make_repo(self) -> None:
+        self.init_repo()
+        self.write(".gitignore", "ignored*.py\n")
+        self.write("tracked.py", "x = 1\n")
+        self.write("src/inner.py", "x = 1\n")
+        run_git(self.tmp, "add", "-A")
+        self.write("untracked.py", "x = 1\n")
+        self.write("ignored1.py", "x = 1\n")
+        self.write("a[1].py", "x = 1\n")  # A glob character: must match literally
+
+    def paths(self, *names: str) -> list:
+        return [os.path.join(self.tmp, *name.split("/")) for name in names]
+
+    def test_should_keep_listed_files_in_order_and_drop_ignored_ones(self):
+        self.make_repo()
+        given = self.paths("untracked.py", "ignored1.py", "src/inner.py", "tracked.py", "a[1].py")
+
+        self.assertEqual(self.paths("untracked.py", "src/inner.py", "tracked.py", "a[1].py"), filter_git_listed(given))
+
+    def test_should_run_one_ls_files_call_for_many_files(self):
+        self.make_repo()
+        given = self.paths("untracked.py", "ignored1.py", "src/inner.py", "tracked.py")
+        real_run = subprocess.run
+        calls = []
+
+        def spy(command, *args, **kwargs):
+            calls.append(command)
+            return real_run(command, *args, **kwargs)
+
+        with patch("todonotifier.git_meta.subprocess.run", side_effect=spy):
+            filter_git_listed(given)
+
+        self.assertEqual(1, sum(1 for command in calls if "ls-files" in command))
+        self.assertEqual(2, len(calls))  # rev-parse and ls-files
+
+    def test_should_split_very_long_lists_into_several_calls_with_the_same_result(self):
+        self.make_repo()
+        given = self.paths("untracked.py", "ignored1.py", "src/inner.py", "tracked.py")
+
+        with patch.object(git_meta, "MAX_PATHSPEC_CHARS", 30):
+            self.assertEqual(self.paths("untracked.py", "src/inner.py", "tracked.py"), filter_git_listed(given))
+
+    def test_should_return_empty_for_no_files(self):
+        self.assertEqual([], filter_git_listed([]))
+
+    def test_should_return_none_outside_a_repository_or_if_git_fails(self):
+        self.make_repo()
+        with tempfile.TemporaryDirectory() as outside:
+            self.assertIsNone(filter_git_listed([os.path.join(outside, "a.py")]))
+
+        failed = subprocess.CompletedProcess(["git"], 128, stdout=b"", stderr=b"fatal")
+        root_ok = subprocess.CompletedProcess(["git"], 0, stdout=self.tmp.encode(), stderr=b"")
+        for second in (None, failed):
+            with patch("todonotifier.git_meta._run_git", side_effect=[root_ok, second]):
+                self.assertIsNone(filter_git_listed(self.paths("tracked.py")))
+
+    def test_should_return_none_for_paths_without_a_common_directory(self):
+        with patch("todonotifier.git_meta.os.path.commonpath", side_effect=ValueError):
+            self.assertIsNone(filter_git_listed(["/a/x.py", "/b/y.py"]))
 
 
 if __name__ == "__main__":

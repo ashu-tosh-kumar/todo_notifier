@@ -1,0 +1,13 @@
+LOCATION         TAG   OWNER  DUE                     MESSAGE
+src/app.py:10    TODO  alice  2026-04-01 overdue 30d  Remove the legacy path
+src/app.py:99    TODO  alice  2026-04-21 overdue 10d  Handle <None> & empty input
+src/db.py:5      TODO  bob    2026-03-02 overdue 60d  Add an index
+src/util.py:7    TODO  -      2026-04-30 overdue 1d   Delete after the migration
+src/old.py:3     TODO  alice  2026-01-01 stale 120d   Rewrite this module
+src/old.py:40    TODO  -      2026-04-11 stale 20d    Split into two functions
+src/api.py:12    TODO  bob    2026-04-20 stale 11d    Paginate the list endpoint
+src/api.py:80    TODO  carol  2026-05-03 due in 2d    Cache the lookup
+docs/guide.md:4  TODO  -      2026-05-08 due in 7d    Document the new flags
+src/misc.py:1    TODO  -      -                       Think about naming
+
+10 TODOs · 4 overdue · 3 stale · 4 unowned

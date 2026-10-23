@@ -435,6 +435,21 @@ def _pyproject_table(data: dict[str, Any], path: str) -> Optional[dict[str, Any]
     return table
 
 
+def has_pyproject_table(path: str) -> bool:
+    """Tells whether a `pyproject.toml` has a `[tool.todonotifier]` table (an empty one counts)
+
+    Args:
+        path (str): Path of the `pyproject.toml`
+
+    Returns:
+        bool: True if the table exists
+
+    Raises:
+        ConfigError: If the file cannot be read or is not valid TOML
+    """
+    return _pyproject_table(_read_toml(path), path) is not None
+
+
 def _discover(start: str) -> Optional[tuple[str, dict[str, Any]]]:
     """Walks up from `start` and returns the path and raw table of the first config file found"""
     current: str = os.path.abspath(start)

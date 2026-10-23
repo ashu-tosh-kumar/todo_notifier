@@ -38,6 +38,9 @@ repository = "https://github.com/ashu-tosh-kumar/todo_notifier"
 documentation = "https://ashu-tosh-kumar.github.io/todo_notifier/"
 exclude = ["tests", "sample_reports"]
 
+[tool.poetry.scripts]
+todonotifier = "todonotifier.cli:main"
+
 [tool.poetry.dependencies]
 python = "^3.10"
 gitpython = "^3.1.0"
@@ -58,6 +61,7 @@ coverage = "^7.4.4"
 pdoc = ">=14.4,<16.0"
 pytest = "^8.1.1"
 twine = "^6.0.1"
+jsonschema = ">=4.18,<5"
 
 [build-system]
 requires = ["poetry-core"]

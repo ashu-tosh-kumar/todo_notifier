@@ -442,6 +442,41 @@ class TestScanRespectGitignore(ScannerTestCase):
 
         self.assertEqual(["src/a.js"], [item.file for item in result.items])
 
+    def test_many_explicit_files_should_need_one_git_ls_files_call_and_no_blame_without_use_git_blame(self):
+        self.make_repo()
+        files = [self.write(f"src/f{number}.js", f"// TODO number {number}\n") for number in range(30)]
+        real_run = subprocess.run
+        calls = []
+
+        def spy(command, *args, **kwargs):
+            calls.append(command)
+            return real_run(command, *args, **kwargs)
+
+        with patch("todonotifier.git_meta.subprocess.run", side_effect=spy):
+            result = scan(ScanSettings(paths=files, extensions=["js"], respect_gitignore=True), today=TODAY)
+
+        self.assertEqual(30, len(result.items))
+        self.assertEqual(1, sum(1 for command in calls if "ls-files" in command))
+        self.assertEqual(0, sum(1 for command in calls if "blame" in command))
+        self.assertLessEqual(len(calls), 3)
+
+    def test_many_explicit_files_with_blame_should_need_one_ls_files_call_and_one_blame_per_file(self):
+        self.make_repo()
+        files = [self.write(f"src/f{number}.js", f"// TODO number {number}\n") for number in range(10)]
+        _git(self.tmp, "add", "-A")
+        real_run = subprocess.run
+        calls = []
+
+        def spy(command, *args, **kwargs):
+            calls.append(command)
+            return real_run(command, *args, **kwargs)
+
+        with patch("todonotifier.git_meta.subprocess.run", side_effect=spy):
+            scan(ScanSettings(paths=files, extensions=["js"], respect_gitignore=True, use_git_blame=True), today=TODAY)
+
+        self.assertEqual(1, sum(1 for command in calls if "ls-files" in command))
+        self.assertEqual(10, sum(1 for command in calls if "blame" in command))
+
     def test_outside_a_repository_the_tree_should_be_walked(self):
         self.write("node_modules/x.js", "// TODO walked\n")
         self.write("a.js", "// TODO a\n")
