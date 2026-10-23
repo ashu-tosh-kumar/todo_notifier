@@ -199,6 +199,7 @@ class TestHelpers(unittest.TestCase):
             "https://x.test/a>b",
             "https://x.test/a|b",
             "/relative",
+            "http://[::1",  # A mistyped repository URL: urlsplit raises ValueError
         ):
             self.assertIsNone(safe_url(bad), bad)
 
