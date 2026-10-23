@@ -1,3 +1,4 @@
+import ntpath
 import os
 import shutil
 import subprocess
@@ -14,8 +15,10 @@ from todonotifier.git_meta import (
     WARNING_GIT_NOT_INSTALLED,
     WARNING_NOT_A_GIT_REPO,
     WARNING_SHALLOW_CLONE,
+    WARNING_UNSAFE_REPO,
     BlameLine,
     GitError,
+    _decode_paths,
     _unquote_diff_path,
     blame_file,
     blame_files,
@@ -557,6 +560,21 @@ class TestEnrichWithGit(GitTestCase):
         self.assertEqual([None, None], [item.created_date for item in items])
         self.assertEqual([None, "frank"], [item.author for item in items])
 
+    def test_a_repository_of_another_user_should_say_so_instead_of_claiming_it_is_not_a_repository(self):
+        # git refuses repositories owned by another user (Docker bind mounts, container jobs): "fatal: detected dubious ownership"
+        self.make_two_author_repo()
+        refused = subprocess.CompletedProcess(
+            ["git"], 128, stdout=b"", stderr=f"fatal: detected dubious ownership in repository at '{self.tmp}'\n".encode()
+        )
+
+        with patch("todonotifier.git_meta._run_git", return_value=refused), self.assertLogs(LOGGER_NAME, level="WARNING") as logs:
+            items = self.enrich(default_due_days=90)
+
+        self.assertEqual([WARNING_UNSAFE_REPO.format(path=self.tmp)], [record.getMessage() for record in logs.records])
+        self.assertIn(f"git config --global --add safe.directory {self.tmp}", logs.records[0].getMessage())
+        self.assertNotIn("not inside a git repository", logs.records[0].getMessage())
+        self.assertTrue(all(item.created_date is None for item in items))
+
     def test_git_missing_should_warn_once_and_not_crash(self):
         self.make_two_author_repo()
 
@@ -893,6 +911,21 @@ class TestFilterGitListed(GitTestCase):
         for second in (None, failed):
             with patch("todonotifier.git_meta._run_git", side_effect=[root_ok, second]):
                 self.assertIsNone(filter_git_listed(self.paths("tracked.py")))
+
+    def test_paths_from_git_should_use_the_separators_of_the_platform(self):
+        # git prints "/" everywhere. On Windows the paths of the caller have backslashes, so without normalising none of them matched and
+        # `todonotifier scan file.py` (the pre-commit way) saw no file at all
+        with patch.object(os.path, "join", ntpath.join), patch.object(os.path, "normpath", ntpath.normpath), patch.object(os.path, "isfile", return_value=True):
+            decoded = _decode_paths(b"src/inner.py\0top.py\0", "C:\\repo")
+
+        self.assertEqual(["C:\\repo\\src\\inner.py", "C:\\repo\\top.py"], decoded)
+
+    def test_should_match_named_files_whatever_the_case_and_separators_of_the_platform(self):
+        self.make_repo()
+        given = self.paths("src/inner.py", "tracked.py")
+
+        with patch.object(os.path, "normcase", lambda path: path.upper()):
+            self.assertEqual(given, filter_git_listed(given))
 
     def test_should_return_none_for_paths_without_a_common_directory(self):
         with patch("todonotifier.git_meta.os.path.commonpath", side_effect=ValueError):
