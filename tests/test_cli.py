@@ -178,6 +178,45 @@ class TestParsing:
         assert out == ""
         assert "usage:" in err
 
+    @pytest.mark.parametrize("command", ["scan", "report", "notify"])
+    def test_paths_may_be_mixed_with_options(self, project, monkeypatch, command):
+        for name in ("a.py", "b.py", "c.py"):
+            write(project, name, f"# TODO in {name}\n")
+        captured: dict = {}
+
+        def fake_scan(settings, today=None):
+            captured["paths"] = settings.paths
+            return ScanResult(root=str(project))
+
+        monkeypatch.setattr(cli, "scan", fake_scan)
+        monkeypatch.setattr(cli, "build_notifiers", lambda notify: [RecordingNotifier()])
+
+        assert main([command, "a.py", "--no-blame", "b.py", "--tags", "TODO,FIXME", "c.py", "--format", "json"]) == EXIT_OK
+        assert captured["paths"] == ["a.py", "b.py", "c.py"]
+
+    def test_mixed_paths_scan_only_those_files(self, capsys, project):
+        for name in ("a.py", "b.py", "c.py"):
+            write(project, name, f"# TODO in {name}\n")
+
+        code, out, _ = run(capsys, "scan", "a.py", "--format", "json", "--no-blame", "c.py")
+
+        assert code == EXIT_OK
+        assert [item["file"] for item in json.loads(out)["items"]] == ["a.py", "c.py"]
+
+    def test_double_dash_still_ends_the_options(self, capsys, project):
+        write(project, "-odd.py", "# TODO dash\n")
+
+        code, out, _ = run(capsys, "scan", "--no-blame", "--format", "json", "--", "-odd.py")
+
+        assert code == EXIT_OK
+        assert [item["file"] for item in json.loads(out)["items"]] == ["-odd.py"]
+
+    def test_the_parser_can_be_used_twice_in_a_row(self, capsys, project):
+        write(project, "a.py", "# TODO x\n")
+
+        assert run(capsys, "scan", "a.py", "--no-blame")[0] == EXIT_OK
+        assert run(capsys, "scan", "--no-blame", "a.py")[0] == EXIT_OK
+
     def test_exit_status_of_argparse_requests(self):
         assert _exit_status(SystemExit()) == 0
         assert _exit_status(SystemExit(0)) == 0
@@ -540,6 +579,20 @@ class TestFormats:
         assert out.splitlines()[0] == os.path.join(".report", "Module-wise Summary.html")
         assert os.path.isfile(repo / ".report" / "Expired TODO Items.html")
 
+    @needs_git
+    def test_the_expired_report_lists_explicit_dates_only(self, capsys, repo):
+        """A TODO whose default due date passed is stale, not expired (D4); the legacy report cannot tell them apart, so it must not see the date"""
+        run(capsys, "report", "--out", "reports")
+
+        with open(os.path.join("reports", "Expired TODO Items.html"), encoding="utf-8") as report:
+            expired = report.read()
+        with open(os.path.join("reports", "Module-wise Summary.html"), encoding="utf-8") as report:
+            by_module = report.read()
+
+        assert "explicit and long gone" in expired
+        assert "undated" not in expired
+        assert "undated" in by_module
+
     def test_report_out_is_the_directory(self, capsys, repo):
         _, out, _ = run(capsys, "report", "--out", "elsewhere", "--no-blame")
 
@@ -568,6 +621,112 @@ class TestFormats:
         stream.flush()
 
         assert stream.buffer.getvalue() == b"1 TODO ? 2\n"
+
+
+class TestBrokenPipe:
+    """`todonotifier scan . | head -1` closes stdout early. That is not an error (exit 3, traceback), it just ends the output"""
+
+    class ClosedPipe:
+        """A stdout whose reader went away"""
+
+        encoding = "utf-8"
+
+        def isatty(self) -> bool:
+            return False
+
+        def write(self, text: str) -> int:
+            raise BrokenPipeError(32, "Broken pipe")
+
+        def flush(self) -> None:
+            raise BrokenPipeError(32, "Broken pipe")
+
+    def test_writing_to_a_closed_pipe_is_quiet(self, monkeypatch):
+        discarded: list = []
+        monkeypatch.setattr(sys, "stdout", self.ClosedPipe())
+        monkeypatch.setattr(cli, "_discard_output", discarded.append)
+
+        _write_stdout("1 TODO")  # Does not raise
+
+        assert discarded == [sys.stdout]
+
+    def test_a_pipe_that_closes_at_the_flush_is_quiet_too(self, monkeypatch):
+        import io
+
+        class FlushFails(io.StringIO):
+            def flush(self) -> None:
+                raise BrokenPipeError(32, "Broken pipe")
+
+        discarded: list = []
+        monkeypatch.setattr(sys, "stdout", FlushFails())
+        monkeypatch.setattr(cli, "_discard_output", discarded.append)
+
+        _write_stdout("1 TODO")
+
+        assert len(discarded) == 1
+
+    def test_the_run_goes_on_so_fail_on_still_decides_the_exit_code(self, capsys, repo, monkeypatch):
+        monkeypatch.setattr(cli, "_discard_output", lambda stream: None)
+        monkeypatch.setattr(sys, "stdout", self.ClosedPipe())
+
+        code = main(["scan", ".", "--no-blame", "--fail-on", "expired"])
+
+        assert code == EXIT_FAIL_ON  # Not 3: the overdue TODO still fails the check
+
+    def test_a_broken_pipe_anywhere_else_exits_quietly(self, capsys, project, monkeypatch):
+        discarded: list = []
+        monkeypatch.setattr(cli, "_discard_output", discarded.append)
+
+        def explode(args: Any) -> int:
+            raise BrokenPipeError(32, "Broken pipe")
+
+        monkeypatch.setattr(cli, "_command_scan", explode)
+
+        code, out, err = run(capsys, "scan", ".")
+
+        assert (code, out, err) == (EXIT_OK, "", "")
+        assert discarded == [sys.stdout, sys.stderr]
+
+    def test_discarding_points_the_descriptor_at_the_null_device(self):
+        reader, writer = os.pipe()
+        os.close(reader)  # Nobody reads: writing now fails with BrokenPipeError
+
+        class Stream:
+            def fileno(self) -> int:
+                return writer
+
+        try:
+            with pytest.raises(BrokenPipeError):
+                os.write(writer, b"x")
+
+            cli._discard_output(Stream())
+
+            os.write(writer, b"x")  # Goes to the null device
+        finally:
+            os.close(writer)
+
+    def test_a_stream_without_a_descriptor_is_left_alone(self, capsys):
+        cli._discard_output(sys.stdout)  # capsys: fileno() is not supported
+        cli._discard_output(object())  # No fileno at all
+
+    def test_the_real_program_exits_quietly_when_the_reader_goes_away(self, tmp_path):
+        filler = "with a text that makes the output long enough to fill a pipe"
+        write(tmp_path, "many.py", "".join(f"# TODO {{2020-01-01}} @user{n % 5} item {n} {filler}\n" for n in range(4000)))
+        env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+
+        process = subprocess.Popen(
+            [sys.executable, "-m", "todonotifier", "scan", str(tmp_path), "--no-blame"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+        assert process.stdout is not None
+        first_line = process.stdout.readline()
+        process.stdout.close()  # Like `head -1` does
+        _, stderr = process.communicate(timeout=60)
+
+        assert first_line.startswith(b"LOCATION")
+        assert process.returncode == 0
+        assert stderr == b""
 
 
 class TestColor:
@@ -847,6 +1006,53 @@ class TestNotify:
         assert len(digest.calls[0][0].items) == 2
         assert plain.calls == 1 and plain.new_count_seen == "untouched"
 
+    @needs_git
+    def test_since_without_new_todos_sends_nothing_and_says_so_at_info_level(self, capsys, project, monkeypatch):
+        init_repo(project)
+        write(project, "pyproject.toml", "[tool.todonotifier]\n" + NOTIFY_CONFIG)
+        write(project, "a.py", "# TODO {2020-01-01} old and overdue\n")
+        commit_all(project)
+        recording = RecordingNotifier()
+        monkeypatch.setattr(cli, "build_notifiers", lambda notify: [recording])
+
+        code, _, quiet_err = run(capsys, "notify", ".", "--since", "HEAD", "--no-blame")
+        _, _, verbose_err = run(capsys, "notify", ".", "--since", "HEAD", "--no-blame", "-v")
+
+        assert code == EXIT_OK
+        assert recording.calls == []
+        assert quiet_err == ""  # INFO is not shown by default
+        assert "INFO todonotifier.cli: No TODOs on the lines changed since HEAD, so no notification was sent." in verbose_err
+        assert "Notified" not in verbose_err
+
+    @needs_git
+    def test_since_without_new_todos_still_honors_a_config_error_and_fail_on(self, capsys, project, monkeypatch):
+        init_repo(project)
+        write(project, ".todonotifier.toml", '[notify.slack]\nwebhook_env = "TN_SLACK"\n')
+        write(project, "a.py", "# TODO {2020-01-01} old and overdue\n")
+        commit_all(project)
+
+        code, _, err = run(capsys, "notify", ".", "--since", "HEAD", "--no-blame")  # TN_SLACK is not set
+
+        assert code == EXIT_USAGE and "TN_SLACK" in err
+
+        recording = RecordingNotifier()
+        monkeypatch.setattr(cli, "build_notifiers", lambda notify: [recording])
+
+        assert main(["notify", ".", "--since", "HEAD", "--no-blame", "--fail-on", "any"]) == EXIT_OK  # Nothing changed, so nothing can fail
+        assert recording.calls == []
+
+    def test_an_empty_scan_without_since_still_sends_the_all_clear(self, capsys, project, monkeypatch):
+        write(project, "pyproject.toml", "[tool.todonotifier]\n" + NOTIFY_CONFIG)
+        write(project, "a.py", "x = 1\n")
+        recording = RecordingNotifier()
+        monkeypatch.setattr(cli, "build_notifiers", lambda notify: [recording])
+
+        code, _, err = run(capsys, "notify", ".", "--no-blame")
+
+        assert code == EXIT_OK
+        assert len(recording.calls) == 1 and recording.calls[0][0].items == []
+        assert "Notified RecordingNotifier" in err
+
     def test_format_prints_the_result_too(self, capsys, configured, monkeypatch):
         monkeypatch.setattr(cli, "build_notifiers", lambda notify: [RecordingNotifier()])
 
@@ -910,7 +1116,7 @@ class TestInit:
         main(["init"])
 
         with open(project / "pyproject.toml", encoding="utf-8") as file:
-            assert file.read().startswith('[project]\nname = "demo"\n\n# TODO Notifier configuration')
+            assert file.read().startswith('[project]\nname = "demo"\n\n# todonotifier configuration')
 
     def test_an_empty_pyproject_gets_the_section_only(self, capsys, project):
         write(project, "pyproject.toml", "")
@@ -1012,6 +1218,26 @@ class TestInit:
             assert loaded.settings.default_due_days == 90
             assert loaded.settings.exclude_dirs["NAME"][-2:] == ["generated", "vendor"]
             assert loaded.settings.author_aliases == {"jane@example.com": "jane"}
+
+    @needs_git
+    @pytest.mark.parametrize("ignore_case", [False, True])
+    @pytest.mark.parametrize("pyproject", [True, False])
+    def test_the_starter_does_not_add_todos_of_its_own(self, capsys, project, pyproject, ignore_case):
+        """The first scan after `init` must not report the comments of the starter file itself (it once did: 'TODO Notifier configuration')"""
+        init_repo(project)
+        if pyproject:
+            write(project, "pyproject.toml", '[project]\nname = "demo"\n')
+        assert main(["init"]) == EXIT_OK
+        capsys.readouterr()
+        commit_all(project)
+        flags = ["--ignore-case"] if ignore_case else []
+
+        code, out, _ = run(capsys, "scan", ".", "--format", "json", "--no-require-comment", *flags)
+
+        assert code == EXIT_OK
+        result = json.loads(out)
+        assert result["items"] == []
+        assert result["scanned_files"] == ["pyproject.toml" if pyproject else ".todonotifier.toml"]
 
     def test_the_starter_mentions_the_docs(self):
         assert "github.com/ashu-tosh-kumar/todo_notifier" in starter_config(True)
