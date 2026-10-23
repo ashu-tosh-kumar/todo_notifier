@@ -140,6 +140,9 @@ config = DefaultConfig(
     # Exclude specific files
     exclude_files={"regex": [r".*\.pyc$", r".*\.log$"]},
     
+    # Scan these file extensions (without leading dot). Defaults to ["py"]
+    file_extensions=["py", "js", "ts"],
+
     # Custom settings
     ignore_todo_case=True,
     save_html_reports=True,
@@ -296,12 +299,23 @@ config = DefaultConfig(
 )
 ```
 
+### File Extensions
+
+By default only `.py` files are scanned. Use `file_extensions` (without the leading dot)
+to scan other file types:
+
+```python
+from todonotifier.config import DefaultConfig
+
+config = DefaultConfig(file_extensions=["py", "js", "ts"])
+```
+
 ### Custom Configuration Class
 
 Most of the features are configurable while instantiating configuration class. But users
 are free to write another configuration class or simply inherit from `DefaultConfig`.
 However, configuration class should be a child of `BaseConfig` in
-`todonotifier/config.py`.
+`todonotifier/config.py`. Note that `BaseConfig` requires `file_extensions` since v2.0.0.
 
 ```python
 from todonotifier.config import BaseConfig
@@ -367,7 +381,24 @@ details.
 
 ## Changelog
 
-### v1.4.0 (Latest)
+### v2.0.0 (Unreleased)
+
+- **Breaking Change**: `BaseConfig.__init__` has a new required argument
+  `file_extensions` (list of extensions without the leading dot). Custom subclasses of
+  `BaseConfig` that call `super().__init__()` must now pass it. `DefaultConfig` is
+  unaffected and defaults to `["py"]`.
+- **Breaking Change**: `todonotifier.utils.get_files_in_dir` now takes `extensions:
+  List[str]` instead of `extension: str`.
+- **Behavior Change**: HTML reports are now rendered with Jinja2 templates (new runtime
+  dependency `jinja2`) with autoescaping, so characters like `<`, `>` and `&` in TODO
+  messages are escaped. Whitespace in the generated HTML also differs.
+- Added `file_extensions` config option to scan files other than `.py`
+- Files larger than 10 MB are parsed line by line instead of being loaded into memory
+- Unparseable completion dates now log a warning with module and line number
+- The library no longer calls `logging.basicConfig` on the root logger; only the
+  `todonotifier` logger is configured (see `todonotifier/log.py`)
+
+### v1.4.0
 
 - **Breaking Change**: Renamed `CONNECT_METHOD` in in `todonotifier.connect` to
   `ConnectMethod`.
