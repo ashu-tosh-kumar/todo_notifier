@@ -225,7 +225,7 @@ class TestParseFilesForTodoItems(unittest.TestCase):
                     USER("ashutosh"),
                     "2022-05-07",
                     "sample_test_file.py",
-                    POSITION(53),  # Not sure why 53, should be 54
+                    POSITION(54),
                 ),
             ]
         }
@@ -303,6 +303,56 @@ class TestParseFilesForTodoItems(unittest.TestCase):
         dummy_files = ["tests/sample_test_file2.py"]
         project_parent_dir = "tests"  # Important to keep it same as tests directory
         stub_compute_file_line_no_to_chars_map.side_effect = (Exception("unittest-compute-file-line-no-to-chars-map-exception"),)
+        expected_value = {"sample_test_file2.py": []}
+
+        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
+
+        self._compare_todos(expected_value, actual_value)
+
+    @patch("todonotifier.todo_notifier.STREAMING_THRESHOLD_BYTES", 0)
+    @patch("todonotifier.todo_notifier._parse_file_in_memory")
+    def test_parse_files_for_todo_items_should_use_streaming_parser_for_large_files(self, stub_parse_file_in_memory):
+        dummy_files = ["tests/sample_test_file.py"]
+        project_parent_dir = "tests"
+
+        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
+
+        stub_parse_file_in_memory.assert_not_called()
+        self.assertEqual(len(actual_value["sample_test_file.py"]), len(self._in_memory_todos(dummy_files, project_parent_dir, False)["sample_test_file.py"]))
+
+    def _in_memory_todos(self, files: List[str], project_parent_dir: str, ignore_todo_case: bool) -> Dict[str, List[TODO]]:
+        return parse_files_for_todo_items(project_parent_dir, files, ignore_todo_case)
+
+    @patch("todonotifier.todo_notifier.STREAMING_THRESHOLD_BYTES", 0)
+    def test_parse_files_for_todo_items_streaming_parser_should_match_in_memory_parser(self):
+        dummy_files = ["tests/sample_test_file.py", "tests/sample_test_file2.py"]
+        project_parent_dir = "tests"
+
+        for ignore_todo_case in (False, True):
+            streamed_value = parse_files_for_todo_items(project_parent_dir, dummy_files, ignore_todo_case)
+            with patch("todonotifier.todo_notifier.STREAMING_THRESHOLD_BYTES", 10**9):
+                in_memory_value = parse_files_for_todo_items(project_parent_dir, dummy_files, ignore_todo_case)
+
+            self._compare_todos(in_memory_value, streamed_value)
+
+    @patch("todonotifier.todo_notifier.STREAMING_THRESHOLD_BYTES", 0)
+    @patch("todonotifier.todo_notifier._parse_todo_from_match")
+    def test_parse_files_for_todo_items_streaming_parser_should_handle_exception_in_parsing_todo_items(self, stub_parse_todo_from_match):
+        dummy_files = ["tests/sample_test_file2.py"]
+        project_parent_dir = "tests"
+        stub_parse_todo_from_match.side_effect = Exception("unittest-parse-todo-exception")
+        expected_value = {"sample_test_file2.py": []}
+
+        actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
+
+        self._compare_todos(expected_value, actual_value)
+
+    @patch("todonotifier.todo_notifier.STREAMING_THRESHOLD_BYTES", 0)
+    @patch("builtins.open")
+    def test_parse_files_for_todo_items_streaming_parser_should_handle_exception_in_reading_file(self, stub_open):
+        dummy_files = ["tests/sample_test_file2.py"]
+        project_parent_dir = "tests"
+        stub_open.side_effect = Exception("unittest-open-exception")
         expected_value = {"sample_test_file2.py": []}
 
         actual_value = parse_files_for_todo_items(project_parent_dir, dummy_files, False)
