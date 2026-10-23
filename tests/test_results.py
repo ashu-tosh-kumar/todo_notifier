@@ -168,6 +168,15 @@ class TestTodoItem(unittest.TestCase):
         self.assertEqual("FIXME", item.tag)
         self.assertEqual("https://github.com/org/repo/blob/abc/src/a.py#L9", item.web_url)
 
+    def test_from_legacy_should_use_the_tag_of_the_legacy_todo(self):
+        todo = TODO("msg", USER("alice"), "", "src/a.py", POSITION(9), tag="HACK")
+
+        self.assertEqual("HACK", TodoItem.from_legacy(todo, today=TODAY).tag)
+        self.assertEqual("TODO", TodoItem.from_legacy(TODO("msg", USER("alice"), "", "a.py", POSITION(1)), today=TODAY).tag)
+
+    def test_to_legacy_should_keep_the_tag(self):
+        self.assertEqual("FIXME", make_item(tag="FIXME").to_legacy().tag)
+
     def test_to_legacy_should_restore_the_sentinel_and_unknown_user(self):
         legacy = make_item().to_legacy()
 

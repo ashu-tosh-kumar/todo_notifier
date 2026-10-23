@@ -1,5 +1,7 @@
 import json
 import os
+import shutil
+import subprocess
 import tempfile
 import unittest
 from datetime import date
@@ -8,11 +10,13 @@ from unittest.mock import patch
 from todonotifier.results import ScanResult, TodoItem
 from todonotifier.scanner import ScanException, scan
 from todonotifier.settings import ScanSettings
+from todonotifier.settings_file import resolve_settings
 from todonotifier.todo_notifier import parse_files_for_todo_items
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 SAMPLE_FILES = [os.path.join(TESTS_DIR, "sample_test_file.py"), os.path.join(TESTS_DIR, "sample_test_file2.py")]
 TODAY = date(2025, 6, 15)
+GIT_AVAILABLE = shutil.which("git") is not None
 
 
 class ScannerTestCase(unittest.TestCase):
@@ -38,7 +42,8 @@ class TestScanEquivalence(ScannerTestCase):
     def test_scan_should_find_the_same_todos_as_parse_files_for_todo_items(self):
         result = scan(ScanSettings(paths=SAMPLE_FILES), today=TODAY)
 
-        expected = parse_files_for_todo_items(result.root, SAMPLE_FILES, False)
+        # `scan` parses with the extended syntax (one colon after a tag is dropped), so the line "class" plus the tag and a colon has the message "" and not ":"
+        expected = parse_files_for_todo_items(result.root, SAMPLE_FILES, False, extended_syntax=True)
         actual = [(todo.msg, todo.user.user_name, str(todo.completion_date), todo.position.line_no) for todos in result.to_legacy().values() for todo in todos]
         legacy = [(todo.msg, todo.user.user_name, str(todo.completion_date), todo.position.line_no) for todos in expected.values() for todo in todos]
 
@@ -276,3 +281,181 @@ class TestScanGitHook(ScannerTestCase):
         spy.assert_called_once()
         self.assertEqual(os.path.dirname(path), spy.call_args.args[2])
         self.assertEqual(TODAY, spy.call_args.args[3])
+
+
+class TestScanDetection(ScannerTestCase):
+    def test_scan_should_honour_tags(self):
+        path = self.write("a.py", "# TODO a\n# FIXME b\n# NOTE c\n")
+
+        result = scan(ScanSettings(paths=[path], tags=["TODO", "FIXME"]), today=TODAY)
+
+        self.assertEqual([("TODO", "a"), ("FIXME", "b")], [(item.tag, item.message) for item in result.items])
+
+    def test_scan_should_default_to_the_todo_tag_only(self):
+        path = self.write("a.py", "# TODO a\n# FIXME b\n")
+
+        result = scan(ScanSettings(paths=[path]), today=TODAY)
+
+        self.assertEqual(["TODO"], [item.tag for item in result.items])
+
+    def test_scan_should_honour_ignore_case_and_report_the_configured_tag(self):
+        path = self.write("a.py", "# todo a\nfrom todonotifier import x\n")
+
+        result = scan(ScanSettings(paths=[path], ignore_case=True), today=TODAY)
+
+        self.assertEqual([("TODO", "a", 1)], [(item.tag, item.message, item.line) for item in result.items])
+
+    def test_scan_should_honour_require_comment(self):
+        path = self.write("a.py", 'x = "TODO list"\n# TODO real\n')
+
+        self.assertEqual([1, 2], [item.line for item in scan(ScanSettings(paths=[path]), today=TODAY).items])
+        self.assertEqual([2], [item.line for item in scan(ScanSettings(paths=[path], require_comment=True), today=TODAY).items])
+
+    def test_scan_should_understand_owner_in_parentheses_and_colons(self):
+        path = self.write("a.py", "# TODO(ashu): fix this\n# FIXME {2020-01-01} @bob: later\n")
+
+        result = scan(ScanSettings(paths=[path], tags=["TODO", "FIXME"]), today=TODAY)
+
+        self.assertEqual(
+            [("TODO", "fix this", "ashu", "annotation", None), ("FIXME", "later", "bob", "annotation", date(2020, 1, 1))],
+            [(item.tag, item.message, item.author, item.author_source, item.due_date) for item in result.items],
+        )
+
+    def test_scan_should_reject_invalid_tags(self):
+        path = self.write("a.py", "# TODO a\n")
+
+        with self.assertRaises(ScanException):
+            scan(ScanSettings(paths=[path], tags=[]), today=TODAY)
+
+    def test_scan_should_skip_binary_files(self):
+        self.write("a.py", "# TODO a\n")
+        with open(os.path.join(self.tmp, "b.py"), "wb") as f:
+            f.write(b"# TODO b\x00")
+
+        result = scan(ScanSettings(paths=[self.tmp]), today=TODAY)
+
+        self.assertEqual(["a.py"], result.scanned_files)
+
+    def test_dot_git_should_be_excluded_by_default(self):
+        self.write(".git/hooks/x.md", "<!-- TODO hidden -->\n")
+        self.write("docs/a.md", "<!-- TODO shown -->\n")
+
+        result = scan(ScanSettings(paths=[self.tmp], extensions=["md"]), today=TODAY)
+
+        self.assertEqual(["docs/a.md"], [item.file for item in result.items])
+
+    def test_scan_with_the_cli_defaults_should_report_comments_of_many_languages(self):
+        self.write("a.js", "const s = 'TODO list'; // TODO js\n")
+        self.write("b.rs", "/* FIXME(alice): rust */\n")
+        self.write("c.md", "TODO not in a comment\n<!-- HACK md -->\n")
+
+        settings = resolve_settings({"paths": [self.tmp], "use_git_blame": False}, None, start=self.tmp)
+        result = scan(settings, today=TODAY)
+
+        self.assertEqual(
+            [("a.js", "TODO", "js"), ("b.rs", "FIXME", "rust"), ("c.md", "HACK", "md")],
+            [(item.file, item.tag, item.message) for item in result.items],
+        )
+
+
+def _git(cwd: str, *args: str) -> None:
+    env = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_SYSTEM=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+    subprocess.run(["git", *args], cwd=cwd, env=env, capture_output=True, check=True)
+
+
+@unittest.skipUnless(GIT_AVAILABLE, "git is not installed")
+class TestScanRespectGitignore(ScannerTestCase):
+    def make_repo(self) -> None:
+        _git(self.tmp, "init", "-q")
+        self.write(".gitignore", "node_modules/\n*.min.js\n")
+        self.write("src/a.js", "// TODO tracked\n")
+        self.write("node_modules/x.js", "// TODO in node_modules\n")
+        self.write("src/b.min.js", "// TODO minified\n")
+        _git(self.tmp, "add", ".gitignore", "src/a.js")
+        self.write("src/new.js", "// TODO untracked but not ignored\n")
+
+    def test_default_cli_settings_should_not_report_gitignored_files(self):
+        self.make_repo()
+
+        settings = resolve_settings({"paths": [self.tmp]}, None, start=self.tmp)
+        settings.use_git_blame = False
+        result = scan(settings, today=TODAY)
+
+        self.assertEqual(["src/a.js", "src/new.js"], [item.file for item in result.items])
+
+    def test_without_respect_gitignore_the_tree_should_be_walked(self):
+        self.make_repo()
+
+        result = scan(ScanSettings(paths=[self.tmp], extensions=["js"], exclude_dirs={"NAME": []}), today=TODAY)
+
+        self.assertEqual(["node_modules/x.js", "src/a.js", "src/b.min.js", "src/new.js"], [item.file for item in result.items])
+
+    def test_git_listing_should_still_apply_extensions_and_exclusions(self):
+        self.make_repo()
+        self.write("src/skip/c.js", "// TODO excluded dir\n")
+        self.write("src/d.js", "// TODO excluded file\n")
+        self.write("src/e.py", "# TODO other extension\n")
+        self.write("src/sub/skip/deep.js", "// TODO deep excluded dir\n")
+        _git(self.tmp, "add", "-A")
+        settings = ScanSettings(
+            paths=[self.tmp],
+            extensions=["js"],
+            respect_gitignore=True,
+            exclude_dirs={"NAME": ["skip"]},
+            exclude_files={"NAME": ["d.js"]},
+        )
+
+        result = scan(settings, today=TODAY)
+
+        self.assertEqual(["src/a.js", "src/new.js"], [item.file for item in result.items])
+
+    def test_exclusion_by_absolute_path_should_apply(self):
+        self.make_repo()
+        settings = ScanSettings(paths=[self.tmp], extensions=["js"], respect_gitignore=True, exclude_dirs={"ABS_PATH": [os.path.join(self.tmp, "src")]})
+
+        result = scan(settings, today=TODAY)
+
+        self.assertEqual([], result.items)
+
+    def test_scan_of_a_subdirectory_should_list_only_that_subdirectory(self):
+        self.make_repo()
+        self.write("other/z.js", "// TODO elsewhere\n")
+
+        result = scan(ScanSettings(paths=[os.path.join(self.tmp, "src")], extensions=["js"], respect_gitignore=True), today=TODAY)
+
+        self.assertEqual(["a.js", "new.js"], [item.file for item in result.items])
+
+    def test_tracked_file_deleted_from_disk_should_be_skipped(self):
+        self.make_repo()
+        os.remove(os.path.join(self.tmp, "src", "a.js"))
+
+        result = scan(ScanSettings(paths=[self.tmp], extensions=["js"], respect_gitignore=True), today=TODAY)
+
+        self.assertEqual(["src/new.js"], [item.file for item in result.items])
+
+    def test_individual_files_should_be_checked_against_gitignore(self):
+        self.make_repo()
+        ignored = os.path.join(self.tmp, "node_modules", "x.js")
+        shown = os.path.join(self.tmp, "src", "a.js")
+
+        result = scan(ScanSettings(paths=[ignored, shown], extensions=["js"], respect_gitignore=True), today=TODAY)
+
+        self.assertEqual(["src/a.js"], [item.file for item in result.items])
+
+    def test_outside_a_repository_the_tree_should_be_walked(self):
+        self.write("node_modules/x.js", "// TODO walked\n")
+        self.write("a.js", "// TODO a\n")
+        file_path = os.path.join(self.tmp, "a.js")
+
+        with patch("todonotifier.git_meta.find_git_root", return_value=None):
+            result = scan(ScanSettings(paths=[self.tmp, file_path], extensions=["js"], respect_gitignore=True, exclude_dirs={"NAME": []}), today=TODAY)
+
+        self.assertEqual(["a.js", "node_modules/x.js"], [item.file for item in result.items])
+
+    def test_if_git_is_unavailable_the_tree_should_be_walked(self):
+        self.write("a.js", "// TODO a\n")
+
+        with patch("todonotifier.git_meta.subprocess.run", side_effect=FileNotFoundError):
+            result = scan(ScanSettings(paths=[self.tmp], extensions=["js"], respect_gitignore=True), today=TODAY)
+
+        self.assertEqual(["a.js"], [item.file for item in result.items])
