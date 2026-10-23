@@ -1,0 +1,37 @@
+# Bandit: Python-specific static security analysis (hardcoded secrets, shell
+# injection, unsafe deserialization, etc.). Complements CodeQL; results are
+# reported to the Security tab via SARIF. Non-blocking (--exit-zero); CodeQL is
+# the gate. Replaces the Python coverage previously provided by OSSAR.
+name: Bandit
+
+on:
+  push:
+    branches: ["main", "development"]
+  pull_request:
+    branches: ["main", "development"]
+  schedule:
+    - cron: "30 7 * * 2"
+
+permissions:
+  contents: read
+
+jobs:
+  bandit:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+      - name: Install Bandit
+        run: pip install "bandit[sarif]"
+      - name: Run Bandit
+        run: bandit -r . -x ./tests,./.venv,./venv -f sarif -o bandit.sarif --exit-zero
+      - name: Upload SARIF to code-scanning
+        uses: github/codeql-action/upload-sarif@4bfa242aa49c5f7c6770b98670d354a7dfac05f8 # v3
+        with:
+          sarif_file: bandit.sarif
