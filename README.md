@@ -133,6 +133,8 @@ Sources, all checked on 2026-10-23 (these tools change, so check their current d
    An undated TODO becomes **stale** 90 days after it was added; a TODO whose `{date}` has passed is **overdue**.
    `--fail-on expired` fails on overdue TODOs only. See [Command line](#command-line) for all flags and formats.
 
+5. **Run it before each commit** with [pre-commit](#pre-commit): add the `todonotifier` hook to `.pre-commit-config.yaml`.
+
 ## Command line
 
 `todonotifier scan .` needs no config (see [Quick Start](#quick-start)). It scans the common languages (see "Configuration file"), skips what
@@ -165,12 +167,12 @@ mixed with options (`todonotifier scan a.py --format json b.py`); after a `--` e
 | `--tags TODO,FIXME` | Comma separated tags (default `TODO,FIXME,HACK,XXX`) |
 | `--ext py,js` | Comma separated file extensions; `common` is the preset of common languages (default) |
 | `--ignore-case` | Match tags case insensitively |
-| `--no-blame` | Do not run `git blame`: no authors, ages or default due dates |
+| `--no-blame` / `--blame` | Do not run / run `git blame` (no authors, ages or default due dates without it). The last one on the command line wins, so `--no-blame --blame` runs blame |
 | `--default-due-days N` | An undated TODO turns stale `N` days after it was added (default 90, `0` disables) |
 | `--no-require-comment` | Also report tags that are not inside a comment |
 | `--no-gitignore` | Also scan files that `.gitignore` excludes |
 | `--since GIT_REF` | Only report TODOs on lines added or changed since `GIT_REF` (e.g. `HEAD~1`, `origin/main`). Needs a git repository; new files count in full |
-| `--fail-on {none,expired,stale,any}` | Exit with 1 if such a TODO exists (default `none`, or `fail_on` of the config file). `expired`: an explicit `{date}` has passed. `stale`: also default due dates. `any`: any TODO. Judged after `--since` |
+| `--fail-on {none,expired,stale,any,incomplete}` | Exit with 1 if such a TODO exists (default `none`, or `fail_on` of the config file). `expired`: an explicit `{date}` has passed. `stale`: also default due dates. `any`: any TODO. `incomplete`: a TODO has no owner written in the comment (`@user` or `TODO(user)`; a `git blame` author does not count) or no explicit `{date}` (a default due date does not count). Judged after `--since` |
 | `--format {table,json,github,markdown,sarif,html}` | Output format (default `table`; `html` for `report`; `notify` prints nothing unless given) |
 | `--output FILE` | Write the result to `FILE` instead of stdout (for `html`: the directory for the report files) |
 | `-q`, `--quiet` / `-v`, `--verbose` | Log errors only / debug logs and tracebacks. Logs go to stderr, results to stdout |
@@ -208,6 +210,56 @@ In a GitHub Actions step (`fetch-depth: 0` is needed for `git blame` and `--sinc
 
 GitHub shows at most 10 error, 10 warning and 10 notice annotations per step, so `--since` keeps pull requests readable.
 
+## pre-commit
+
+TODO Notifier ships two hooks for [pre-commit](https://pre-commit.com). Add this to your `.pre-commit-config.yaml`, then run
+`pre-commit install` (and `pre-commit autoupdate` to move `rev` to a newer release):
+
+```yaml
+repos:
+  - repo: https://github.com/ashu-tosh-kumar/todo_notifier
+    rev: v2.1.0
+    hooks:
+      - id: todonotifier           # fails if a staged file has a TODO whose {date} has passed
+      # - id: todonotifier-strict  # fails if a staged file has a TODO without an owner or an explicit {date}
+```
+
+| Hook | Runs | Fails the commit when |
+|---|---|---|
+| `todonotifier` | `todonotifier scan --fail-on expired --no-blame <staged files>` | a staged file has a TODO whose explicit `{date}` has passed |
+| `todonotifier-strict` | `todonotifier scan --fail-on incomplete --no-blame <staged files>` | a staged file has a TODO without an owner (`@user` or `TODO(user)`) or without an explicit `{date}` |
+
+Both hooks scan only the files pre-commit passes (one process, one `git ls-files` call, no walk of the repository). Binary files and files with
+an unknown extension are skipped, and so is anything your config excludes (`exclude_dirs`, `exclude_files`, `.gitignore`). The config file of the
+repository root (`[tool.todonotifier]` in `pyproject.toml`, or `.todonotifier.toml`) applies as usual, so `tags`, `extensions` and
+`require_comment` work in the hooks too. The first run installs the tool in a pre-commit environment; after that the hook takes well under a
+second for a typical commit (measured on about 10 files). Only the TODOs in the staged files are looked at, but the whole file counts, not only the
+lines you changed.
+
+**Blame is off by default** so the hook stays fast. The expired check only uses dates written in the comment, so it does not need blame. Turn blame on
+when you want authors, ages and default due dates, for example to also fail on stale TODOs. pre-commit appends `args` to the `entry`, before the file
+names. A later `--fail-on` replaces the earlier one, and a later `--blame` replaces the `--no-blame` of the entry:
+
+```yaml
+    hooks:
+      - id: todonotifier
+        args: [--blame, --fail-on, stale]   # run: todonotifier scan --fail-on expired --no-blame --blame --fail-on stale <files>
+```
+
+Other flags work the same way, for example `args: [--tags, "TODO,FIXME"]` or `args: [--config, ci/todonotifier.toml]`. To change the scan for
+the hook only, use `args`; to change it for every run, put it in the config file.
+
+**Ruff's TD rules or TODO Notifier?** They do different jobs. Use [Ruff's TD rules](https://docs.astral.sh/ruff/rules/#flake8-todos-td) (flake8-todos)
+to lint the *format* of TODO comments, and TODO Notifier for *deadlines*: `todonotifier` finds the overdue ones. `todonotifier-strict` overlaps with
+Ruff's `TD002` (author) and `TD003` (issue link) in spirit but checks for an owner and a date; use it if you want every TODO dated, and skip it if
+Ruff already covers what you need.
+
+Try it without installing anything:
+
+```bash
+pre-commit try-repo https://github.com/ashu-tosh-kumar/todo_notifier todonotifier --files path/to/file.py
+```
+
 ## Configuration file
 
 Scan options can live in your project instead of on the command line. TODO Notifier reads
@@ -217,7 +269,9 @@ keys at the top level (drop the `tool.todonotifier` prefix from the table names)
 **Discovery:** starting at the scan path (its directory, if it is a file), it walks up to
 the git root (or the filesystem root). In each directory `.todonotifier.toml` is checked
 first, then `pyproject.toml` (only if it has a `[tool.todonotifier]` table). The first file
-found wins. An explicit path overrides discovery. With no file, the defaults apply.
+found wins. An explicit path overrides discovery. With no file, the defaults apply. When files are named (as pre-commit does) and all of them are
+inside the current directory, discovery starts at the current directory, so the config of the repository root applies to every file. `exclude_dirs`
+and `exclude_files` apply to named files too.
 
 **Precedence**, highest first: command line flags, config file, the command line and config
 file defaults (shown below), then the `ScanSettings` defaults. The library API (`ScanSettings()`,
@@ -252,7 +306,7 @@ default_due_days = 90
 # With commit_sha, builds links to each TODO in the report. (default: unset)
 repo_web_url = "https://github.com/your-org/your-repo"
 commit_sha = "0123456789abcdef"
-# When the command line should exit non-zero: "none", "expired", "stale" or "any".
+# When the command line should exit non-zero: "none", "expired", "stale", "any" or "incomplete".
 fail_on = "none"
 
 # Exclusions are ADDED to the built-in ones (DEFAULT_EXCLUDE_DIRS / DEFAULT_EXCLUDE_FILES).
@@ -877,6 +931,12 @@ details.
   one-line file or a file with thousands of TODOs is scanned in linear time (it took minutes); `generated_at` keeps the time of day;
   `--default-due-days` is limited to 100 years; "dubious ownership" of a repository is explained; an unreadable file is one error line;
   credentials in a clone URL are not logged by `Connect`; `.pre-commit-config.yaml` matches CI.
+
+- Added pre-commit hooks (`.pre-commit-hooks.yaml`, see "pre-commit"): `todonotifier` (`scan --fail-on expired --no-blame`) and `todonotifier-strict`
+  (`scan --fail-on incomplete --no-blame`). New `--fail-on incomplete` (a TODO without an owner annotation or an explicit date; also a `fail_on`
+  value in the config file), and a `--blame` flag that overrides an earlier `--no-blame` (the last one wins), so `args` of a hook can turn blame on.
+  Files named on the command line now obey `exclude_dirs` as well as `exclude_files`, and when they are all inside the current directory the config
+  file is looked up from there (pre-commit passes repo-relative paths).
 
 - Release and project housekeeping: CI runs on Python 3.10 to 3.14 with `black`, `isort`, `flake8`, 100% coverage
   and a self-check (`todonotifier scan . --fail-on expired`); `.github/workflows/release.yml` publishes tagged

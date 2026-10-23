@@ -1,0 +1,21 @@
+# Hooks for https://pre-commit.com. Add this repository to your .pre-commit-config.yaml (see "pre-commit" in the README).
+#
+# pre-commit appends `args` from the consumer's config to `entry`, and then the staged files. A later --fail-on beats an earlier one, and --blame
+# beats an earlier --no-blame, so a consumer can change either with `args`.
+- id: todonotifier
+  name: todonotifier (overdue TODOs)
+  description: Fail the commit if a staged file has a TODO whose explicit {date} has passed. Git blame is off for speed (add `args` [--blame] to turn it on).
+  entry: todonotifier scan --fail-on expired --no-blame
+  language: python
+  types: [text]
+  pass_filenames: true
+  require_serial: true
+
+- id: todonotifier-strict
+  name: todonotifier (TODOs need an owner and a date)
+  description: Fail the commit if a staged file has a TODO without an owner (@user or TODO(user)) or without an explicit {date}. Use Ruff's TD rules to lint the TODO format.
+  entry: todonotifier scan --fail-on incomplete --no-blame
+  language: python
+  types: [text]
+  pass_filenames: true
+  require_serial: true
