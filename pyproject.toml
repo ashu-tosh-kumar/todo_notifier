@@ -24,7 +24,7 @@ skip = ["migrations", ".env", "venv", ".local", ".history", ".vscode"]
 
 [tool.poetry]
 name = "todonotifier"
-version = "1.4.0"
+version = "2.0.0"
 description = "Library to setup automatic TODO Notifications in code"
 authors = ["Ashutosh <37182127+ashu-tosh-kumar@users.noreply.github.com>"]
 license = "MIT"
@@ -38,6 +38,7 @@ exclude = ["tests", "sample_reports"]
 python = "^3.9"
 gitpython = "^3.1.0"
 python-dateutil = "^2.8.2"
+jinja2 = "^3.1.0"
 
 
 [tool.poetry.group.dev.dependencies]

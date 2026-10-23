@@ -14,6 +14,7 @@ class TestBaseConfig(unittest.TestCase):
         self._dummy_save_html_reports = True
         self._dummy_ignore_todo_case = False
         self._dummy_notifier = None
+        self._dummy_file_extensions = ["py", "js"]
 
         self._base_config = BaseConfig(
             self._dummy_exclude_dirs,
@@ -23,6 +24,7 @@ class TestBaseConfig(unittest.TestCase):
             self._dummy_save_html_reports,
             self._dummy_ignore_todo_case,
             self._dummy_notifier,
+            self._dummy_file_extensions,
         )
 
     def test_exclude_dirs_should_return_excluded_directory(self):

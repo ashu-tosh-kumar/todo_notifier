@@ -1,21 +1,19 @@
 """This module provides a sample driver method to setup and run TODO Notifier
 """
 
-import logging
 import os
 import tempfile
 from typing import TypeVar
 
 from todonotifier.config import BaseConfig, default_config
 from todonotifier.connect import Connect
+from todonotifier.log import get_logger
 from todonotifier.todo_notifier import parse_files_for_todo_items
 from todonotifier.utils import generate_summary, get_files_in_dir, store_html
 
 P = TypeVar("P")
 
-# logging configuration
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class TODOException(Exception):
@@ -43,7 +41,7 @@ def run(connect: Connect, config: BaseConfig = default_config) -> None:
             connect.pull_repository(target_dir=project_dir)
 
             all_files_in_project_dir = get_files_in_dir(
-                dir_path=project_dir, extension="py", exclude_subdirs=config.exclude_dirs, exclude_files=config.exclude_files
+                dir_path=project_dir, extensions=config.file_extensions, exclude_subdirs=config.exclude_dirs, exclude_files=config.exclude_files
             )
 
             ignore_todo_case = config.ignore_todo_case

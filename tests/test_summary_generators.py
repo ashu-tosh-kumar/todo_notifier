@@ -40,30 +40,25 @@ class TestByModuleSummaryGenerator(unittest.TestCase):
                 [self._dummy_user_name, self._dummy_msg, self._dummy_line_no, "2022-09-22"],
             ]
         }
-        expected_value = f"""
-            <h3>TODOs for module {self._dummy_module}</h3>
-            <p>
-                
-            <table>
-                <caption>Module wise summary</caption>
-            <tr>
-                <th>User Name</th>
-                <th>Message</th>
-                <th>Line No.</th>
-                <th>Completion Date</th>
-            </tr>
-            
-                <tr>
-                    <td>{self._dummy_user_name}</td>
-                    <td>{self._dummy_msg}</td>
-                    <td>{self._dummy_line_no}</td>
-                    <td>{"2022-09-22"}</td>
-                </tr>
-                
-            </table>
-            
-            </p><br>
-            """  # noqa: W293
+        expected_value = f"""<h3>TODOs for module {self._dummy_module}</h3>
+<p>
+    <table>
+        <caption>Module wise summary</caption>
+        <tr>
+            <th>User Name</th>
+            <th>Message</th>
+            <th>Line No.</th>
+            <th>Completion Date</th>
+        </tr>
+        <tr>
+            <td>{self._dummy_user_name}</td>
+            <td>{self._dummy_msg}</td>
+            <td>{self._dummy_line_no}</td>
+            <td>{"2022-09-22"}</td>
+        </tr>
+    </table>
+</p><br>
+"""
 
         self._by_module_summary_generator.generate_html()
 
@@ -103,30 +98,25 @@ class TestExpiredTodosByUserSummaryGenerator(unittest.TestCase):
                 [self._dummy_msg, self._dummy_module, self._dummy_line_no, "2020-09-22"],
             ]
         }
-        expected_value = f"""
-            <h3>Expired TODOs for {self._dummy_user.user_name}</h3>
-            <p>
-                
-            <table>
-                <caption>User wise summary of expired todo item</caption>
-            <tr>
-                <th>Message</th>
-                <th>Module</th>
-                <th>Line No.</th>
-                <th>Completion Date</th>
-            </tr>
-            
-                    <tr>
-                        <td>{self._dummy_msg}</td>
-                        <td>{self._dummy_module}</td>
-                        <td>{self._dummy_line_no}</td>
-                        <td>{"2020-09-22"}</td>
-                    </tr>
-                    
-            </table>
-            
-            </p><br>
-            """  # noqa: W293
+        expected_value = f"""<h3>Expired TODOs for {self._dummy_user.user_name}</h3>
+<p>
+    <table>
+        <caption>User wise summary of expired todo item</caption>
+        <tr>
+            <th>Message</th>
+            <th>Module</th>
+            <th>Line No.</th>
+            <th>Completion Date</th>
+        </tr>
+        <tr>
+            <td>{self._dummy_msg}</td>
+            <td>{self._dummy_module}</td>
+            <td>{self._dummy_line_no}</td>
+            <td>{"2020-09-22"}</td>
+        </tr>
+    </table>
+</p><br>
+"""
 
         self._expired_todos_by_user_summary_generator.generate_html()
 
@@ -168,30 +158,25 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
                 [self._dummy_msg, self._dummy_module, self._dummy_line_no, expected_completion_date],
             ]
         }
-        expected_value = f"""
-            <h3>Upcoming TODOs for {self._dummy_user.user_name}</h3>
-            <p>
-                
-            <table>
-                <caption>User wise summary of upcoming todo items</caption>
-            <tr>
-                <th>Message</th>
-                <th>Module</th>
-                <th>Line No.</th>
-                <th>Completion Date</th>
-            </tr>
-            
-                    <tr>
-                        <td>{self._dummy_msg}</td>
-                        <td>{self._dummy_module}</td>
-                        <td>{self._dummy_line_no}</td>
-                        <td>{expected_completion_date}</td>
-                    </tr>
-                    
-            </table>
-            
-            </p><br>
-            """  # noqa: W293
+        expected_value = f"""<h3>Upcoming TODOs for {self._dummy_user.user_name}</h3>
+<p>
+    <table>
+        <caption>User wise summary of upcoming todo items</caption>
+        <tr>
+            <th>Message</th>
+            <th>Module</th>
+            <th>Line No.</th>
+            <th>Completion Date</th>
+        </tr>
+        <tr>
+            <td>{self._dummy_msg}</td>
+            <td>{self._dummy_module}</td>
+            <td>{self._dummy_line_no}</td>
+            <td>{expected_completion_date}</td>
+        </tr>
+    </table>
+</p><br>
+"""
 
         self._upcoming_week_todos_by_user_summary_generator.generate_html()
 

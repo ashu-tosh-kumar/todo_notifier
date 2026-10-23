@@ -15,6 +15,9 @@ from typing import TypeVar
 from dateutil import parser
 
 from todonotifier.constants import DEFAULT_COMPLETION_DATE
+from todonotifier.log import get_logger
+
+logger = get_logger(__name__)
 
 T = TypeVar("T")
 
@@ -91,14 +94,21 @@ class TODO:
             module (str): Module in which todo item is present
             position (POSITION): Represents the position of the respective todo
 
-        Raises:
-            InvalidDateFormatException: Raised if the `completion_date_str` is not valid or doesn't conform to expected format of "YYYY-MM-DD"
+        Note:
+            If completion_date_str is empty or cannot be parsed, defaults to DEFAULT_COMPLETION_DATE
         """
         self._msg = msg
         self._user = user
         try:
-            self._completion_date = parser.parse(completion_date_str).date()
-        except Exception:
+            if completion_date_str:
+                self._completion_date = parser.parse(completion_date_str).date()
+            else:
+                self._completion_date = parser.parse(DEFAULT_COMPLETION_DATE).date()
+        except (ValueError, TypeError, parser.ParserError) as e:
+            logger.warning(
+                f"Unable to parse date '{completion_date_str}' for TODO in {module}:{position.line_no}. "
+                f"Using default date {DEFAULT_COMPLETION_DATE}. Error: {e}"
+            )
             self._completion_date = parser.parse(DEFAULT_COMPLETION_DATE).date()
         self._module = module
         self._position = position

@@ -1,0 +1,22 @@
+{% for module, todos in container.items() %}
+<h3>TODOs for module {{ module }}</h3>
+<p>
+    <table>
+        <caption>Module wise summary</caption>
+        <tr>
+            <th>User Name</th>
+            <th>Message</th>
+            <th>Line No.</th>
+            <th>Completion Date</th>
+        </tr>
+        {% for todo_item in todos %}
+        <tr>
+            <td>{{ todo_item[0] }}</td>
+            <td>{{ todo_item[1] }}</td>
+            <td>{{ todo_item[2] }}</td>
+            <td>{{ todo_item[3] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</p><br>
+{% endfor %}
