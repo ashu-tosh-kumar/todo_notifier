@@ -348,7 +348,8 @@ def build_reports(result: ScanResult) -> list[tuple[str, str]]:
     """Renders the built-in HTML reports (module-wise, expired by user, upcoming week) of a result
 
     New generator objects are used on every call, so nothing is carried over between calls. The generators work on the legacy structure
-    (`ScanResult.to_legacy()`), which does not tell overdue from stale: a default due date that has passed counts as expired there.
+    (`ScanResult.to_legacy()`), where only explicit due dates exist: a TODO with a default due date is shown without a date, so it is never
+    "expired" and never "upcoming" (decision D4). The generators compare dates with the real current day, not with `ScanResult.generated_at`.
 
     Args:
         result (ScanResult): The result to report

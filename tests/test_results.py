@@ -192,6 +192,12 @@ class TestTodoItem(unittest.TestCase):
         self.assertEqual("alice", legacy.user.user_name)
         self.assertEqual(date(2025, 1, 2), legacy.completion_date)
 
+    def test_to_legacy_should_not_present_a_default_due_date_as_a_deadline(self):
+        legacy = make_item(author="alice", due_date=date(2025, 1, 2), due_source="default").to_legacy()
+
+        self.assertEqual(DEFAULT_COMPLETION_DATE, str(legacy.completion_date))
+        self.assertEqual("alice", legacy.user.user_name)
+
     def test_legacy_round_trip_should_preserve_the_todo(self):
         for completion_date_str, user_name in (("", UNKNOWN_USER_NAME), ("2022-05-03", "ashutosh"), ("2022-05-01", UNKNOWN_USER_NAME)):
             original = TODO("msg", USER(user_name), completion_date_str, "a.py", POSITION(2))
