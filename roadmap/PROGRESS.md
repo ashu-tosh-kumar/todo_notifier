@@ -35,8 +35,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 |---|---|---|---|---|---|
 | - | Roadmap docs + progress file | `claude/serene-hopper-qkult2` | [#165](https://github.com/ashu-tosh-kumar/todo_notifier/pull/165) | ✅ done | Merged latest `development` |
 | 0.1 | Foundation | `roadmap/0.1-foundation` | [#166](https://github.com/ashu-tosh-kumar/todo_notifier/pull/166) | ✅ done | See "Notes per workstream" below |
-| 0.2 | Config file | `roadmap/0.2-config-file` | | ✅ done | See "Notes per workstream" below |
-| 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | | ⬜ todo | |
+| 0.2 | Config file | `roadmap/0.2-config-file` | [#167](https://github.com/ashu-tosh-kumar/todo_notifier/pull/167) | ✅ done | See "Notes per workstream" below |
+| 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | | 🟡 in progress | |
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | | ⬜ todo | |
 | 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | ⬜ todo | |
 | 0.6 | CLI | `roadmap/0.6-cli` | | ⬜ todo | |
