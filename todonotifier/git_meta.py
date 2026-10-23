@@ -49,7 +49,7 @@ WARNING_NOT_A_GIT_REPO = (
     "git blame skipped: {path} is not inside a git repository (or git could not read it). Authors, creation dates and default due dates are unavailable."
 )
 WARNING_UNSAFE_REPO = (
-    "git blame skipped: git refuses to read {path} because it belongs to another user (\"dubious ownership\", typical in containers and CI jobs that "
+    'git blame skipped: git refuses to read {path} because it belongs to another user ("dubious ownership", typical in containers and CI jobs that '
     "run as a different user). Fix it with `git config --global --add safe.directory {path}`. Until then authors, creation dates, default due dates "
     "and .gitignore are unavailable."
 )

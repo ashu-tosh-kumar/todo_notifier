@@ -563,9 +563,7 @@ class TestEnrichWithGit(GitTestCase):
     def test_a_repository_of_another_user_should_say_so_instead_of_claiming_it_is_not_a_repository(self):
         # git refuses repositories owned by another user (Docker bind mounts, container jobs): "fatal: detected dubious ownership"
         self.make_two_author_repo()
-        refused = subprocess.CompletedProcess(
-            ["git"], 128, stdout=b"", stderr=f"fatal: detected dubious ownership in repository at '{self.tmp}'\n".encode()
-        )
+        refused = subprocess.CompletedProcess(["git"], 128, stdout=b"", stderr=f"fatal: detected dubious ownership in repository at '{self.tmp}'\n".encode())
 
         with patch("todonotifier.git_meta._run_git", return_value=refused), self.assertLogs(LOGGER_NAME, level="WARNING") as logs:
             items = self.enrich(default_due_days=90)

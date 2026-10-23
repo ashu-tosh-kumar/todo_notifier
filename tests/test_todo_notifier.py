@@ -638,6 +638,29 @@ class TestRobustness(DetectionTestCase):
         self.assertEqual(["b.py"], list(result))
         self.assertTrue(any("Skipping binary file" in line and "a.py" in line for line in logs.output))
 
+    def test_unreadable_file_should_be_one_error_line_and_not_stop_the_others(self):
+        unreadable = self._write("a.py", "# TODO hidden\n")
+        text = self._write("b.py", "# TODO shown\n")
+
+        with patch("todonotifier.todo_notifier._is_binary_file", side_effect=[PermissionError(13, "Permission denied"), False]):
+            with self.assertLogs("todonotifier.todo_notifier", level="ERROR") as logs:
+                result = parse_files_for_todo_items(self.tmp, [unreadable, text], False)
+
+        self.assertEqual([], result["a.py"])
+        self.assertEqual(["shown"], [todo.msg for todo in result["b.py"]])
+        (record,) = logs.records
+        self.assertIsNone(record.exc_info)  # No traceback for a file the user cannot read
+        self.assertEqual(f"Cannot read {unreadable!r}: Permission denied", record.getMessage())
+
+    def test_unreadable_file_without_an_error_text_should_still_be_named(self):
+        path = self._write("a.py", "# TODO hidden\n")
+
+        with patch("todonotifier.todo_notifier.os.path.getsize", side_effect=OSError()):
+            with self.assertLogs("todonotifier.todo_notifier", level="ERROR") as logs:
+                parse_files_for_todo_items(self.tmp, [path], False)
+
+        self.assertEqual(f"Cannot read {path!r}: OSError", logs.records[0].getMessage())
+
     def test_nul_byte_after_the_first_8_kb_should_not_make_a_file_binary(self):
         path = self._write("a.py", b"# TODO shown\n" + b"#" * 9000 + b"\x00\n")
 
