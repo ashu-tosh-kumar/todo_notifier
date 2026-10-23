@@ -49,6 +49,23 @@ class TestTodo(unittest.TestCase):
 
         self.assertEqual(expected_completion_date, todo.completion_date)
 
+    def test_a_date_that_is_too_large_should_give_the_default_date_instead_of_raising(self):
+        with self.assertLogs("todonotifier.models", level="WARNING"):
+            todo = TODO(self._dummy_msg, self._dummy_user, "99999999999999999999", self._dummy_module, self._dummy_position)
+
+        self.assertEqual(parser.parse(DEFAULT_COMPLETION_DATE).date(), todo.completion_date)
+
+    def test_the_warning_for_a_bad_date_should_not_contain_raw_control_characters(self):
+        # The date and the path come from a scanned file and the warning goes to a terminal
+        with self.assertLogs("todonotifier.models", level="WARNING") as logs:
+            TODO(self._dummy_msg, self._dummy_user, "\x1b]0;evil\x07 soon", "dir/\x1b[31mfile.py", self._dummy_position)
+
+        message = logs.records[0].getMessage()
+        self.assertNotIn("\x1b", message)
+        self.assertNotIn("\x07", message)
+        self.assertIn("\\x1b]0;evil\\x07 soon", message)
+        self.assertIn("line 1", message)
+
     def test_msg_should_return_correct_msg(self):
         self.assertAlmostEqual(self._dummy_msg, self._todo.msg)
 

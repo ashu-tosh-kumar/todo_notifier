@@ -171,9 +171,11 @@ def scan(settings: ScanSettings, today: Optional[date] = None) -> ScanResult:
         if not os.path.exists(path):
             raise ScanException(f"Path does not exist: {path}")
 
-    reference_day: date = today or date.today()
-    # The date of `generated_at` is the reference day of the status fields, so that `ScanResult.due_within` agrees with them
-    generated_at: datetime = datetime.combine(today, time.min).astimezone() if today else datetime.now().astimezone()
+    now: datetime = datetime.now().astimezone()
+    reference_day: date = today or now.date()
+    # The date of `generated_at` is the reference day of the status fields, so that `ScanResult.due_within` agrees with them. A day other than the
+    # current one (tests, a replayed scan) has no time of day, so it is midnight. For the current day (what the command line passes) the real time is kept
+    generated_at: datetime = now if reference_day == now.date() else datetime.combine(reference_day, time.min).astimezone()
 
     root: str = _resolve_root(abs_paths)
     files: list[str] = _collect_files(abs_paths, settings)

@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-from datetime import date
+from datetime import date, datetime, time, timedelta
 from unittest.mock import patch
 
 from todonotifier.results import ScanResult, TodoItem
@@ -233,6 +233,26 @@ class TestScanResultFields(ScannerTestCase):
 
         self.assertEqual(1, len(result.overdue()))
         self.assertEqual(date.today(), result.generated_at.date())
+
+    def test_generated_at_should_keep_the_time_of_day_when_the_reference_day_is_today(self):
+        # The command line always passes today's date; the JSON output must not claim that the scan ran at midnight
+        self.write("a.py", "# TODO a\n")
+
+        before = datetime.now().astimezone()
+        for today in (date.today(), None):
+            with self.subTest(today=today):
+                result = scan(ScanSettings(paths=[self.tmp]), today=today)
+
+                self.assertGreaterEqual(result.generated_at, before.replace(microsecond=0))
+                self.assertLess(result.generated_at - before, timedelta(minutes=5))
+                self.assertIsNotNone(result.generated_at.tzinfo)
+
+    def test_generated_at_should_be_midnight_for_another_reference_day(self):
+        self.write("a.py", "# TODO a\n")
+
+        result = scan(ScanSettings(paths=[self.tmp]), today=TODAY)
+
+        self.assertEqual(datetime.combine(TODAY, time.min).astimezone(), result.generated_at)
 
     def test_scan_should_build_web_urls_when_repo_url_and_commit_are_set(self):
         self.write("src/a.py", "# TODO a\n\n# TODO b\n")

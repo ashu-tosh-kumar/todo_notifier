@@ -257,6 +257,7 @@ class CommentLexer:
         spans: list[tuple[int, int]] = []
         length: int = len(line)
         position: int = 0
+        next_token: dict[str, int] = {}  # Where each token occurs next, shared by all the steps over this line, see `_lex_code`
 
         if self._syntax.fenced_code and self._update_fence(line):
             return spans
@@ -278,7 +279,7 @@ class CommentLexer:
                 self._state = None
                 continue
 
-            position = self._lex_code(line, position, spans)
+            position = self._lex_code(line, position, spans, next_token)
             if position < 0:
                 return spans
 
@@ -307,13 +308,16 @@ class CommentLexer:
 
         return False
 
-    def _lex_code(self, line: str, position: int, spans: list[tuple[int, int]]) -> int:
+    def _lex_code(self, line: str, position: int, spans: list[tuple[int, int]], next_token: dict[str, int]) -> int:
         """Lexes code (not inside a comment or string) from `position` up to the next comment or multi-line string
 
         Args:
             line (str): The line
             position (int): Column to start at
             spans (list[tuple[int, int]]): Comment ranges found so far. A new range is appended when the code is followed by a comment
+            next_token (dict[str, int]): Column of the next occurrence of each token (-1 if there is none), as found so far on this line. A token is
+                searched for again only once the lexer has moved past its remembered column. Searching every token from scratch at every step is
+                quadratic on a long line, and a minified bundle is one line of a megabyte with thousands of string literals
 
         Returns:
             int: Column to continue at, or -1 if the rest of the line was consumed
@@ -323,7 +327,9 @@ class CommentLexer:
             match_index: int = -1
             token: str = ""
             for candidate in self._tokens:
-                found: int = line.find(candidate, position)
+                found: int = next_token.get(candidate, -2)
+                if found == -2 or (found != -1 and found < position):
+                    found = next_token[candidate] = line.find(candidate, position)
                 if found != -1 and (match_index == -1 or found < match_index):
                     match_index, token = found, candidate
             if match_index == -1:
