@@ -76,6 +76,10 @@ The system consists of several key components:
   patterns
 - **models.py** - Core data models (`TODO`, `USER`, `POSITION`) with date parsing and
   validation
+- **scanner.py** - `scan(ScanSettings)`: side-effect-free, in-place scan returning a
+  JSON-serializable `ScanResult`
+- **settings.py** - `ScanSettings`, the schema of every scan option
+- **results.py** - `TodoItem` and `ScanResult` (structured scan output)
 - **config.py** - Configuration system with `BaseConfig` and `DefaultConfig` classes
 - **driver.py** - Main orchestration layer that coordinates parsing, summary generation,
   and notifications

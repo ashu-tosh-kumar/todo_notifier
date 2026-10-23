@@ -67,6 +67,14 @@ class BaseSummaryGenerator(ABC):
         """
         return self._html
 
+    def reset(self) -> None:
+        """Discards the state accumulated by earlier runs. `driver.run` calls it before generating summaries
+
+        Does nothing by default, so custom generators keep working. Override it if `generate_summary` accumulates state in `container`
+        (or elsewhere) that would otherwise carry over to the next run.
+        """
+        pass
+
     @abstractmethod
     def generate_summary(self, all_todos_objs: Dict[str, List[TODO]]) -> None:
         """Abstract function to generate_summary summary
@@ -91,6 +99,10 @@ class ByModuleSummaryGenerator(BaseSummaryGenerator):
             container (Dict[str, List[List[str]], optional): A container in which `generate_summary` would add info of the current todo object. Defaults to {}.
         """
         super().__init__(name=name, container=container or {})
+
+    def reset(self) -> None:
+        """Clears the container, so that a config reused across runs does not report the same TODOs twice"""
+        self._container.clear()
 
     def generate_summary(self, all_todos_objs: Dict[str, List[TODO]]) -> None:
         """Generates summary for each module
@@ -145,6 +157,10 @@ class ExpiredTodosByUserSummaryGenerator(BaseSummaryGenerator):
             container (Dict[str, List[List[str]], optional): A container in which `generate_summary` would add info of the current todo object. Defaults to {}.
         """
         super().__init__(name=name, container=container or {})
+
+    def reset(self) -> None:
+        """Clears the container, so that a config reused across runs does not report the same TODOs twice"""
+        self._container.clear()
 
     def generate_summary(self, all_todos_objs: Dict[str, List[TODO]]) -> None:
         """Generates summary for all expired todo items by user
@@ -203,6 +219,10 @@ class UpcomingWeekTodosByUserSummaryGenerator(BaseSummaryGenerator):
             container (Dict[str, List[List[str]]], optional): A container in which `generate_summary` would add info of the current todo object. Defaults to {}
         """
         super().__init__(name=name, container=container or {})
+
+    def reset(self) -> None:
+        """Clears the container, so that a config reused across runs does not report the same TODOs twice"""
+        self._container.clear()
 
     def generate_summary(self, all_todos_objs: Dict[str, List[TODO]]) -> None:
         """Generates summary for all upcoming todo items by user

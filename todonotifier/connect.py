@@ -29,6 +29,7 @@ class ConnectMethod(Enum):
     GIT_CLONE = "GIT_CLONE"
     DRY_RUN_FILE = "DRY_RUN_FILE"
     DRY_RUN_DIR = "DRY_RUN_DIR"
+    LOCAL = "LOCAL"
 
 
 class Connect:
@@ -40,7 +41,7 @@ class Connect:
         Args:
             connect_method (ConnectMethod): Method to be used to pull a repository into the target location
             project_dir_name (str): Name of the project. Should match the name of project main directory
-            url (str): Url or file address or directory address that needs to be pulled
+            url (str): Url or file address or directory address that needs to be pulled. For `ConnectMethod.LOCAL`, the directory that is scanned in place
             branch_name (optional, Union[str, None]): Branch name is specific branch to be checked out
                                                     after cloning the repository. Useful for `ConnectMethod.GIT_CLONE`. Defaults to None.
         """
@@ -58,6 +59,24 @@ class Connect:
         """
         return self._project_dir_name
 
+    @property
+    def connect_method(self) -> ConnectMethod:
+        """Getter for connect method
+
+        Returns:
+            ConnectMethod: Returns value of `self._connect_method`
+        """
+        return self._connect_method
+
+    @property
+    def source_path(self) -> str:
+        """Absolute path of the source passed as `url`. Meaningful for `ConnectMethod.LOCAL`, where the source is scanned in place
+
+        Returns:
+            str: Absolute path of `url`
+        """
+        return os.path.abspath(self._file_dir_url)
+
     def __str__(self) -> str:
         """Returns the string representation of the class `Connect`
 
@@ -71,7 +90,7 @@ class Connect:
         the call to respective methods set during class initialization
 
         Args:
-            target_dir (str): Directory into which the data from given `url` needs to be copied into
+            target_dir (str): Directory into which the data from given `url` needs to be copied into. Ignored for `ConnectMethod.LOCAL`
             branch_name (optional, Union[str, None]): Branch name is specific branch to be checked out
                                                     after cloning the repository. Useful for `ConnectMethod.GIT_CLONE`. Defaults to None.
 
@@ -86,6 +105,8 @@ class Connect:
                 return self._pull_file_for_dry_run(target_dir)
             elif self._connect_method == ConnectMethod.DRY_RUN_DIR:
                 return self._pull_dir_for_dry_run(target_dir)
+            elif self._connect_method == ConnectMethod.LOCAL:
+                return self._use_local_dir_in_place()
             else:
                 raise ConnectException("Unsupported connect method passed")
         except Exception:
@@ -129,3 +150,12 @@ class Connect:
         ignore_list = DEFAULT_EXCLUDE_DIRS["PATTERN"] + DEFAULT_EXCLUDE_DIRS["NAME"]
         target_dir = os.path.join(target_dir, test_dir_base_name)
         copytree(self._file_dir_url, target_dir, ignore=ignore_patterns(*ignore_list))
+
+    def _use_local_dir_in_place(self) -> None:
+        """Validates that `url` is an existing directory. Nothing is copied: the directory is scanned in place
+
+        Raises:
+            ConnectException: Raised if `url` is not an existing directory
+        """
+        if not os.path.isdir(self._file_dir_url):
+            raise ConnectException(f"Not a directory: {self._file_dir_url}")

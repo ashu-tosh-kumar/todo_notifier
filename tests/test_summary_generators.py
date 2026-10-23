@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from todonotifier.models import POSITION, TODO, USER
 from todonotifier.summary_generators import (
+    BaseSummaryGenerator,
     ByModuleSummaryGenerator,
     ExpiredTodosByUserSummaryGenerator,
     UpcomingWeekTodosByUserSummaryGenerator,
@@ -181,6 +182,68 @@ class TestUpcomingWeekTodosByUserSummaryGenerator(unittest.TestCase):
         self._upcoming_week_todos_by_user_summary_generator.generate_html()
 
         self.assertEqual(expected_value, self._upcoming_week_todos_by_user_summary_generator.html)
+
+
+class TestReset(unittest.TestCase):
+    def test_base_reset_should_do_nothing(self):
+        class CustomGenerator(BaseSummaryGenerator):
+            def generate_summary(self, all_todos_objs) -> None:
+                pass
+
+            def generate_html(self) -> None:
+                pass
+
+        custom_generator = CustomGenerator(name="unittest", container={"kept": 1})
+
+        custom_generator.reset()
+
+        self.assertEqual({"kept": 1}, custom_generator.container)
+
+    def test_abstract_methods_should_be_callable_from_subclasses(self):
+        class CustomGenerator(BaseSummaryGenerator):
+            def generate_summary(self, all_todos_objs) -> None:
+                super().generate_summary(all_todos_objs)
+
+            def generate_html(self) -> None:
+                super().generate_html()
+
+        custom_generator = CustomGenerator(name="unittest", container={})
+
+        custom_generator.generate_summary({})
+        custom_generator.generate_html()
+
+        self.assertEqual("", custom_generator.html)
+
+    def test_built_in_generators_should_clear_their_container_on_reset(self):
+        todo = TODO("msg", USER("alice"), "2000-01-01", "module", POSITION(1))
+        all_todos = {"module": [todo]}
+
+        for generator in (ByModuleSummaryGenerator(), ExpiredTodosByUserSummaryGenerator()):
+            generator.generate_summary(all_todos)
+            self.assertNotEqual({}, generator.container)
+
+            generator.reset()
+
+            self.assertEqual({}, generator.container)
+
+    def test_upcoming_generator_should_clear_its_container_on_reset(self):
+        generator = UpcomingWeekTodosByUserSummaryGenerator()
+        generator.generate_summary({"module": [TODO("msg", USER("alice"), str(datetime.today().date()), "module", POSITION(1))]})
+        self.assertNotEqual({}, generator.container)
+
+        generator.reset()
+
+        self.assertEqual({}, generator.container)
+
+    def test_generating_after_reset_should_not_duplicate_rows(self):
+        generator = ByModuleSummaryGenerator()
+        all_todos = {"module": [TODO("msg", USER("alice"), "2000-01-01", "module", POSITION(1))]}
+
+        generator.generate_summary(all_todos)
+        generator.reset()
+        generator.generate_summary(all_todos)
+
+        self.assertEqual(1, len(generator.container["module"]))
 
 
 if __name__ == "__main__":
