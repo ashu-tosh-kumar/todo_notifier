@@ -369,7 +369,7 @@ details.
 
 ### v1.4.0 (Latest)
 
-- **Breaking Change**: Renamed `CONNECT_METHOD` in in `todonotifier.connect` to
+- **Breaking Change**: Renamed `CONNECT_METHOD` in `todonotifier.connect` to
   `ConnectMethod`.
 - Added accessibility captions to HTML reports
 - Security improvements and package upgrades
