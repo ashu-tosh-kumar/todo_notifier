@@ -22,6 +22,9 @@ class TestConnectMethod(unittest.TestCase):
     def test_connect_method_should_have_dry_run_dir(self):
         self.assertIsNotNone(ConnectMethod.DRY_RUN_DIR)
 
+    def test_connect_method_should_have_local(self):
+        self.assertIsNotNone(ConnectMethod.LOCAL)
+
 
 class TestConnect(unittest.TestCase):
     def test_project_dir_name_should_return_project_name(self):
@@ -73,6 +76,37 @@ class TestConnect(unittest.TestCase):
         connect.pull_repository(target_dir=dummy_target_dir)
 
         spy__pull_dir_for_dry_run.assert_called_once_with(dummy_target_dir)
+
+    def test_connect_method_should_return_the_connect_method(self):
+        connect = Connect(connect_method=ConnectMethod.LOCAL, project_dir_name="", url="")
+
+        self.assertEqual(ConnectMethod.LOCAL, connect.connect_method)
+
+    def test_source_path_should_return_the_absolute_path_of_url(self):
+        connect = Connect(connect_method=ConnectMethod.LOCAL, project_dir_name="", url="unittest-relative-dir/")
+
+        self.assertEqual(os.path.join(os.getcwd(), "unittest-relative-dir"), connect.source_path)
+
+    def test_pull_repository_with_local_should_validate_without_copying(self):
+        with tempfile.TemporaryDirectory() as source_dir, tempfile.TemporaryDirectory() as target_dir:
+            with open(os.path.join(source_dir, "a.py"), "w") as f:
+                f.write("# TODO x\n")
+            connect = Connect(connect_method=ConnectMethod.LOCAL, project_dir_name="unittest-project", url=source_dir)
+
+            with patch("todonotifier.connect.copytree") as spy_copytree, patch("todonotifier.connect.copy") as spy_copy:
+                connect.pull_repository(target_dir=target_dir)
+
+            spy_copytree.assert_not_called()
+            spy_copy.assert_not_called()
+            self.assertEqual([], os.listdir(target_dir))
+            self.assertEqual(["a.py"], os.listdir(source_dir))
+
+    def test_pull_repository_with_local_should_raise_connect_exception_if_url_is_not_a_directory(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            connect = Connect(connect_method=ConnectMethod.LOCAL, project_dir_name="", url=os.path.join(temp_dir, "missing"))
+
+            with self.assertRaises(ConnectException):
+                connect.pull_repository(target_dir=temp_dir)
 
     @patch("todonotifier.connect.Connect._pull_using_git_clone")
     def test_pull_repository_should_raise_connect_exception_if_unsupported_connect_method_passed(self, stub__pull_using_https):
