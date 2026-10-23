@@ -26,15 +26,16 @@ already covers that). It focuses on **deadlines, owners and digests**: "fail or 
 overdue TODOs in PRs" and "weekly overdue-TODO digest to Slack".
 
 ### Scope
-1. **Repository:** per decision D2, a new public repo `todonotifier-action` with `action.yml`
+1. **Repository:** per D2 (decided), a new public repo `todonotifier-action` with `action.yml`
    at its root. ⚠️ GitHub Marketplace requires the action metadata file at the root of a public
    repository. Check GitHub's current publishing docs before starting.
 2. **Composite action:** `actions/setup-python` → `pip install todonotifier==<version input>` →
    `todonotifier ...`. Cache pip.
 3. **Inputs:** `mode` (`pr` or `digest`), `version`, `config` (path), `fail-on`
-   (`none`, `expired`, `any`), `tags`, `extensions`, `slack-webhook`, `teams-webhook`,
+   (`none`, `expired`, `stale`, `any`; default `none`, see D4 design), `default-due-days`
+   (default `90`), `tags`, `extensions`, `slack-webhook`, `teams-webhook`,
    `comment` (true/false), `working-directory`.
-4. **Outputs:** `total`, `overdue`, `new`, `report-path`.
+4. **Outputs:** `total`, `overdue`, `stale`, `new`, `report-path`.
 5. **`pr` mode** (on `pull_request`):
    - `todonotifier scan --since ${{ github.event.pull_request.base.sha }} --format github`, so
      new TODOs show up as inline annotations;
@@ -146,8 +147,8 @@ main setup guide lives on Medium. New users need task-oriented docs.
      github-actions, pre-commit, linter, productivity;
    - `classifiers`: Development Status, Environment :: Console, Intended Audience ::
      Developers, Topic :: Software Development :: Quality Assurance, Topic :: Software
-     Development :: Bug Tracking, License :: OSI Approved :: MIT License, and the supported
-     Programming Language :: Python versions;
+     Development :: Bug Tracking, License :: OSI Approved :: MIT License, and Programming
+     Language :: Python :: 3.10 to 3.14 (D1);
    - `[tool.poetry.urls]`: Changelog, Issue Tracker, Documentation.
 3. **GitHub repo settings** (the maintainer does these manually; the agent lists them in the
    PR): topics (`todo`, `fixme`, `technical-debt`, `code-quality`, `developer-tools`,

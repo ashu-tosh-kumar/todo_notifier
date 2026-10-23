@@ -4,7 +4,8 @@
 minutes, with no Python script to write. TODO ownership and dates are filled in automatically
 where possible, and teams get reminders in Slack or Teams instead of only SMTP email.
 
-**Release:** `v2.1.0` (non-breaking). ⚠️ Estimated effort: 1 to 2 weeks.
+**Release:** `v2.1.0`. Non-breaking, except that it requires Python ≥ 3.10 (D1).
+⚠️ Estimated effort: 1 to 2 weeks.
 
 **Exit criteria**
 - `todonotifier scan .` works on any git repo with zero configuration.
@@ -43,7 +44,9 @@ on, and it is also the scan engine that the Phase 3 SaaS worker will import.
    - `exclude_dirs` and `exclude_files` (same shape as `BaseConfig`)
    - `require_comment: bool` (default `False`; implemented in 0.4)
    - `use_git_blame: bool` (default `False`; implemented in 0.3)
-   - `default_due_days: Optional[int]` (default `None`; implemented in 0.3, see decision D4)
+   - `default_due_days: Optional[int]` (default `None` in `ScanSettings` and `from_config`;
+     the CLI and config-file default of `90` is applied in 0.2 and 0.6; implemented in 0.3;
+     see "D4 design" in [README.md](README.md#d4-design-default-due-dates-without-noisy-ci))
    - `respect_gitignore: bool` (default `False`; implemented in 0.4)
    - `repo_web_url: Optional[str]` and `commit_sha: Optional[str]` (used for deep links)
 
@@ -55,11 +58,13 @@ on, and it is also the scan engine that the Phase 3 SaaS worker will import.
 3. **`ScanResult` and `TodoItem`** (in `todonotifier/models.py` or a new
    `todonotifier/results.py`):
    - `TodoItem` fields: `file` (relative path), `line`, `tag`, `message`, `author`,
-     `author_source` (`"annotation"`, `"git_blame"` or `"unknown"`), `due_date: Optional[date]`
-     (`None` instead of the sentinel), `created_date: Optional[date]` (filled by 0.3),
-     `is_overdue`, `days_overdue`, `web_url: Optional[str]`.
+     `author_source` (`"annotation"`, `"git_blame"` or `"unknown"`), `due_date: date | None`
+     (`None` instead of the sentinel), `due_source` (`"explicit"`, `"default"` or `"none"`),
+     `created_date: date | None` (filled by 0.3), `is_overdue` (explicit date passed),
+     `is_stale` (default date passed), `days_past_due`, `web_url: str | None`.
    - `ScanResult` fields: `items`, `scanned_files`, `root`, `generated_at`, `schema_version`
-     (start at `1`), plus helpers: `overdue()`, `due_within(days)`, `by_author()`, `by_file()`.
+     (start at `1`), plus helpers: `overdue()`, `stale()`, `due_within(days)`, `by_author()`,
+     `by_file()`.
    - Both must support `to_dict()` / `from_dict()` and a JSON round-trip.
    - Provide `TodoItem.from_legacy(todo: TODO)` and the reverse, so the existing summary
      generators keep working without changes.
@@ -67,7 +72,10 @@ on, and it is also the scan engine that the Phase 3 SaaS worker will import.
    `DRY_RUN_DIR` as it is for backwards compatibility.
 5. **Refactor `driver.run`** to `ScanSettings.from_config` → `scan` → existing summary
    generators, storage and notifier. Public behavior must stay unchanged.
-6. **Generator state bug:** write a test that calls `run()` twice with the same config. If rows
+6. **Python 3.10 minimum (D1):** set `python = "^3.10"` in `pyproject.toml`, refresh
+   `poetry.lock`, and add the changelog note "Requires Python ≥ 3.10. Python 3.9 users stay on
+   2.0.x." (The CI matrix change is in 0.7.)
+7. **Generator state bug:** write a test that calls `run()` twice with the same config. If rows
    duplicate, reset generator state at the start of each run without breaking custom
    generators. One option is a `reset()` method on `BaseSummaryGenerator` that does nothing by
    default and is overridden by the three built-in generators.
@@ -98,7 +106,10 @@ on, and it is also the scan engine that the Phase 3 SaaS worker will import.
    Discovery: start at the scan path and walk up to the git root (or the filesystem root if
    there is no git repo). The first file found wins. An explicit path (CLI `--config`)
    overrides discovery.
-2. **Precedence:** CLI flags > config file > `ScanSettings` defaults. Implement this as
+2. **Precedence:** CLI flags > config file > CLI/config-file defaults > `ScanSettings`
+   defaults. The CLI/config-file defaults are where the D4 and D5 choices apply:
+   `default_due_days = 90`, `extensions = "common"`, the wider tag list,
+   `respect_gitignore = true` and `use_git_blame = true`. Implement this as
    `resolve_settings(cli_overrides: Dict[str, Any], config_path: Optional[str]) -> ScanSettings`.
 3. **Validation:** unknown keys and wrong types fail with a clear message naming the key and
    the file (for example `Unknown key 'tagz' in pyproject.toml [tool.todonotifier]. Did you mean 'tags'?`).
@@ -138,8 +149,12 @@ key SaaS feature.
    which is already a dependency.
 2. Fill in `TodoItem.author` (with `author_source="git_blame"`) only when there is no `@user`
    annotation. Always fill in `created_date` when blame is available.
-3. **`default_due_days`:** if it is set and a TODO has no `{date}`, then
-   `due_date = created_date + default_due_days`. Off by default (decision D4).
+3. **Default due dates (D4):** if `default_due_days` is set and a TODO has no `{date}`, set
+   `due_date = created_date + default_due_days` and `due_source = "default"`. If there is no
+   `created_date` (no blame), leave `due_source = "none"`. An explicit `{date}` always wins.
+   `default_due_days = 0` disables defaults. Follow "D4 design" in
+   [README.md](README.md#d4-design-default-due-dates-without-noisy-ci) exactly: default
+   dates mark items as *stale*, never as *overdue*.
 4. **Author aliases:** an optional `[tool.todonotifier.authors]` table mapping emails to handles
    (for example `"a@x.com" = "ashu"`), used for display and later for Slack mentions.
 5. **Graceful degradation, with a warning logged once per run:**
@@ -155,6 +170,8 @@ key SaaS feature.
 - In a temporary test repo with two authors and fixed commit dates, the author and
   `created_date` are correct for each TODO.
 - An `@user` annotation always wins over the blame result.
+- With `default_due_days=90`, a TODO committed 100 days ago with no date is `is_stale=True`
+  and `is_overdue=False`. One committed 10 days ago is neither.
 - Shallow, non-git and uncommitted cases are covered by tests and do not crash.
 - A scan of a repo with about 1,000 files and about 100 TODOs, with blame on, takes less than
   2× the time without blame. ⚠️ This is a target, not a measured baseline. Record the actual
@@ -182,7 +199,7 @@ key SaaS feature.
 2. **Configurable tags:** default `["TODO", "FIXME", "HACK", "XXX"]` for the CLI and config file.
    The library's `DefaultConfig` keeps `TODO` only, for backwards compatibility. Store the
    matched tag in `TodoItem.tag`. The existing `{date}` and `@user` syntax works after any tag.
-3. **Language presets (decision D5):** `extensions = "common"` expands to a curated list
+3. **Language presets (D5, decided):** `extensions = "common"` expands to a curated list
    (py, js, jsx, ts, tsx, java, kt, go, rs, rb, php, c, h, cpp, hpp, cs, swift, scala, sh, sql,
    yaml, yml, toml, html, css, scss, md). The CLI and config-file default is `common`.
    `DefaultConfig` keeps `["py"]`.
@@ -215,8 +232,8 @@ key SaaS feature.
    default implementation calls the existing `notify(reports)`, so custom notifiers keep
    working.
 2. **`todonotifier/digest.py` (new):** builds a channel-neutral digest from a `ScanResult`:
-   - totals (open, overdue, due in 7 days, new since the last commit range if known);
-   - top N overdue items grouped by owner, each with a deep link
+   - totals (open, overdue, stale, due in 7 days, new since the last commit range if known);
+   - top N overdue items, then top N stale items, as separate sections grouped by owner, each with a deep link
      (`{repo_web_url}/blob/{commit_sha}/{file}#L{line}`) when both values are known.
 3. **New notifiers** in `todonotifier/notifier.py`:
    - `SlackWebhookNotifier`: incoming-webhook payload with Block Kit sections. Truncate long
@@ -261,8 +278,10 @@ key SaaS feature.
      `pyproject.toml`, or create `.todonotifier.toml`. Never overwrite an existing section.
    - `todonotifier --version`
 3. **Flags shared by scan, report and notify:** `--config PATH`, `--tags`, `--ext`,
-   `--ignore-case`, `--no-blame`, `--since GIT_REF`, `--fail-on {none,expired,any}`,
-   `--format`, `--output FILE`, `-q/--quiet`, `-v/--verbose`. Flags map to `cli_overrides` in
+   `--ignore-case`, `--no-blame`, `--default-due-days N` (CLI default `90`, `0` disables),
+   `--since GIT_REF`, `--fail-on {none,expired,stale,any}` (default `none`; `expired` counts
+   explicit dates only, `stale` adds default dates, per D4), `--format`, `--output FILE`,
+   `-q/--quiet`, `-v/--verbose`. Flags map to `cli_overrides` in
    `resolve_settings` (from 0.2). Until 0.2 merges, call a stub that returns defaults plus
    overrides.
 4. **`--since GIT_REF`:** report only TODOs on lines added or changed relative to `GIT_REF`
@@ -282,7 +301,9 @@ key SaaS feature.
 ### Acceptance criteria
 - In a fresh virtualenv, `pipx install .` then `todonotifier scan .` on this repo prints a
   table in under 30 s with no config.
-- `--fail-on expired` returns 1 when an overdue TODO exists and 0 otherwise.
+- `--fail-on expired` returns 1 when a TODO with a passed **explicit** date exists and 0
+  otherwise. In particular, it returns 0 for a repo whose only problems are stale TODOs
+  without dates. `--fail-on stale` returns 1 for those.
 - `--format json` output validates against the documented schema, and `--format github`
   output matches the GitHub workflow-command syntax.
 - `todonotifier scan file1.py file2.py` scans only those files.
@@ -301,8 +322,9 @@ key SaaS feature.
 ### Scope
 1. **CI cleanup** in `.github/workflows/python-app.yml`: install dependencies once per job
    (they are currently installed three times), switch to a version matrix
-   (3.9 to 3.13, or per decision D1), add `black --check` and `isort --check-only`, report
-   coverage, and upgrade `actions/setup-python` to the current major version.
+   (3.10 to 3.14, per D1; replace the current `build3_9` job), add `black --check` and
+   `isort --check-only`, report coverage, and upgrade `actions/setup-python` to the current
+   major version. Move `.github/workflows/docs.yml` off Python 3.9 as well.
 2. **Publish workflow** `.github/workflows/release.yml`: on a `v*` tag, build with Poetry and
    publish to PyPI with **Trusted Publishing** (OIDC, no API token), then create a GitHub
    Release with the changelog section. The maintainer must configure the trusted publisher on

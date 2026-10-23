@@ -8,7 +8,12 @@ PR checks. The first paying customers come from the waitlist and design partners
 
 ⚠️ Estimated effort: 6 to 10 weeks for one developer with agents.
 
-**Where:** a new private repo, `todonotifier-cloud` (decision D3). It depends on the published
+**Positioning (D6):** a generic **technical debt tracker** (working name **Mendo**, pending
+[2.0](phase-2-validation.md#20-name-and-brand-checks)). The MVP tracks one kind of debt, TODO
+comments, but the data model, UI wording and URLs must not assume TODOs are the only kind
+(see 3.3).
+
+**Where:** a new private repo, `<brand>-cloud` (working name `mendo-cloud`; D3). It depends on the published
 `todonotifier` library. The scan engine is `todonotifier.scanner.scan()` from 0.1, plus the git
 metadata from 0.3, so library fixes benefit both products.
 
@@ -116,19 +121,28 @@ orgs.
 **Size:** S–M · **Depends on:** 3.0
 
 Entities: `Organization`, `Installation`, `Repository`, `User`, `Membership`, `ScanRun`,
-`Todo` (fingerprint, repo, file, line, tag, message, author_login/email, due_date,
-created_date, first_seen_at, resolved_at, status), `NotificationChannel`,
+`DebtItem` (fingerprint, **`kind`**, repo, file, line, tag, message, author_login/email,
+due_date, due_source, created_date, first_seen_at, resolved_at, status, `details` JSONB for
+kind-specific fields), `NotificationChannel`,
 `NotificationPreference`, `Subscription`/`Plan`, `AuditLog`. Define Pydantic v2 schemas for
 every API payload. Create everything with Alembic migrations.
 
+**Generic tech-debt model:** in the MVP, `kind` is always `"todo"`. Possible later kinds
+(not in the MVP): lint suppressions (`# noqa`, `# type: ignore`, `eslint-disable`), skipped
+tests, deprecated or outdated dependencies, and manually logged debt items. Scanners write
+through a `DebtSource` interface (`kind`, `scan(repo) -> list[DebtItem]`), so adding a kind
+means adding a source, not a migration.
+
 **Acceptance:** migrations upgrade and downgrade cleanly. Indexes exist on
-(repo, status) and (org, author).
+(repo, kind, status) and (org, author). Nothing in the UI or the API paths hard-codes
+"todo" except the label for the `todo` kind.
 
 ## 3.4 Dashboard
 
 **Size:** L · **Depends on:** 3.2
 
-- **Overview per org:** open, overdue, new this week, resolved this week; a trend line over
+- **Overview per org:** open, overdue (explicit date), stale (default date), new this week,
+  resolved this week; a trend line over
   time; a TODO-age histogram.
 - **Views:** by person ("my TODOs"), by repo, and the full list with filters (repo, owner,
   tag, overdue, age) and search.

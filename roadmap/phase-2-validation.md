@@ -4,7 +4,8 @@
 tracking before writing any SaaS code.
 
 ⚠️ Effort: low (a few days of work), but it takes 4 to 6 weeks of elapsed time to collect a
-signal. 2.1 and 2.2 can start **now**, in parallel with Phases 0 and 1.
+signal. 2.0 and 2.2 can start **now**, in parallel with Phases 0 and 1. 2.1 follows as soon as
+2.0 settles the name.
 
 **Exit criteria:** a written GO / NO-GO decision (`roadmap/decision-saas.md`) backed by
 interview notes and the metrics from 1.5.
@@ -13,16 +14,65 @@ Read [README.md](README.md) first for the dependency graph and open decisions.
 
 ---
 
+## 2.0 Name and brand checks
+
+**Size:** S (an agent researches; the maintainer decides and buys) · **Hard dependencies:** none · **Blocks:** 2.1
+
+**Brief (D6):** the SaaS is positioned as a generic **technical debt tracking tool** that
+starts with TODO comments. The name must be unique, simple, easy to pronounce and spell in any
+language, and memorable on first hearing. The library keeps the name `todonotifier`.
+
+### Shortlist
+Ranked. Quick web checks were done on 2026-10-23. ⚠️ They are not trademark or domain
+clearance.
+
+| Rank | Name | Story / tagline | Strengths | Risks found |
+|---|---|---|---|---|
+| 1 (working name) | **Mendo** | *mend* + *do*: "Mend your tech debt." | Invented word, 2 syllables, spelled as said in most languages, sounds like a friendly brand. No developer tool found with this name. | Japanese *mendō* (面倒) means "hassle". That could work as an in-joke (tech debt *is* a hassle), but test it with Japanese speakers. A small Android publisher "Mendo Company" exists in an unrelated field. |
+| 2 | **Paydown** | Finance term for repaying debt: "Pay down your tech debt." | Instantly explains the product to English speakers. No software product found with the name. | Descriptive, so harder to trademark. English-centric. A compound word is weaker on "spell in any language". |
+| 3 | **Mora** | Latin and Romance-language term for late payment or default (debt "in mora"). | 4 letters, pronounced the same nearly everywhere, a strong story for overdue debt. No developer tool found with the name. | A common word in several languages (it also means blackberry in Spanish), so `.com` and trademarks are likely crowded. It needs a modifier such as `getmora` or `mora.dev`. |
+
+**Ruled out:** **Kodo** (too close to Kodus, an existing AI code-quality and tech-debt tool),
+**Fixa** (fixa.dev, an AI coding agent, already exists), **Duely** (an existing legal-tech
+startup, and easily confused with "duly"), **Cruft** (clashes with the `cruft` Python package
+for cookiecutter templates), and **Pendo** (an established product analytics company).
+
+### Scope
+For each shortlisted name, in rank order, stop at the first name that passes every check:
+1. **Trademark:** search classes 9 (software) and 42 (SaaS) in
+   [IP India public search](https://ipindiaservices.gov.in/eregister/), the USPTO and the
+   WIPO Global Brand Database. Record exact and similar marks. ⚠️ Before spending money on
+   the brand, get a trademark attorney or agent to confirm.
+2. **Domains:** check `.com`, `.dev`, `.io` and `.app`, plus `get<name>.com` and
+   `<name>hq.com`. Note the prices in INR.
+3. **Handles:** GitHub organization, PyPI and npm package names, X, LinkedIn page, and the
+   GitHub Marketplace listing name.
+4. **Language check:** ask at least 5 people with different first languages (for example
+   Hindi, Tamil, Spanish, Japanese, German) to (a) say the name after reading it, (b) spell
+   it after hearing it, and (c) report any bad meanings.
+5. **Recall test:** say the name and tagline once to 5 developers and ask them a day later
+   what it was called and what it does.
+
+### Deliverable
+`roadmap/decision-name.md`: the chosen name, the evidence from each check, the domains and
+handles registered (by the maintainer), and a one-line tagline. Then replace the "Mendo"
+placeholder across `roadmap/`.
+
+---
+
 ## 2.1 Landing page and waitlist
 
-**Size:** S · **Hard dependencies:** none · **Soft dependency:** D6 (name and domain) · **Feeds:** 1.5 and 2.3
+**Size:** S · **Hard dependencies:** 2.0 (name and domain) · **Feeds:** 1.5 and 2.3
 
 ### Scope
 1. A one-page site, separate from the docs, aimed at **engineering managers and tech leads**,
    not individual developers:
-   - **headline:** e.g. "See every overdue TODO across your GitHub org. Get a weekly digest
-     in Slack.";
-   - three benefits: owner and age tracking, weekly digests per person, PR checks;
+   - **headline** (tech-debt positioning, TODOs as the first proof point): e.g. "Track your
+     technical debt before it tracks you. Start with every TODO across your GitHub org, with
+     owners, deadlines and a weekly Slack digest.";
+   - three benefits: owner and age tracking, weekly digests per person, PR checks. Add a
+     "coming next" line listing other debt sources (lint suppressions, skipped tests,
+     outdated dependencies), and use the waitlist form to ask which one people want most;
    - a mock dashboard screenshot (it can be a static design);
    - a **pricing sketch** to test willingness to pay (⚠️ illustrative numbers, to be tested):
      Free (1 repo), Team at about ₹1,499/month, Business at about ₹4,999/month, with "join the

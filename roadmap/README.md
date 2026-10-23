@@ -12,7 +12,11 @@ the unit of work for one agent and one pull request.
 | [phase-0-core.md](phase-0-core.md) | 0: Core and CLI | Remove setup friction: CLI, config file, git-aware ownership, accurate detection, chat notifiers | This repo |
 | [phase-1-distribution.md](phase-1-distribution.md) | 1: Distribution | Be where developers already are: GitHub Action, pre-commit, docs, discoverability, launch | This repo + new `todonotifier-action` repo |
 | [phase-2-validation.md](phase-2-validation.md) | 2: SaaS validation | Prove teams will pay before building anything hosted | Mostly non-code (landing page, interviews) |
-| [phase-3-saas-mvp.md](phase-3-saas-mvp.md) | 3: SaaS MVP | GitHub App, dashboard, digests, billing | New private repo `todonotifier-cloud` |
+| [phase-3-saas-mvp.md](phase-3-saas-mvp.md) | 3: SaaS MVP | GitHub App, dashboard, digests, billing | New private repo `<brand>-cloud` (working name `mendo-cloud`, see D6) |
+
+**Positioning (from D6):** the SaaS is a generic **technical debt tracker**. TODO comments
+are its first debt source, not its only one. The open-source library keeps its name
+(`todonotifier`) and stays the TODO scanner.
 
 > ⚠️ Effort estimates throughout are rough guesses for one developer working with coding
 > agents. They are not benchmarks.
@@ -48,7 +52,9 @@ flowchart LR
     end
 
     subgraph P2[Phase 2: Validation]
+        C20[2.0 Name and brand checks]
         C21[2.1 Landing page and waitlist]
+        C20 --> C21
         C22[2.2 Customer interviews]
         C23[2.3 Go / No-go decision]
     end
@@ -71,7 +77,7 @@ flowchart LR
 
 | Wave | Start condition | Run in parallel | Notes |
 |---|---|---|---|
-| **1** | Now | `0.1` Foundation, `1.4` Discoverability, `2.1` Landing page, `2.2` Interview script and recruiting | `1.4`, `2.1` and `2.2` touch nothing in the library code, so there is no merge-conflict risk with `0.1`. |
+| **1** | Now | `0.1` Foundation, `1.4` Discoverability, `2.0` Name and brand checks, `2.2` Interview script and recruiting | `1.4`, `2.0` and `2.2` touch nothing in the library code, so there is no merge-conflict risk with `0.1`. `2.1` Landing page follows as soon as `2.0` picks a name and domain. |
 | **2** | `0.1` merged | `0.2` Config file, `0.3` Git blame, `0.4` Detection, `0.5` Notifiers, `0.6` CLI, `1.3` Docs (drafting only) | Each touches mostly separate modules (see "File ownership" below). `0.6` integrates `0.2` once it merges. `0.5` may start before `0.1` merges, coding against the `ScanResult` interface defined in `0.1`. |
 | **3** | All of `0.2` to `0.6` merged | `0.7` Release | Single agent. Publishes `v2.1.0` to PyPI. |
 | **4** | `v2.1.0` published | `1.1` GitHub Action, `1.2` pre-commit hook, `1.3` Docs (finalize) | All three need a published version to pin to. |
@@ -95,7 +101,8 @@ flowchart LR
 | 1.3 | 0.7 (final content) | 0.6 (drafting) |
 | 1.4 | none | none |
 | 1.5 | 1.1, 1.2, 1.3, 1.4 | 2.1 |
-| 2.1 | none | none |
+| 2.0 | none | none |
+| 2.1 | 2.0 (name and domain) | none |
 | 2.2 | none | 2.1 (waitlist is a recruiting source) |
 | 2.3 | 1.5, 2.1, 2.2 | none |
 | 3.x | 2.3 = GO, 0.1, 0.3 | 0.4, 0.5 |
@@ -124,15 +131,17 @@ Everyone adds to `README.md`'s changelog. Resolve those conflicts by keeping all
 - Add an entry to the changelog section of `README.md`.
 
 **Library code (this repo, Phases 0 and 1)**
-- **Python compatibility:** the package declares `python = "^3.9"` in `pyproject.toml`. Until the
-  maintainer resolves decision **D1** below, write code that runs on 3.9: no `match`, no
-  `X | Y` type unions at runtime, use `typing.List` / `Optional` like the existing code. For
-  TOML, use `tomllib` on 3.11+ and `tomli` below that.
+- **Python compatibility (D1):** the minimum supported version is **3.10**. Workstream 0.1
+  changes `pyproject.toml` to `python = "^3.10"`. Python 3.10 syntax is allowed
+  (`X | None`, `match`), but don't rewrite existing code just to modernise it. For TOML, use
+  `tomllib` on 3.11+ and `tomli` on 3.10.
 - **Dependencies:** keep runtime dependencies minimal (currently `gitpython`,
   `python-dateutil`, `jinja2`). Prefer the standard library (`argparse`, `urllib.request`,
   `dataclasses`, `json`). Adding a runtime dependency needs a one-line justification in the PR.
   Pydantic is not used in the library. It is used in the SaaS backend (Phase 3).
-- **Backwards compatibility:** Phase 0 ships as `v2.1.0`, a non-breaking minor release.
+- **Backwards compatibility:** Phase 0 ships as `v2.1.0`. Apart from dropping Python 3.9 (D1),
+  it is a non-breaking minor release. pip keeps 3.9 users on `2.0.x` automatically, because
+  `python_requires` excludes them, and the changelog must say so.
   `todonotifier.driver.run(connect, config)`, `DefaultConfig`, `Connect`, `ConnectMethod`,
   `BaseSummaryGenerator`, `BaseNotifier` and `EmailNotifier` must keep working unchanged.
   New behavior is opt-in through the library API, and on by default only through the new CLI
@@ -153,18 +162,39 @@ Everyone adds to `README.md`'s changelog. Resolve those conflicts by keeping all
 - Python 3.11+, FastAPI + uvicorn, Pydantic v2 (including `pydantic-settings`), async I/O
   (`httpx`, `asyncio.gather` for independent calls), Google-style docstrings and full type hints.
 
-## Open decisions for the maintainer
+## Maintainer decisions
 
-Agents must not decide these. If a workstream is blocked on one, stop and ask.
+Agents must not change these. If a workstream needs a decision that is not listed here, stop
+and ask.
 
-| ID | Decision | Recommendation | Blocks |
+| ID | Decision | Status | What it means for the work |
 |---|---|---|---|
-| D1 | Minimum Python version. 3.9 reached end of life in Oct 2025 and 3.10 reaches it in Oct 2026 ([python.org release status](https://devguide.python.org/versions/)) | Keep `^3.9` for `v2.1.0` to stay non-breaking. Raise to `>=3.11` in a later `v3.0.0`. | 0.7 (CI matrix) |
-| D2 | Host the GitHub Action in a separate repo or in this repo | Separate repo `todonotifier-action`, for clean `v1` tags and its own Marketplace listing | 1.1 |
-| D3 | SaaS code: private repo or open core | Private repo. The library stays MIT. | Phase 3 |
-| D4 | Default due date for TODOs without `{date}` | No default (current behavior). Opt-in `default_due_days` setting. | 0.3 |
-| D5 | Default file extensions for the CLI | Common-languages set for the CLI and config file. Keep `["py"]` for `DefaultConfig` to stay backwards compatible. | 0.4, 0.6 |
-| D6 | Product name and domain for the SaaS | Decide during Phase 2 | 2.1, Phase 3 |
+| D1 | Minimum Python version | ✅ **3.10** | `python = "^3.10"` (set in 0.1). CI matrix 3.10 to 3.14 (0.7). Docs workflow moves off 3.9. 3.9 users stay on `2.0.x`. Note: 3.10 reaches end of life in Oct 2026 ([python.org](https://devguide.python.org/versions/)), so plan to raise the minimum to 3.11 in a later major release. |
+| D2 | Where the GitHub Action lives | ✅ **Separate public repo** `todonotifier-action` | 1.1 creates it. Rebranding the Action under the D6 name is out of scope until the SaaS ships. |
+| D3 | SaaS code | ✅ **Private repo**. The library stays MIT. | Phase 3 lives in `<brand>-cloud`. Nothing SaaS-specific is added to this repo. |
+| D4 | Default due date when `{date}` is missing | ✅ **Yes, apply a default due date** | See "D4 design" below. |
+| D5 | Default file extensions | ✅ **Common-languages preset** for the CLI and config file. `DefaultConfig` keeps `["py"]`. | 0.4, 0.6 |
+| D6 | SaaS name and domain | 🟡 **Shortlisted.** Working name **Mendo**, pending 2.0 checks. | Use "Mendo" as a placeholder in Phase 2 and 3 drafts. Finalise in [2.0](phase-2-validation.md#20-name-and-brand-checks) before buying a domain or building the landing page. |
+
+### D4 design: default due dates without noisy CI
+
+A default due date makes every old, undated TODO overdue on the first scan. If
+`--fail-on expired` counted those, CI would go red the day a team adopts the tool, which is
+the worst possible first impression. The rule is therefore **default dates are reported but
+do not fail builds unless the team opts in**:
+
+- Every `TodoItem` gets `due_source`: `"explicit"` (written as `{date}`), `"default"` (computed),
+  or `"none"`.
+- Default due date = `created_date` (from `git blame`, 0.3) + `default_due_days`.
+  - CLI, config file and Action default: **`default_due_days = 90`**. ⚠️ 90 is a judgment
+    call, not a benchmark. Teams can change it, or set `0` to disable defaults.
+  - Library `DefaultConfig`: unchanged (no default), so existing users see no difference.
+  - If blame is unavailable (not a git repo, blame disabled, or a shallow clone), there is no
+    `created_date`, so `due_source = "none"`. Log the reason once.
+- Wording in reports: "**Overdue**" means an explicit date has passed. "**Stale**" means a
+  default due date has passed. Digests and the dashboard show them as separate groups.
+- `--fail-on` values: `none`, `expired` (explicit dates only, the default), `stale` (explicit
+  or default), and `any` (any matching TODO).
 
 ## Known defects to fix early (verified on `main`)
 
