@@ -129,7 +129,7 @@ def compute_line_and_pos_given_span(line_no_to_chars_map: dict, span: Tuple[int,
     curr_count = 0
     for line_no in range(len(line_no_to_chars_map)):
         curr_count += line_no_to_chars_map[line_no + 1]
-        if curr_count >= span[0]:
+        if curr_count > span[0]:
             todo_line_no = line_no + 1
             break
 
