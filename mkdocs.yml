@@ -1,0 +1,85 @@
+# MkDocs Material site. Sources are in site_src/; the pdoc API reference is built into site/api/ after `mkdocs build` (see .github/workflows/docs.yml).
+site_name: TODO Notifier
+site_description: Find every TODO in your code, see who owns it and how old it is, and fail CI when one expires.
+site_url: https://ashu-tosh-kumar.github.io/todo_notifier/
+repo_url: https://github.com/ashu-tosh-kumar/todo_notifier
+repo_name: ashu-tosh-kumar/todo_notifier
+docs_dir: site_src
+site_dir: site
+strict: true
+
+# Broken internal links and anchors fail the build (strict turns warnings into errors)
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+# The generated languages table is included into syntax.md, it is not a page of its own.
+exclude_docs: |
+  reference/_languages.md
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - toc.follow
+
+nav:
+  - Home: index.md
+  - Quickstart (5 minutes): quickstart.md
+  - TODO syntax: syntax.md
+  - Command line: cli.md
+  - CLI flags and exit codes: reference/cli.md
+  - Configuration: reference/configuration.md
+  - CI integrations: ci.md
+  - pre-commit: pre-commit.md
+  - Notifications: notifications.md
+  - Python API: python-api.md
+  - API reference: api/index.html
+  - How it compares: comparison.md
+  - FAQ: faq.md
+  - Changelog: changelog.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ashu-tosh-kumar/todo_notifier
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/todonotifier/

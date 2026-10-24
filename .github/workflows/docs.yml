@@ -1,6 +1,7 @@
 name: website
 
-# build the documentation whenever there are new commits on main
+# Build the documentation (MkDocs Material user guide, plus the pdoc API reference under /api/).
+# Pull requests only build it (so a broken link or page shows up in review); pushes to main also deploy it to GitHub Pages.
 on:
   push:
     branches:
@@ -8,6 +9,7 @@ on:
     # Alternative: only build for tags.
     # tags:
     #   - '*'
+  pull_request:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
@@ -16,8 +18,9 @@ permissions:
   id-token: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# Pull requests have their own groups, so they never block or replace a deployment.
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: false
 
 jobs:
@@ -32,25 +35,42 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Install all dependencies (including pdoc)
-      - run: pip install poetry; poetry install --with dev
+      # Install all dependencies (including MkDocs Material and pdoc)
+      - run: pip install poetry; poetry install --with dev,docs
 
-      # Build your documentation into docs/
-      - run: poetry run pdoc -o docs --docformat google --logo https://user-images.githubusercontent.com/37182127/233436178-26c2b4be-e630-4f9b-b4c9-d58424bd365d.png todonotifier/
+      # The generated reference pages (configuration, CLI flags, languages) must match the code
+      - run: poetry run python scripts/gen_docs_reference.py --check
+
+      # Build the user guide into site/. `strict: true` in mkdocs.yml fails the build on a broken link or a missing page.
+      - run: poetry run mkdocs build --strict
+
+      # Build the API reference into site/api/ (after mkdocs, which cleans site/ first and ships a placeholder site/api/index.html)
+      - run: poetry run pdoc -o site/api --docformat google --logo https://user-images.githubusercontent.com/37182127/233436178-26c2b4be-e630-4f9b-b4c9-d58424bd365d.png todonotifier/
 
       # Create .nojekyll file to disable Jekyll processing
-      - run: touch docs/.nojekyll
+      - run: touch site/.nojekyll
 
-      # Setup Pages (this was missing from your original workflow)
+      # Setup Pages and publish the artifact (pushes to main only)
       - name: Setup Pages
+        if: github.event_name == 'push'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.event_name == 'push'
         with:
-          path: docs/
+          path: site/
 
-  # Deploy the artifact to GitHub pages.
+      # On pull requests, keep the built site for a few days so reviewers can download and open it
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: github.event_name == 'pull_request'
+        with:
+          name: site-preview
+          path: site/
+          retention-days: 7
+
+  # Deploy the artifact to GitHub pages (never for pull requests).
   deploy:
+    if: github.event_name == 'push'
     needs: build
     runs-on: ubuntu-latest
     permissions:

@@ -105,6 +105,12 @@ pytest = "^8.1.1"
 twine = "^6.0.1"
 jsonschema = ">=4.18,<5"
 
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = ">=9.5,<10"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

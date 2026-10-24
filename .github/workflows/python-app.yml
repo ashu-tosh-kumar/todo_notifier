@@ -46,6 +46,8 @@ jobs:
         run: poetry run isort --check-only .
       - name: Lint (flake8)
         run: poetry run flake8 . --config ./tox.ini
+      - name: Check the generated docs reference is up to date
+        run: poetry run python scripts/gen_docs_reference.py --check
       - name: Test with coverage
         run: poetry run coverage run -m pytest
       - name: Coverage report

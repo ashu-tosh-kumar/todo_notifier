@@ -9,7 +9,7 @@ Deadlines, owners and digests for the TODO comments in your code. This action is
   Teams or a webhook, and uploads the HTML reports as an artifact.
 
 It is a thin wrapper around the [`todonotifier`](https://pypi.org/project/todonotifier/) command line tool, so everything the tool does (the config file,
-tags, `git blame` owners, default due dates) works here too. See the [main README](../../README.md) for the TODO format and the config file.
+tags, `git blame` owners, default due dates) works here too. See the [documentation](https://ashu-tosh-kumar.github.io/todo_notifier/) for the TODO format and the config file.
 
 > **Where it lives.** Until the action has its own repository (`todonotifier-action`), use it from this repository:
 > `uses: ashu-tosh-kumar/todo_notifier/integrations/github-action@<ref>`, where `<ref>` is a release tag or, better, a full commit SHA.
@@ -76,7 +76,7 @@ the summary and `fail-on` still work). The comment is skipped with a notice on e
 ## Weekly digest
 
 Copy this to `.github/workflows/todo-digest.yml`, and add the Slack incoming webhook URL as the repository secret `SLACK_WEBHOOK_URL`
-(see [Slack](../../README.md#slack) for how to create one):
+(see [Slack](https://ashu-tosh-kumar.github.io/todo_notifier/notifications/#slack) for how to create one):
 
 ```yaml
 name: TODO digest
@@ -211,9 +211,8 @@ which GitHub Marketplace requires (a public repository with a single `action.yml
    (`cp -R integrations/github-action/. ../todonotifier-action/`). Leave `selftest.toml` behind, or keep it for the self-test in step 4.
 2. Check the `name` in `action.yml`. A Marketplace name must be unique: it cannot match an existing action, a Marketplace category, or a user or
    organization (other than your own). If "TODO Notifier" is taken, change `name:`.
-3. In the copied `README.md`, replace every `ashu-tosh-kumar/todo_notifier/integrations/github-action@...` with `ashu-tosh-kumar/todonotifier-action@v1`,
-   and the relative links to the main README (`../../README.md`) with `https://github.com/ashu-tosh-kumar/todo_notifier#readme`. Enable Dependabot for
-   the `github-actions` ecosystem in the new repository, because the action pins its own actions by commit SHA.
+3. In the copied `README.md`, replace every `ashu-tosh-kumar/todo_notifier/integrations/github-action@...` with `ashu-tosh-kumar/todonotifier-action@v1`
+   (the links to the documentation site are absolute, so they keep working). Enable Dependabot for the `github-actions` ecosystem in the new repository, because the action pins its own actions by commit SHA.
 4. Move the self-test: copy `.github/workflows/action-selftest.yml` and the fixtures `tests/fixtures/languages` and `tests/fixtures/action`, use
    `uses: ./`, replace `package: ${{ github.workspace }}` by `version: <the version on PyPI>` and fix the `working-directory` paths.
    (`tests/test_action_render.py` in the main repository tests `scripts/render.py` and stays there while the action is also used from there.)

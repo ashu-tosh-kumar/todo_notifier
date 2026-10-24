@@ -1128,7 +1128,7 @@ class TestNotify:
 
         assert code == EXIT_USAGE and out == ""
         assert "No notifiers are configured (there is no config file)" in err
-        assert "todonotifier init" in err and "#notifications" in err
+        assert "todonotifier init" in err and "ashu-tosh-kumar.github.io/todo_notifier/notifications" in err
 
     def test_with_a_config_without_notifiers_it_names_the_file(self, capsys, project):
         write(project, "pyproject.toml", "[tool.todonotifier]\n")
@@ -1462,7 +1462,7 @@ class TestInit:
         assert result["scanned_files"] == ["pyproject.toml" if pyproject else ".todonotifier.toml"]
 
     def test_the_starter_mentions_the_docs(self):
-        assert "github.com/ashu-tosh-kumar/todo_notifier" in starter_config(True)
+        assert "ashu-tosh-kumar.github.io/todo_notifier" in starter_config(True)
 
 
 class TestEnvNotifierFlags:
