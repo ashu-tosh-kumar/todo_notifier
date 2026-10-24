@@ -51,8 +51,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | [#180](https://github.com/ashu-tosh-kumar/todo_notifier/pull/180) | ✅ done | Research done, maintainer decides. See [decision-name.md](decision-name.md), decisions A93 to A95 and notes under "Notes per workstream" (2.0) |
 | 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | [#181](https://github.com/ashu-tosh-kumar/todo_notifier/pull/181) | ✅ done | Draft ready; hosting, form and analytics are maintainer steps. See [landing-page/README.md](landing-page/README.md) |
 | 2.2 | Interview kit | `roadmap/2.2-interviews` | [#182](https://github.com/ashu-tosh-kumar/todo_notifier/pull/182) | ✅ kit ready; interviews are a maintainer step | See "Notes per workstream" below |
-| 2.3 | GO / NO-GO decision template | `roadmap/2.3-decision` |  | ✅ done | Template ready in [decision-saas.md](decision-saas.md); the decision is the maintainer's, 4 to 6 weeks after launch |
-| P2 | Phase 2 review + final review | | | ⬜ todo | |
+| 2.3 | GO / NO-GO decision template | `roadmap/2.3-decision` | [#183](https://github.com/ashu-tosh-kumar/todo_notifier/pull/183) | ✅ done | Template ready in [decision-saas.md](decision-saas.md); the decision is the maintainer's, 4 to 6 weeks after launch |
+| P2 | Phase 2 review + final review | `roadmap/final-review` | | 🟡 in progress | |
 
 Legend: ✅ done · 🟡 in progress · ⬜ todo · ⛔ blocked (needs the maintainer)
 
