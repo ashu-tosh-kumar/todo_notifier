@@ -54,7 +54,7 @@ default URL; with a custom domain it does not matter). Copy `index.html` as the 
 The page posts the form with `fetch` (`mode: 'no-cors'`) to the `FORM_ENDPOINT` constant near the
 top of the script. While it is empty, the form validates and then shows "Not wired up yet".
 Fields sent: `email`, `company_size`, `repos`, `current_tool`, `pay_intent` (yes, maybe, no),
-`next_source` (repeated once per checkbox), plus hidden `utm_source`, `utm_medium`,
+`next_source` (repeated once per checkbox), `interview_ok` (`yes`, present only when the optional "OK to contact me for a 20-minute interview" box is ticked), plus hidden `utm_source`, `utm_medium`,
 `utm_campaign`, `referrer` and `brand`.
 
 Because the response is opaque with `no-cors`, the page shows "You're on the list" whenever the
@@ -63,7 +63,7 @@ request leaves the browser. Check the sheet yourself after the first test.
 ### Option A (recommended): Google Apps Script web app, ends in a Sheet you own
 
 1. Create a Google Sheet with a header row:
-   `timestamp, email, company_size, repos, current_tool, pay_intent, next_source, utm_source, utm_medium, utm_campaign, referrer, brand`.
+   `timestamp, email, company_size, repos, current_tool, pay_intent, next_source, interview_ok, utm_source, utm_medium, utm_campaign, referrer, brand`.
 2. Extensions, Apps Script, paste:
 
    ```javascript
@@ -73,6 +73,7 @@ request leaves the browser. Check the sheet yourself after the first test.
      sheet.appendRow([
        new Date(), p.email, p.company_size, p.repos, p.current_tool, p.pay_intent,
        (e.parameters.next_source || []).join('; '),
+       p.interview_ok || 'no',
        p.utm_source, p.utm_medium, p.utm_campaign, p.referrer, p.brand
      ]);
      return ContentService.createTextOutput('ok');
@@ -98,7 +99,7 @@ connect Formspree to Sheets only if the free plan allows it.
 Both are happier with their own form than with a custom HTML form. Tally has no plain "post here"
 endpoint (⚠️ verify), and Google Forms' `formResponse` URL needs `entry.NNN` field names that
 would replace the names used here. If you prefer one of them, build the form there (same six
-questions), embed it or link to it in place of the `<form>`, and use their Google Sheets
+questions plus the interview box), embed it or link to it in place of the `<form>`, and use their Google Sheets
 integration (⚠️ check the free-tier limits, which have changed before). Tally supports hidden
 fields filled from the URL (⚠️ verify), which would carry the UTM values. You then lose the
 page's own hidden-field capture, so option A or B keeps attribution simplest.
@@ -137,7 +138,7 @@ and `utm_` tags that go into the form. If you add analytics, mention it there.
 - [ ] **Live before 1.5 launches:** hosted (section 2), HTTPS works, the page opens at 360 px
       and in dark mode.
 - [ ] **Signups arrive in a sheet you can see:** `FORM_ENDPOINT` set (section 3), a test
-      submission created a row with all columns, including `pay_intent` and `next_source`.
+      submission created a row with all columns, including `pay_intent`, `next_source` and `interview_ok` (`yes` when the box was ticked, `no` otherwise).
 - [ ] **Analytics record visits by source:** snippet enabled (section 4), a visit to
       `/?utm_source=test` shows up with that source, a test signup shows `utm_source=test`
       in the sheet.

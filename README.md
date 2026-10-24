@@ -249,6 +249,8 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
   `@org/team` in a TODO message no longer notify anyone when the Markdown digest is posted as a pull request comment; scanning a path on another drive than the
   current directory (Windows) no longer fails; the README uses absolute links and image URL, which PyPI needs.
 
+- Final review fix: the file paths of `--format sarif` are percent-encoded (a SARIF `uri` is a URI reference, so a `#` or a space in a file name broke the location).
+
 ### v1.4.0
 
 - **Breaking Change**: Renamed `CONNECT_METHOD` in `todonotifier.connect` to

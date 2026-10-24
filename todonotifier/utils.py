@@ -185,7 +185,7 @@ def store_html(html: str, report_name: str, target_dir: str = None) -> str:
     Args:
         html (str): HTML content of the report
         report_name (str): Name with which `html` content needs to be stored into a file with/without extension. Default extension is `.html`
-        target_dir (str, optional): Target location(absolute path) where file needs to be stored. Defaults to folder `.reports` in current location.
+        target_dir (str, optional): Target location(absolute path) where file needs to be stored. Defaults to folder `.report` in current location.
 
     Returns:
         str: Path of the file that was written

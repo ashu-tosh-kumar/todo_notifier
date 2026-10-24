@@ -26,6 +26,7 @@ import os
 import re
 from datetime import date
 from typing import Optional
+from urllib.parse import quote
 
 from todonotifier.digest import build_digest, render_markdown, shorten_message
 from todonotifier.git_meta import to_repo_path
@@ -76,6 +77,11 @@ def _paint(text: str, code: str, color: bool) -> str:
 def _reference_day(result: ScanResult, today: Optional[date]) -> date:
     """The day statuses are computed against: `today`, else the date of `ScanResult.generated_at`"""
     return today or result.generated_at.date()
+
+
+def _sarif_uri(path: str) -> str:
+    """Percent-encodes a path for a SARIF `uri`, which is a URI reference: a `#` or a space in a file name would otherwise end or break it"""
+    return quote(path, safe="/")
 
 
 def _display_path(item: TodoItem, result: ScanResult, repo_root: Optional[str]) -> str:
@@ -285,7 +291,7 @@ def _format_sarif(result: ScanResult, repo_root: Optional[str], today: date) -> 
                 "locations": [
                     {
                         "physicalLocation": {
-                            "artifactLocation": {"uri": _display_path(item, result, repo_root), "uriBaseId": "%SRCROOT%"},
+                            "artifactLocation": {"uri": _sarif_uri(_display_path(item, result, repo_root)), "uriBaseId": "%SRCROOT%"},
                             "region": {"startLine": item.line},
                         }
                     }

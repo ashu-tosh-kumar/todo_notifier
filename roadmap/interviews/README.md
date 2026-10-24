@@ -34,9 +34,10 @@ Before the first real interview, practise the script on two friendly engineers a
 From the 2.2 spec, roughly in this order (warmest first):
 
 1. **Personal network on LinkedIn.** Engineering managers and tech leads you know, and people they introduce. Warm contacts reply most often.
-2. **Waitlist signups** from the landing page ([landing-page/README.md](../landing-page/README.md)), those who answered "yes" or "maybe" to paying first.
-   ⚠️ The form has no "may we contact you for an interview" box. Email each person once, say you are writing because they signed up, make it
-   optional and honour a "no" at once. Consider adding a checkbox to the form before launch.
+2. **Waitlist signups** from the landing page ([landing-page/README.md](../landing-page/README.md)). The form has an optional "OK to contact me for a
+   20-minute interview" box (the `interview_ok` column of the sheet): write only to the people who ticked it, those who answered "yes" or "maybe" to
+   paying first (see [outreach.md](outreach.md), message 3). Signups who did not tick it agreed to early access emails, not to research calls. Honour
+   a "no" at once.
 3. **Launch commenters** (Show HN, Reddit, LinkedIn, newsletters; see [../launch/](../launch/)). Reply in the thread, then continue in private.
 4. **r/developersIndia** and local **Python or DevOps meetups**. Read the rules first and post once.
 5. **Referrals** at the end of every interview ("who else should I talk to?").

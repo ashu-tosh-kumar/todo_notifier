@@ -33,6 +33,11 @@ clearance.
 | 2 | **Paydown** | Finance term for repaying debt: "Pay down your tech debt." | Instantly explains the product to English speakers. No software product found with the name. | Descriptive, so harder to trademark. English-centric. A compound word is weaker on "spell in any language". |
 | 3 | **Mora** | Latin and Romance-language term for late payment or default (debt "in mora"). | 4 letters, pronounced the same nearly everywhere, a strong story for overdue debt. No developer tool found with the name. | A common word in several languages (it also means blackberry in Spanish), so `.com` and trademarks are likely crowded. It needs a modifier such as `getmora` or `mora.dev`. |
 
+> **Update from the 2.0 research (2026-10-24):** a funded SaaS company called Mendo already exists, so
+> [decision-name.md](decision-name.md) recommends **Fragmo** as the provisional choice. The table above is the
+> original shortlist and is kept as written. "Mendo" is still the placeholder in `roadmap/` until the
+> maintainer decides; the landing page draft uses "Fragmo", and the interview kit says `[Brand]`.
+
 **Ruled out:** **Kodo** (too close to Kodus, an existing AI code-quality and tech-debt tool),
 **Fixa** (fixa.dev, an AI coding agent, already exists), **Duely** (an existing legal-tech
 startup, and easily confused with "duly"), **Cruft** (clashes with the `cruft` Python package
