@@ -2,6 +2,7 @@ import os
 import tempfile
 import textwrap
 import unittest
+from datetime import date, timedelta
 from pathlib import Path
 from unittest import mock
 
@@ -134,6 +135,12 @@ class TestPrecedence(ConfigTestCase):
         self.pyproject("respect_gitignore = true")
 
         self.assertFalse(resolve_settings({"respect_gitignore": False}, start=self.root).respect_gitignore)
+
+    def test_the_largest_default_due_days_should_be_accepted_and_not_overflow_a_date(self):
+        settings = resolve_settings({"default_due_days": 36500}, start=self.root)
+
+        self.assertEqual(36500, settings.default_due_days)
+        self.assertEqual(date(2026, 1, 1) + timedelta(days=settings.default_due_days), date(2125, 12, 8))
 
     def test_zero_default_due_days_should_turn_default_due_dates_off(self):
         self.assertIsNone(resolve_settings({"default_due_days": 0}, start=self.root).default_due_days)
@@ -364,7 +371,9 @@ class TestErrors(ConfigTestCase):
             "use_git_blame = 1": "'use_git_blame' in .* must be true or false, got int",
             'default_due_days = "90"': "'default_due_days' in .* must be an integer, got str",
             "default_due_days = true": "'default_due_days' in .* must be an integer, got bool",
-            "default_due_days = -1": "'default_due_days' in .* must be at least 0, got -1",
+            "default_due_days = -1": "'default_due_days' in .* must be between 0 and 36500, got -1",
+            "default_due_days = 36501": "'default_due_days' in .* must be between 0 and 36500, got 36501",
+            "default_due_days = 99999999999": "'default_due_days' in .* must be between 0 and 36500, got 99999999999",
             "repo_web_url = 5": "'repo_web_url' in .* must be a non-empty string, got int",
             'commit_sha = " "': "'commit_sha' in .* must be a non-empty string, got str",
             'exclude_dirs = ["a"]': "'exclude_dirs' in .* must be a table",

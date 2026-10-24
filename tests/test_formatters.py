@@ -3,7 +3,7 @@ import os
 import re
 import tempfile
 import unittest
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from jsonschema import Draft202012Validator
 
@@ -335,6 +335,24 @@ class TestReports(unittest.TestCase):
         self.assertIn("Remove the legacy path", by_name["Module-wise Summary"])
         self.assertIn("src/app.py", by_name["Module-wise Summary"])
         self.assertIn("Handle &lt;None&gt; &amp; empty input", by_name["Module-wise Summary"])  # Autoescaped
+
+    def test_build_reports_treats_only_explicit_dates_as_expired_or_upcoming(self):
+        today = date.today()
+        stale = make_item("src/old.py", 3, "stale default date", "alice", today - timedelta(days=30), explicit=False)
+        soon = make_item("src/old.py", 9, "default date next week", "bob", today + timedelta(days=3), explicit=False)
+        late = make_item("src/new.py", 5, "explicit date passed", "carol", today - timedelta(days=2))
+        next_week = make_item("src/new.py", 8, "explicit date next week", "dave", today + timedelta(days=3))
+        result = _result(stale, soon, late, next_week)
+
+        by_name = dict(build_reports(result))
+
+        self.assertIn("explicit date passed", by_name["Expired TODO Items"])
+        self.assertNotIn("stale default date", by_name["Expired TODO Items"])
+        self.assertNotIn("alice", by_name["Expired TODO Items"])
+        self.assertIn("explicit date next week", by_name["Upcoming Week TODO Items"])
+        self.assertNotIn("default date next week", by_name["Upcoming Week TODO Items"])
+        for message in ("stale default date", "default date next week", "explicit date passed", "explicit date next week"):
+            self.assertIn(message, by_name["Module-wise Summary"])  # Every TODO is still listed by module
 
     def test_build_reports_does_not_carry_state_between_calls(self):
         result = make_scan_result()

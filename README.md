@@ -112,11 +112,13 @@ Colors are used only when stdout is a terminal, `NO_COLOR` is unset and there is
 |---|---|
 | `todonotifier scan [PATH ...]` | Scan and print the TODOs (default path `.`, or the `paths` of the config file). Paths may be files, e.g. the staged files from pre-commit. |
 | `todonotifier report [PATH ...] [--out DIR]` | Write the HTML reports (module-wise, expired by user, upcoming week) to `DIR` (default `.report`) and print their paths. Same as `scan --format html`. |
-| `todonotifier notify [PATH ...]` | Scan, then send the digest to every notifier of the config file (Slack, Teams, webhook, email, see "Notifications"). All notifiers are tried and every failure is printed. |
+| `todonotifier notify [PATH ...]` | Scan, then send the digest to every notifier of the config file (Slack, Teams, webhook, email, see "Notifications"). All notifiers are tried and every failure is printed. With `--since`, nothing is sent (and the reason is logged at INFO level, see `-v`) if no TODO is on a changed line; without `--since` an empty result is still sent, as an "all clear". |
 | `todonotifier init [--pyproject \| --standalone]` | Append a commented `[tool.todonotifier]` section to `pyproject.toml` (if it exists and has none), else create `.todonotifier.toml`. Never overwrites anything. |
 | `todonotifier --version` | Print the version. |
 
-`python -m todonotifier ...` does the same as the `todonotifier` command. The exit codes are listed under [Exit codes](#exit-codes).
+`python -m todonotifier ...` does the same as the `todonotifier` command. The exit codes are listed under [Exit codes](#exit-codes). PATH arguments may be
+mixed with options (`todonotifier scan a.py --format json b.py`); after a `--` everything is a path. If the reader of the output goes away
+(`todonotifier scan . | head -1`), the output ends quietly and the exit code is the one the run would have had.
 
 ### Flags
 
@@ -326,7 +328,10 @@ max_items = 10
 ```
 
 It posts `{"type": "message", "attachments": [{"contentType": "application/vnd.microsoft.card.adaptive", ...}]}` with an Adaptive Card (version
-1.4) made of `TextBlock`s and a `FactSet`. Teams limits a message to about 28 KB, so keep `max_items` modest.
+1.4) made of `TextBlock`s and a `FactSet`. Teams limits a message to about 28 KB, so keep `max_items` modest. A `TextBlock` understands only a small
+Markdown subset and shows backslash escapes as they are, so text from the scanned files (messages, file names, authors) is neutralised, not
+escaped: `*`, `[`, `]`, the backtick and underscores that are not inside a word are replaced by look-alike characters, which keeps a message from
+forming links or emphasis (`my_file_name.py` is left alone). The links to the code lines still work.
 
 ### Generic webhook
 
@@ -587,11 +592,12 @@ Lists all TODO items organized by file/module for easy code navigation.
 
 ### 2. **Expired TODOs by User**
 
-Highlights overdue TODO items assigned to each team member.
+Highlights overdue TODO items assigned to each team member. Only explicit `{date}`s count as expired: a TODO whose *default* due
+date (see `default_due_days`) has passed is stale, and `todonotifier report` and the emails do not list it here.
 
 ### 3. **Upcoming Week TODOs**
 
-Shows TODO items due within the next 7 days.
+Shows TODO items with an explicit `{date}` within the next 7 days (default due dates are not deadlines, so they are left out).
 
 ### Accessing Report Data Programmatically
 
@@ -856,6 +862,14 @@ details.
   `todonotifier/schemas/scan_result.schema.json`. New modules `todonotifier.cli` and `todonotifier.formatters`; `git_meta.changed_lines`
   and `git_meta.filter_git_listed`. Passing many files to `scan()` (pre-commit) now takes one `git ls-files` call instead of two per file.
   `utils.store_html` returns the path it wrote and writes UTF-8. Development: `jsonschema` is a new dev dependency.
+
+- Phase 0 review fixes: `scan . | head -1` no longer fails with exit 3 (a closed output ends quietly); PATH arguments can be mixed with
+  options; the HTML reports (`todonotifier report`, emails) list explicit dates only as expired or upcoming (`TodoItem.to_legacy()` gives
+  default due dates the no-date sentinel); `notify --since REF` sends nothing when no TODO is on a changed line; `todonotifier init` no longer
+  creates a config whose own comments are reported as TODOs; Teams cards neutralise Markdown instead of backslash-escaping it; a minified
+  one-line file or a file with thousands of TODOs is scanned in linear time (it took minutes); `generated_at` keeps the time of day;
+  `--default-due-days` is limited to 100 years; "dubious ownership" of a repository is explained; an unreadable file is one error line;
+  credentials in a clone URL are not logged by `Connect`; `.pre-commit-config.yaml` matches CI.
 
 - Release and project housekeeping: CI runs on Python 3.10 to 3.14 with `black`, `isort`, `flake8`, 100% coverage
   and a self-check (`todonotifier scan . --fail-on expired`); `.github/workflows/release.yml` publishes tagged

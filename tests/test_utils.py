@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 import unittest
 from unittest.mock import Mock, patch
 
@@ -144,6 +145,51 @@ class TestGetFilesInDir(unittest.TestCase):
             actual_value = set(get_files_in_dir(temp_dir, [dummy_extension], {}, {}))
             self.assertEqual(expected_value, actual_value)
 
+    def _symlink(self, target: str, link: str) -> None:
+        try:
+            os.symlink(target, link, target_is_directory=True)
+        except (OSError, NotImplementedError):  # Windows without the privilege to create links
+            self.skipTest("symbolic links are not available")
+
+    def test_get_files_in_dir_should_not_follow_a_link_to_a_parent_in_a_loop(self):
+        # `up -> ..` made every file show up once per level until the operating system stopped the nesting (41 times)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            os.makedirs(os.path.join(temp_dir, "d"))
+            with open(os.path.join(temp_dir, "d", "a.py"), "w") as f:
+                f.write("x")
+            self._symlink("..", os.path.join(temp_dir, "d", "up"))
+
+            actual_value = get_files_in_dir(temp_dir, ["py"], {}, {})
+
+        self.assertEqual([os.path.join(temp_dir, "d", "a.py")], actual_value)
+
+    def test_get_files_in_dir_should_not_loop_through_two_links_either(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for name in ("a", "b"):
+                os.makedirs(os.path.join(temp_dir, name))
+            with open(os.path.join(temp_dir, "a", "one.py"), "w") as f:
+                f.write("x")
+            self._symlink(os.path.join(temp_dir, "b"), os.path.join(temp_dir, "a", "to_b"))
+            self._symlink(os.path.join(temp_dir, "a"), os.path.join(temp_dir, "b", "to_a"))
+
+            actual_value = get_files_in_dir(temp_dir, ["py"], {}, {})
+
+        # Every link that would come back to a directory that is being walked is cut, so the walk ends: one.py is seen directly and through b/to_a
+        self.assertEqual(
+            sorted([os.path.join(temp_dir, "a", "one.py"), os.path.join(temp_dir, "b", "to_a", "one.py")]),
+            sorted(actual_value),
+        )
+
+    def test_get_files_in_dir_should_still_follow_a_link_to_another_directory(self):
+        with tempfile.TemporaryDirectory() as temp_dir, tempfile.TemporaryDirectory() as elsewhere:
+            with open(os.path.join(elsewhere, "linked.py"), "w") as f:
+                f.write("x")
+            self._symlink(elsewhere, os.path.join(temp_dir, "linked_dir"))
+
+            actual_value = get_files_in_dir(temp_dir, ["py"], {}, {})
+
+        self.assertEqual([os.path.join(temp_dir, "linked_dir", "linked.py")], actual_value)
+
     @patch("todonotifier.utils._ignore_dir_or_file")
     def test_get_files_in_dir_should_not_throw_exception_if_caught_any(self, stub__ignore_dir_or_file):
         dummy_extension = "py"
@@ -202,6 +248,41 @@ class TestComputeLineAndPosGivenSpan(unittest.TestCase):
         actual_value = compute_line_and_pos_given_span(dummy_line_no_to_chars_map, dummy_span)
 
         self.assertEqual(expected_value, actual_value)
+
+
+class TestLineLookupOfAFileWithManyLines(unittest.TestCase):
+    def test_the_lookup_of_a_file_map_should_agree_with_the_plain_dict_algorithm(self):
+        content = "one\n\ntwo words\nthree"  # Includes an empty line and a last line without a newline
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "f.txt")
+            with open(path, "w") as f:
+                f.write(content)
+            file_map = compute_file_line_no_to_chars_map(path)
+
+            for position in range(len(content)):
+                with self.subTest(position=position):
+                    self.assertEqual(
+                        compute_line_and_pos_given_span(dict(file_map), (position, position)),
+                        compute_line_and_pos_given_span(file_map, (position, position)),
+                    )
+                    self.assertEqual(content.count("\n", 0, position) + 1, compute_line_and_pos_given_span(file_map, (position, position)))
+
+    def test_the_lookup_should_not_add_up_every_line_for_every_todo(self):
+        # 20,000 lines and 20,000 lookups: adding up the lines for each lookup took 25 s, with running totals it takes milliseconds
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "f.txt")
+            with open(path, "w") as f:
+                f.write("# TODO some text to fill the line up\n" * 20000)
+            file_map = compute_file_line_no_to_chars_map(path)
+            line_length = len("# TODO some text to fill the line up\n")
+
+            started = time.perf_counter()
+            lines = [compute_line_and_pos_given_span(file_map, (line_no * line_length + 2, 0)) for line_no in range(20000)]
+            elapsed = time.perf_counter() - started
+
+        self.assertEqual(list(range(1, 20001)), lines)
+        self.assertLess(elapsed, 5)
 
 
 class TestGenerateSummary(unittest.TestCase):

@@ -13,6 +13,7 @@ has one can post to the channel), so config files only name the environment vari
 import http.client
 import json
 import os
+import re
 import smtplib
 import ssl
 import time
@@ -32,7 +33,6 @@ from todonotifier.digest import (
     DigestTotals,
     build_digest,
     describe_item,
-    escape_markdown,
     render_text,
     safe_url,
 )
@@ -455,12 +455,39 @@ class SlackWebhookNotifier(_HttpNotifier):
         return {"text": text}
 
 
+# Characters of the Markdown subset of a Teams TextBlock (bold, italic, links), replaced by look-alikes that Markdown does not know
+_TEAMS_LOOKALIKES: dict[str, str] = {"*": "\u2217", "[": "\uff3b", "]": "\uff3d", "`": "\u02cb"}
+# An underscore can start or end italics unless it sits between two letters or digits, as in `my_file_name.py`
+_TEAMS_UNDERSCORE: "re.Pattern[str]" = re.compile(r"(?<![^\W_])_|_(?![^\W_])")
+
+
+def _teams_text(text: str) -> str:
+    """Makes untrusted text safe for a Teams Adaptive Card `TextBlock` by replacing its Markdown characters with look-alikes
+
+    A TextBlock understands a small subset of Markdown (bold, italic, bullet lists, links). Backslash escapes are not part of that subset (Teams
+    shows the backslash), so characters are replaced instead: `*`, `_` (except inside a word, where it is not italics), `[`, `]` and the backtick
+    become similar looking characters (for example the full-width square bracket). The text cannot form a link or emphasis, and `my_file_name.py` and
+    `__init__.py` stay readable. A link is made only by the code, from a checked URL (`digest.safe_url`).
+
+    Args:
+        text (str): Text such as the message of a TODO, a file name or an author
+
+    Returns:
+        str: The text for a `TextBlock`
+    """
+    text = "".join(_TEAMS_LOOKALIKES.get(char, char) for char in text)
+    return _TEAMS_UNDERSCORE.sub("\uff3f", text)
+
+
 class TeamsWebhookNotifier(_HttpNotifier):
     """Posts the digest to a Microsoft Teams channel as an Adaptive Card, through a Workflows webhook
 
     Create the webhook with the Teams Workflows template "Post to a channel when a webhook request is received" (trigger "When a Teams webhook
     request is received") and keep its URL in an environment variable. The payload is a message with an Adaptive Card attachment
     (`TextBlock`s and a `FactSet`), the format that trigger expects.
+
+    Text in a TextBlock supports only a small Markdown subset and no backslash escapes, so untrusted text is not escaped but neutralised
+    (`_teams_text`): its Markdown characters are replaced by look-alikes.
 
     Note: Microsoft is retiring the Office 365 connectors in favour of Workflows. The payload below follows the documented Workflows format, but verify
     it against the current Microsoft documentation before relying on it. Teams limits the size of a message (about 28 KB), so keep `max_items`
@@ -521,12 +548,12 @@ class TeamsWebhookNotifier(_HttpNotifier):
                 {"type": "TextBlock", "text": f"{section.title} ({section.total})", "weight": "Bolder", "size": "Medium", "spacing": "Medium", "wrap": True}
             )
             for group in section.groups:
-                body.append({"type": "TextBlock", "text": f"**{escape_markdown(group.label)}** ({group.count})", "spacing": "Small", "wrap": True})
+                body.append({"type": "TextBlock", "text": f"**{_teams_text(group.label)}** ({group.count})", "spacing": "Small", "wrap": True})
                 for item in group.items:
                     url: Optional[str] = safe_url(item.web_url)
-                    location: str = escape_markdown(item.location)
+                    location: str = _teams_text(item.location)
                     where: str = f"[{location}]({url})" if url else location
-                    text: str = f"{where} {escape_markdown(item.message)} ({describe_item(section.key, item)})"
+                    text: str = f"{where} {_teams_text(item.message)} ({describe_item(section.key, item)})"
                     body.append({"type": "TextBlock", "text": text, "spacing": "None", "wrap": True})
             if section.hidden_count:
                 body.append({"type": "TextBlock", "text": f"...and {section.hidden_count} more", "isSubtle": True, "spacing": "None", "wrap": True})
@@ -535,7 +562,7 @@ class TeamsWebhookNotifier(_HttpNotifier):
 
     def _reports_payload(self, text: str, names: list[str]) -> dict[str, Any]:
         """Builds a Teams message with a single line"""
-        return self._message([{"type": "TextBlock", "text": escape_markdown(text), "wrap": True}])
+        return self._message([{"type": "TextBlock", "text": _teams_text(text), "wrap": True}])
 
 
 class WebhookNotifier(_HttpNotifier):

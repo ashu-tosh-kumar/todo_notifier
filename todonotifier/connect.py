@@ -3,6 +3,7 @@ cloning the repository to be able to run TODO Notifier.
 """
 
 import os
+import re
 from enum import Enum
 from shutil import copy, copytree, ignore_patterns
 from typing import TypeVar, Union
@@ -83,7 +84,9 @@ class Connect:
         Returns:
             str: Returns string representation of the class `Connect`
         """
-        return f"{repr(self)} connect_method: {self._connect_method} project_dir_name: {self._project_dir_name} url: {self._file_dir_url}"
+        # `driver.run` logs this object at INFO level, and a clone URL may carry a token (`https://user:token@host/repo.git`)
+        url: str = re.sub(r"(?<=://)[^/@\s]*@", "***@", str(self._file_dir_url))
+        return f"{repr(self)} connect_method: {self._connect_method} project_dir_name: {self._project_dir_name} url: {url}"
 
     def pull_repository(self, target_dir: str, branch_name: Union[str, None] = None) -> P:
         """Provides a one point access to pull repository into the target location. This method simply relegates

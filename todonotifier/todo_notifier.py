@@ -370,6 +370,10 @@ def parse_files_for_todo_items(
                 todos = _parse_file_in_memory(file, rel_file_path, ignore_todo_case, tags, require_comment, extended_syntax)
 
             all_todos_objs[rel_file_path] = todos
+        except OSError as error:
+            # An unreadable file (no permission, removed during the scan) is a fact of life, not a bug: one line, not a traceback per file
+            logger.error(f"Cannot read {file!r}: {error.strerror or type(error).__name__}")
+            all_todos_objs[rel_file_path] = []
         except Exception:
             logger.exception(f"Error in parsing todo items in file: {file}")
             all_todos_objs[rel_file_path] = []

@@ -40,8 +40,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | [#169](https://github.com/ashu-tosh-kumar/todo_notifier/pull/169) | ✅ done | See "Notes per workstream" below |
 | 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | [#170](https://github.com/ashu-tosh-kumar/todo_notifier/pull/170) | ✅ done | See "Notes per workstream" below |
 | 0.6 | CLI | `roadmap/0.6-cli` | [#171](https://github.com/ashu-tosh-kumar/todo_notifier/pull/171) | ✅ done | See "Notes per workstream" below |
-| 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | | ✅ done | Tag and publish pending maintainer, see [RELEASING.md](../RELEASING.md) and "Notes per workstream" below |
-| P0 | Phase 0 review | (fixes on the tip branch) | | ⬜ todo | |
+| 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | [#172](https://github.com/ashu-tosh-kumar/todo_notifier/pull/172) | ✅ done | Tag and publish pending maintainer, see [RELEASING.md](../RELEASING.md) and "Notes per workstream" below |
+| P0 | Phase 0 review | `roadmap/p0-review` | | ✅ done | [Phase 0 review notes](#phase-0-review): requirement table, 7 known issues and 13 new findings fixed, what was left |
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | | ⬜ todo | |
 | 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | | ⬜ todo | |
 | 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | | ⬜ todo | See decision A3 |
@@ -109,6 +109,14 @@ product and engineering basis. Each one is easy to reverse.
 | A44 | Actions in the workflows touched (`python-app`, `docs`, `release`) are pinned by full SHA with a version comment (checkout v7.0.1, setup-python v6.3.0, upload-artifact v7.0.2, download-artifact v8.0.2, configure-pages v6.0.0, upload-pages-artifact v5.0.0, deploy-pages v5.0.1, `pypa/gh-action-pypi-publish` v1.14.3; annotated tag dereferenced with `^{}`). SHAs were read with `git ls-remote`. | Repo convention (security workflows); Dependabot updates them. |
 | A45 | `release.yml` has three jobs: `build` (tag must equal `v` + `poetry version`, `twine check`, upload `dist/`), `publish` (`environment: pypi`, `id-token: write`, no token) and `github-release` (`contents: write`, needs `build` and `publish`, so a GitHub Release only exists for what reached PyPI). Release notes come from `.github/scripts/changelog_section.py` (a file, not inline, so it can be run and linted locally); a tag that is not plain `vX.Y.Z` is created with `--prerelease`. Tag names go through `env:` variables, never inline `${{ }}` in `run:`. | Safer against injection through tag names; testable script. |
 | A46 | PyPI has 1.4.0 as the latest release and no 2.0.0, so the README changelog has one `### v2.1.0` section (2.0.0 notes merged, breaking changes first, "2.0.0 was never released"). "Python 3.9 users stay on 1.x" (1.4.0). The heading no longer says "(Unreleased)": the section is final for the tag. `docs.yml` runs on Python 3.12. The CI badge row had a literal `\n` between badges, which was fixed (trivial). | Checked with `curl https://pypi.org/pypi/todonotifier/json` on 2026-10-23. |
+| A47 | The legacy HTML reports (`todonotifier report`, the report part of emails) only know explicit dates: `TodoItem.to_legacy()` gives a default due date the no-date sentinel. So "Expired" never lists a stale item, and "Upcoming Week" does not list a default date either. The table, JSON, SARIF, the `github` format and the digests still show default dates (as "stale", and in the digest's "Due this week" when one is about to pass). `driver.run` is not affected. | The legacy structure has one date and cannot say where it came from; presenting a computed date as a deadline someone set, in a report named "Expired" or "Upcoming", is the failure D4 exists to avoid. |
+| A48 | `notify --since REF` sends nothing, and logs "No TODOs on the lines changed since REF" at INFO, when no TODO is left on a changed line. `notify` without `--since` always sends, including an "all clear" digest for zero TODOs. The notifiers are still built first, so a config error is reported (exit 2) either way, and `--fail-on` is still judged. | A "nothing new" message on every pull request teaches people to mute the channel; a weekly digest that says "all clear" is information. |
+| A49 | A `BrokenPipeError` on stdout (`... \| head -1`) ends the output quietly: the run goes on with stdout pointed at the null device, so the exit code still follows `--fail-on`. A `BrokenPipeError` anywhere else (for example on stderr) exits 0 quietly from `main`. | The Python-documented recipe, without losing the check result. |
+| A50 | PATH arguments may be mixed with options through `cli._IntermixedParser` (`parse_known_intermixed_args`) on the subparsers. A command line with `--` is parsed the usual way, because the intermixed mode loses the paths after `--`. Checked on Python 3.10 to 3.14. | `scan a.py --format json b.py` is natural; `-- -odd.py` must keep working. |
+| A51 | Teams text is neutralised, not escaped: `*`, `[`, `]`, the backtick and underscores that are not inside a word become look-alike characters (`notifier._teams_text`). The GitHub/Markdown digest keeps backslash escapes (GFM supports them). | A TextBlock supports a small Markdown subset and shows backslashes. Look-alikes cannot form links or emphasis, and `my_file_name.py` stays readable. |
+| A52 | `.pre-commit-config.yaml` pins black 26.10.1, flake8 7.4.1 and isort 6.1.0 (the versions of `poetry.lock`/CI) and no `language_version`; `tox.ini` ignores W503; the dead Python <3.10 black constraint and the two GHSA allowances (and the 3.9 comment) of `dependency-review.yml` were removed (the lock holds black 26.10.1 only). | `pre-commit run --all-files` must agree with CI. |
+| A53 | `default_due_days` is limited to 0 to 36500 (100 years) in the config file and on the command line. | Larger values overflow `date + timedelta` and crashed with exit 3. |
+| A54 | The starter written by `todonotifier init` contains none of the default tags (not even in comments, and not "todo@example.com" for case-insensitive scans). | The first scan after `init` reported the config file's own comments as TODOs. |
 
 ## Notes per workstream
 
@@ -302,3 +310,105 @@ Follow-ups:
 - `pre-commit run --all-files` disagrees with the CI checks (its own pinned black/isort/flake8 reformat `todonotifier/cli.py`, `tests/test_cli.py`,
   `tests/test_settings_file.py` and report W503 in `cli.py`). The changes were discarded; align the hook versions/args in `.pre-commit-config.yaml`
   with `pyproject.toml` / `tox.ini` (1.2 touches this file anyway).
+
+### Phase 0 review
+
+Reviewer: the P0 review agent, branch `roadmap/p0-review` (on top of 0.1 to 0.7). Method: read the whole Phase 0 diff, built throw-away git repos
+(two authors, 2020 and recent commits, explicit and past dates, a subdirectory scan, `--since`, an ignored `node_modules`, a binary file, a Latin-1
+file, CRLF line endings, a BOM, a symlink loop, a 1 MB minified bundle, a 20,000 TODO file) and ran `todonotifier` against them, outside a repo and
+with broken configs, against a local HTTP server for `notify`, in a clean wheel install, and the test suite on Python 3.10 (Poetry env), 3.11,
+3.13 and 3.14. The unmodified tests of `origin/development` (91) pass against this code.
+
+#### Requirements audit
+
+Status: met / partly / not met / maintainer step. "Evidence" is a test (`file::Class::test`) or a command that was run on this branch.
+
+| # | Requirement | Status | Evidence |
+|---|---|---|---|
+| 0.1 | `scan()` on `sample_test_file*.py` returns the same TODO set (message, user, date, line) as `parse_files_for_todo_items` | met, one documented deviation | `test_scanner.py::TestScanEquivalence::test_scan_should_find_the_same_todos_as_parse_files_for_todo_items`. `scan` uses the extended syntax, so `class TODO:` has the message `""` instead of `:` (A21); the test calls the parser with `extended_syntax=True` |
+| 0.1 | Every existing test passes without modification | met | `git archive origin/development tests`, run against this code with `PYTHONPATH`: 91 passed. In this stack the only edits of old test files are two longer import lines and one call in `test_utils.py` that now keeps the return value of `store_html` (`git diff origin/development...HEAD -- tests/<old file>`, removed lines only) |
+| 0.1 | `ScanResult` survives `json.dumps(to_dict())` to `from_dict` unchanged | met | `test_results.py::TestScanResult::test_json_round_trip_should_be_unchanged`, `test_scanner.py::TestScanResultFields::test_scan_result_should_survive_a_json_round_trip` |
+| 0.1 | `scan()` creates no files and no temp dirs | met | `test_scanner.py::TestScanPurity::test_scan_should_create_no_files_and_no_temp_dirs` |
+| 0.1 | `driver.run()` twice does not duplicate rows | met | `test_driver.py::TestRunInPlaceAndRepeatedRuns::test_run_twice_should_not_duplicate_report_rows` |
+| 0.1 | Scope: `ScanSettings`, `scanner.scan`, `ScanResult`/`TodoItem` (`to_dict`/`from_dict`/`from_legacy`/`to_legacy`), `ConnectMethod.LOCAL`, `driver.run` on `ScanSettings.from_config`, Python `^3.10` with changelog note, `reset()` | met | `python = "^3.10"` in `pyproject.toml`; README v2.1.0 changelog; `test_settings.py`, `test_results.py`, `test_connect.py::...local...`, `test_driver.py` |
+| 0.2 | Precedence matrix: defaults only, file only, CLI only, file plus CLI | met | `test_settings_file.py::TestPrecedence` (four tests) |
+| 0.2 | Invalid key or type gives a helpful error, exit 2 in the CLI | met | `TestErrors::test_unknown_key_should_suggest_the_closest_key`, `::test_wrong_types_should_name_the_key_and_the_file`, `test_cli.py::TestScan::test_bad_config_files_are_usage_errors`; run: `tagz = [...]` gives `todonotifier: error: Unknown key 'tagz' in .todonotifier.toml. Did you mean 'tags'?`, exit 2 |
+| 0.2 | No config file: defaults, no error | met | `TestDiscovery::test_no_file_should_give_defaults_and_no_error`; run in a bare directory |
+| 0.2 | Scope: discovery up to the git root, `--config` override, `tomllib`/`tomli`, notifier tables with env var names, README example | met | `TestDiscovery`, `TestNotify` and the README "Configuration file"; the `tomllib` branch ran on 3.11, 3.13 and 3.14 (711 passed each) |
+| 0.3 | Two authors, fixed dates: author and `created_date` correct | met | `test_git_meta.py::TestEnrichWithGit::test_should_fill_author_and_created_date_per_todo`; run: `Alice`/`Bob` and `2020-01-01` in the JSON of the test repo |
+| 0.3 | `@user` always wins over blame | met | `TestEnrichWithGit::test_annotation_should_always_win_over_blame_and_aliases` |
+| 0.3 | `default_due_days=90`: 100 days old is stale and not overdue, 10 days old is neither | met | `TestEnrichWithGit::test_default_due_days_should_mark_old_items_stale_and_never_overdue` |
+| 0.3 | Shallow, non-git and uncommitted cases covered, no crash | met | `::test_shallow_clone_should_warn_once_and_still_run_blame`, `::test_non_git_directory_should_warn_once_and_skip`, `::test_uncommitted_and_untracked_lines`; new: `::test_a_repository_of_another_user_should_say_so...` |
+| 0.3 | 1,000 files, 100 TODOs: blame run takes under 2x the run without | partly (a target, not a baseline) | Measured again here: 0.22 s without, 0.47 s with blame, **2.15x** (150 lines per file, 4 cores, best of 3). The 0.3 notes measured 2.3x to 3.2x. One `git blame` process per TODO file is the floor |
+| 0.3 | Scope: aliases, `-L` ranges, bounded thread pool, warning once per run | met | `TestEnrichWithGit::test_should_apply_aliases_case_insensitively`, `TestBlame` |
+| 0.4 | The three false-positive lines give no TODOs | met for the command line and config file defaults; for library defaults the string-literal line needs `require_comment` | `test_todo_notifier.py::TestDetectionRegressions` (three tests). Run: the three lines of the defects table give "No TODOs found" with the CLI defaults and with `--ignore-case`; with `--no-require-comment` the text `"TODO list"` inside a string is reported (by design: `require_comment` is opt-in for the library) |
+| 0.4 | Fixtures in 6 or more languages give the expected items; a TODO in a string is ignored with `require_comment=True` | met | `test_languages.py::TestLanguageFixtures` (10 languages, 41 expected items) |
+| 0.4 | `node_modules/` is ignored by default in a git repo that gitignores it | met | `test_scanner.py::TestScanRespectGitignore::test_default_cli_settings_should_not_report_gitignored_files`; run: `node_modules/pkg/index.py` was not reported |
+| 0.4 | Existing tests still pass with the library defaults | met | see the 91 unmodified tests above |
+| 0.4 | Scope: tags, `common` preset, binary skip, `errors="replace"`, streaming path above 10 MB | met | `TestRobustness`, `TestParseFilesForTodoItems::...streaming...`; run: Latin-1 file gives `caf\ufffd`, a NUL file is skipped, CRLF line numbers are right |
+| 0.5 | Payload snapshots for Slack, Teams, generic webhook with the network mocked | met | `test_notifier.py::TestSnapshots` (`tests/snapshots/{slack,teams,webhook}.json`). The Teams snapshot changed in this review (A51). Not checked against live Microsoft documentation or a real Teams tenant (no network access to them) |
+| 0.5 | Old-style `EmailNotifier(...)` and custom `BaseNotifier` subclasses work unchanged | met | `TestBackwardsCompatibility::test_old_style_email_notifier_uses_ssl_and_logs_in_as_the_sender`, `::test_notify_result_calls_notify_for_old_style_subclasses` |
+| 0.5 | Webhook URLs and passwords never in log output (`assertLogs`) | met | `TestNoSecretsInLogsOrErrors` (3 tests); run: a 500 from a local server gave `Teams webhook POST failed with HTTP 500 ...` with no URL |
+| 0.5 | Scope: `notify_result`, `digest.py`, Slack, Teams, webhook, STARTTLS, `from_env`, 10 s timeout, 2 retries, config keys | met | `test_digest.py`, `test_notifier.py`; a local-server run of `todonotifier notify` delivered the Slack JSON and exited 3 for the failing Teams endpoint |
+| 0.6 | `pipx install .` then `todonotifier scan .` on this repo prints a table in under 30 s with no config | met | wheel built with `poetry build`, installed in a clean Python 3.10 venv (`pipx` itself is not installed here): `todonotifier scan <repo>` 0.4 s, `--version` prints `todonotifier 2.1.0`, `python -m todonotifier` works; the wheel holds `templates/*.html` and `schemas/scan_result.schema.json` |
+| 0.6 | `--fail-on expired` is 1 for a passed explicit date, 0 for a repo with only stale TODOs; `--fail-on stale` is 1 there | met | `test_cli.py::TestFailOn::test_overdue_explicit_date`, `::test_only_stale_todos_do_not_fail_expired`; run: stale-only repo `expired` 0, `stale` 1; repo with an overdue explicit date `expired` 1 |
+| 0.6 | `--format json` validates against the schema; `--format github` matches the workflow-command syntax | met | `TestFormats::test_json_validates_against_the_schema`, `::test_github_annotations_match_the_workflow_command_syntax`, `test_formatters.py` snapshots. SARIF (stretch) was not validated against the official schema (no copy offline) |
+| 0.6 | `scan file1.py file2.py` scans only those | met | `TestScan::test_only_the_named_files_are_scanned`, new `TestParsing::test_mixed_paths_scan_only_those_files`; run: `scanned_files` was exactly the two files |
+| 0.6 | `--since HEAD~1` reports only TODOs on changed lines | met | `TestSince::test_only_todos_on_changed_lines_are_reported`; run: one item (`src/app.py:10`) in the test repo |
+| 0.6 | Scope: four commands and `--version`, shared flags, formats table/json/github/markdown/sarif/html, exit codes 0 to 3, `main(argv)` testable | met | `test_cli.py` (about 125 tests), `--help` shows the exit codes. Exit 3 for `... \| head -1` was a bug, fixed here |
+| 0.7 | CI is green on every version of the matrix | maintainer step (cannot run Actions here) | `python-app.yml` parses, matrix 3.10 to 3.14, `fail-fast: false`. Locally: 716 tests passed on 3.10 (Poetry env) and, in throw-away venvs, on 3.11, 3.13 and 3.14 (black, isort, flake8 and coverage ran on 3.10 only) |
+| 0.7 | `pipx install todonotifier==2.1.0 && todonotifier --version` works from PyPI | maintainer step | Nothing is tagged or published (A4, `RELEASING.md`). The equivalent local check is the wheel install above |
+| 0.7 | A GitHub Release exists with notes | maintainer step | `release.yml` parses; `python .github/scripts/changelog_section.py v2.1.0` prints the notes |
+| 0.7 | Scope: CI cleanup, `release.yml`, README quick start, hygiene, version bump | met | one job with a matrix and `black`/`isort`/`flake8`/coverage steps; `git ls-files .report` is empty and `.report/` is in `.gitignore`; `user_driver.py` is `examples/python_api_example.py`; `poetry version -s` is `2.1.0`; `docs.yml` on 3.12; `pdoc` builds |
+| Exit | `todonotifier scan .` works on any git repo with zero config | met | run on five throw-away repos and this repo (see the review above). Outside a git repo it works too, with one warning and no authors |
+| Exit | `todonotifier scan --fail-on expired` can gate CI | met | the exit code table above; this repository's own CI step exits 0 here (`0 TODOs: 0 overdue ...`) |
+| Exit | Settings can live in `[tool.todonotifier]` in `pyproject.toml` | met | this repo does (`exclude_dirs`), `test_settings_file.py`; run in a throw-away repo with `tags = ["FIXME"]` |
+| Exit | TODOs without `@user` get an owner from `git blame` | met | run: `old undated thing` got `Alice` (`author_source: git_blame`) |
+| Exit | The known false-positive defects are fixed | met | see 0.4 |
+| Exit | `v2.1.0` is published on PyPI | maintainer step | tag and publish are A4; checklist in `RELEASING.md` |
+
+#### Issues found and fixed
+
+The first seven are the known issues of the workstream notes. Every fix has a regression test; each was checked to fail without the fix.
+
+1. **Broken pipe**: `todonotifier scan . | head -1` printed `unexpected BrokenPipeError` and exited 3 (A49). Now quiet, and the exit code follows `--fail-on`.
+2. **Legacy "Expired" report counted stale items** (A47). `TodoItem.to_legacy()` gives default due dates the sentinel; "Upcoming Week" no longer lists default dates either.
+3. **Interleaved arguments**: `scan a.py --format json b.py` was rejected with the top-level usage (A50).
+4. **`notify` with nothing to report** (A48).
+5. **pre-commit drift** (A52): black 24.3.0 / flake8 7.0.0 / isort 5.13.2 reformatted `cli.py`, `test_cli.py`, `test_settings_file.py` and reported W503. `pre-commit run --all-files` now passes and changes nothing (run with the network: the hook environments were installed).
+6. **Stale constraints**: the 3.9 comment and GHSA allowances of `dependency-review.yml`, the black constraint for Python <3.10. `poetry lock` changed only the content hash.
+7. **Teams cards** showed backslashes (A51); snapshot updated.
+
+New findings:
+
+8. **`todonotifier init` made the first scan report junk**: the starter's own comments contained the tags (`# TODO Notifier configuration`, ``# tags = ["TODO", ...]``, and `todo@example.com` with `--ignore-case`), so `scan` after `init` reported three TODOs in the config file, in `pyproject.toml` too (A54).
+9. **Quadratic comment lexer**: a 1.2 MB minified JS file with one tag took 2 min 31 s (tokens were searched again after every string literal). Now 0.6 s; the output is identical on 5,400 random lines (compared with the old lexer).
+10. **Quadratic line lookup**: 20,000 TODOs in one file took 25 s (every lookup added up all lines). Running totals and `bisect` are used; plain dict maps still work.
+11. **`generated_at` was midnight** in every CLI JSON/webhook result (the CLI always passes today's date to `scan`). The real time is kept when the reference day is today.
+12. **Unparsable-date warning**: printed the raw date and file path (terminal escape sequences from a scanned file) and the internal sentinel; a date such as `{99999999999999999999}` raised `OverflowError` and dropped the TODO with a traceback.
+13. **Windows paths in `filter_git_listed`**: `git ls-files` prints `/`, the caller's paths have `\`, so `todonotifier scan file.py` (pre-commit) found no file on Windows. Paths are normalised (checked by simulating `ntpath`; not run on Windows).
+14. **"Dubious ownership"** (Docker bind mounts, container jobs) was reported as "not inside a git repository". The warning now says why and gives the `safe.directory` command.
+15. **Unreadable file**: a full traceback per file at ERROR level. One line now.
+16. **`--default-due-days 99999999999`** crashed with `OverflowError` (exit 3); it is a config error (exit 2) now (A53).
+17. **`digest.safe_url` raised `ValueError`** for a mistyped repository URL such as `http://[::1`, which broke the notification.
+18. **`Connect.__str__` showed clone-URL credentials**, and `driver.run` logs it at INFO (a token in `https://user:token@host/...` reached the log).
+19. **Symlink cycles** (`up -> ..`) in a directory walk (no git, or `--no-gitignore`) listed each file up to 41 times.
+20. **A BOM** at the start of a YAML or shell file hid a comment on the first line.
+
+#### Left unfixed on purpose
+
+- **A lone `\r` is a line break for the parser** (Python universal newlines) but not for `git blame`/`git diff`: in a file with stray CRs (`\r\r\n`), line numbers after them are off by one for blame and `--since`. CRLF files are right. Fixing it means reading with `newline="\n"` in the parser and in the public `utils.compute_file_line_no_to_chars_map`; rare enough to wait.
+- **dateutil is lenient**: `{1}`, `{may}` or `{10:30}` after a tag parse as dates in the current month or day (legacy `models.TODO` behaviour; the documented format is `YYYY-MM-DD`). A strict parser would break `{Dec 31 2024}`-style dates that work today.
+- **`DEFAULT_EXCLUDE_DIRS` skips tracked directories named `build`, `dist`, `site`, `target`, `var`, `migrations`, `instance`, ...** even in a git repo (the legacy list for the Python library). A first-time user with TODOs in a `migrations/` folder sees none and no hint. Worth a decision for the CLI defaults (a Phase 1 docs point at least).
+- **Owner spelling**: `@alice` (annotation) and `Alice` (blame) are two owners in the digest and the reports; only blame results go through `[authors]`. Aliases for annotations would be a feature.
+- **Raw URLs in a TODO message** are auto-linked by Slack and Teams (the text cannot form a hidden link, but a phishing URL can be visible).
+- **Table `DUE` column** does not say that a not-yet-due date is a default one (`2027-01-21 due in 90d` for an undated TODO); the `github`/JSON outputs do. **Wide (CJK) characters** misalign the table.
+- **Created dates are UTC dates** of the commit's author time (decision in 0.3), which can differ by a day from `git log` in the author's time zone.
+- **`git ls-files` failures or timeouts** (60 s) silently fall back to walking the tree, which includes `node_modules` when `--no-blame` hides the only warning.
+- **`KeyboardInterrupt`** prints Python's traceback (exit 130). **`report`** writes `.report/` into the project, which is not git-ignored in other people's repositories (a hint would help).
+- **Not verifiable here**: the Teams payload against live Microsoft documentation or a tenant; SARIF against the official schema; Windows and macOS (separators, console encodings); Python 3.12; the GitHub workflows themselves (parsed, not run).
+
+#### Numbers
+
+716 tests pass (670 before the review); `coverage report` is 100% (2541 statements, `fail_under = 100` holds); `black --check .`, `isort --check-only .`,
+`flake8 . --config ./tox.ini` and `pre-commit run --all-files` are clean; `todonotifier scan . --fail-on expired --format github` on this repo exits 0.

@@ -23,7 +23,7 @@ import traceback
 from contextlib import contextmanager
 from datetime import date
 from importlib import metadata
-from typing import Any, Callable, Iterator, Optional
+from typing import Any, Callable, Iterator, Optional, Sequence
 
 from todonotifier.formatters import (
     DEFAULT_REPORTS_DIR,
@@ -33,7 +33,7 @@ from todonotifier.formatters import (
     write_reports,
 )
 from todonotifier.git_meta import GitError, changed_lines, find_git_root, to_repo_path
-from todonotifier.log import PACKAGE_LOGGER_NAME
+from todonotifier.log import PACKAGE_LOGGER_NAME, get_logger
 from todonotifier.notifier import (
     BaseNotifier,
     DigestNotifier,
@@ -53,6 +53,8 @@ from todonotifier.settings_file import (
     resolve_project_config,
 )
 
+logger = get_logger(__name__)
+
 EXIT_OK: int = 0
 EXIT_FAIL_ON: int = 1
 EXIT_USAGE: int = 2
@@ -71,7 +73,7 @@ exit codes:
 Results go to stdout (or --output), logs and errors to stderr. Docs: """ + README_URL
 
 _STARTER_HEADER: str = """\
-# TODO Notifier configuration. Docs: {url}
+# todonotifier configuration. Docs: {url}
 # Every key is optional. The values shown are the defaults of the command line, so `todonotifier scan .` works without any of this.
 # Uncomment a line to change it.
 """
@@ -81,14 +83,14 @@ _STARTER_BODY: str = """\
 # paths = ["."]
 # File extensions without the dot. "common" covers py, js, ts, java, go, rb, rs, c, cpp, sh, sql, yaml, md and more.
 # extensions = "common"
-# Tags to look for.
-# tags = ["TODO", "FIXME", "HACK", "XXX"]
+# Tags to look for: a list of words. The default is the four usual ones (see the README), so only set this to look for other words.
+# tags = ["MYTAG", "REVIEW"]
 # Match tags case insensitively.
 # ignore_case = false
 # Count a tag only inside a comment, and skip the files that .gitignore excludes.
 # require_comment = true
 # respect_gitignore = true
-# Fill authors and ages from git blame. An undated TODO turns "stale" this many days after it was added (0 turns this off).
+# Fill authors and ages from git blame. An undated item turns "stale" this many days after it was added (0 turns this off).
 # use_git_blame = true
 # default_due_days = 90
 # When `todonotifier scan` exits with 1: "none", "expired" (a {{date}} has passed), "stale" (also default due dates) or "any".
@@ -115,7 +117,7 @@ _STARTER_BODY: str = """\
 
 # [{prefix}notify.email]
 # smtp_host = "smtp.example.com"
-# sender = "todo@example.com"
+# sender = "noreply@example.com"
 # recipients = ["team@example.com"]
 # password_env = "TODO_SMTP_PASSWORD"
 # starttls = true
@@ -124,6 +126,27 @@ _STARTER_BODY: str = """\
 
 class CliError(Exception):
     """Raised for a problem the user can fix, such as an unwritable output file. `main` shows the message and returns exit code 2"""
+
+
+class _IntermixedParser(argparse.ArgumentParser):
+    """Parser of the subcommands. It accepts PATH arguments between the options (`scan a.py --format json b.py`), which argparse rejects by default
+
+    `parse_known_intermixed_args` itself calls `parse_known_args` on some Python versions, so a flag stops the override from calling itself. A `--`
+    on the command line means "only paths from here on", which the intermixed mode does not handle, so such a command line is parsed the usual way.
+    """
+
+    _intermixed_running: bool = False
+
+    def parse_known_args(self, args: Optional[Sequence[str]] = None, namespace: Optional[argparse.Namespace] = None) -> tuple[argparse.Namespace, list[str]]:
+        """Parses the arguments, collecting the PATH arguments from wherever they are"""
+        if self._intermixed_running or (args is not None and "--" in args):
+            return super().parse_known_args(args, namespace)
+
+        self._intermixed_running = True
+        try:
+            return self.parse_known_intermixed_args(args, namespace)
+        finally:
+            self._intermixed_running = False
 
 
 class _StderrHandler(logging.Handler):
@@ -225,7 +248,7 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=raw,
     )
     parser.add_argument("--version", action="version", version=f"todonotifier {get_version()}")
-    subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
+    subparsers = parser.add_subparsers(dest="command", metavar="COMMAND", parser_class=_IntermixedParser)
 
     scan_parser = subparsers.add_parser(
         "scan",
@@ -290,13 +313,38 @@ def _error(message: str) -> None:
     print(f"todonotifier: error: {message}", file=sys.stderr)
 
 
-def _write_stdout(text: str) -> None:
-    """Prints text to stdout. Characters that the terminal cannot show are replaced instead of crashing"""
+def _discard_output(stream: Any) -> None:
+    """Points a stream at the null device, so that nothing more is written to a pipe whose reader has gone away
+
+    This is the recipe of the Python documentation for `BrokenPipeError`. It also keeps the final flush at interpreter exit from failing
+    ("Exception ignored ... BrokenPipeError", exit code 120). A stream without a file descriptor (for example in tests) is left alone.
+    """
     try:
-        print(text)
-    except UnicodeEncodeError:
-        encoding: str = sys.stdout.encoding or "ascii"
-        print(text.encode(encoding, errors="replace").decode(encoding))
+        descriptor: int = stream.fileno()
+        null: int = os.open(os.devnull, os.O_WRONLY)
+        try:
+            os.dup2(null, descriptor)
+        finally:
+            os.close(null)
+    except (OSError, ValueError, AttributeError):
+        pass
+
+
+def _write_stdout(text: str) -> None:
+    """Prints text to stdout. Characters that the terminal cannot show are replaced instead of crashing
+
+    If the reader of stdout has gone away (`todonotifier scan . | head -1`), the rest of the output is discarded quietly and the run goes on, so
+    the exit code still says whether the `--fail-on` condition was met.
+    """
+    try:
+        try:
+            print(text)
+        except UnicodeEncodeError:
+            encoding: str = sys.stdout.encoding or "ascii"
+            print(text.encode(encoding, errors="replace").decode(encoding))
+        sys.stdout.flush()  # A closed pipe is only noticed when the buffer is written
+    except BrokenPipeError:
+        _discard_output(sys.stdout)
 
 
 def _use_color(output: Optional[str]) -> bool:
@@ -465,6 +513,12 @@ def _command_notify(args: argparse.Namespace) -> int:
     if args.format:
         _show_result(args, result, today)
 
+    if args.since and not result.items:
+        # A message that says "nothing new" every time a pull request has no TODOs would only train people to ignore the channel. Without --since an
+        # empty result is still sent: a weekly digest that says "all clear" is information
+        logger.info("No TODOs on the lines changed since %s, so no notification was sent.", args.since)
+        return _exit_code_for(result, project.fail_on)
+
     if args.since:
         for notifier in notifiers:
             if isinstance(notifier, DigestNotifier):
@@ -579,6 +633,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     with _logging_configured(args.quiet, args.verbose):
         try:
             return handler(args)
+        except BrokenPipeError:  # stderr (or stdout, outside `_write_stdout`) lost its reader, e.g. `todonotifier scan . 2>&1 | head -1`: leave quietly
+            _discard_output(sys.stdout)
+            _discard_output(sys.stderr)
+            return EXIT_OK
         except (CliError, ConfigError, NotifierConfigError, ScanException) as error:
             _error(str(error))
             return EXIT_USAGE

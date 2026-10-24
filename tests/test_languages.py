@@ -1,4 +1,5 @@
 import os
+import time
 import unittest
 from datetime import date
 from typing import Optional
@@ -157,6 +158,12 @@ class TestCommentLexer(unittest.TestCase):
         self.assertEqual([[(0, 6)]], spans_of("yaml", "# TODO"))
         self.assertEqual([[(7, 13)]], spans_of("yaml", "key: v # TODO"))
 
+    def test_a_byte_order_mark_should_not_hide_a_comment_on_the_first_line(self):
+        # Windows editors put a BOM at the start of YAML and shell files, and "\ufeff#" is not a "# after whitespace"
+        self.assertEqual([[(1, 7)]], spans_of("yaml", "\ufeff# TODO"))
+        self.assertEqual([[(1, 7)]], spans_of("sh", "\ufeff# TODO"))
+        self.assertEqual([[]], spans_of("yaml", "x\ufeff# TODO"))  # Only the mark itself counts as a separator, not the text before it
+
     def test_markdown_fence_should_hide_comments(self):
         spans = spans_of("md", "<!-- a -->", "```html", "<!-- TODO -->", "```", "<!-- b -->", "~~~", "<!-- c -->", "~~~", "<!-- d -->")
 
@@ -166,6 +173,32 @@ class TestCommentLexer(unittest.TestCase):
         spans = spans_of("md", "<!--", "```", "-->", "<!-- x -->")
 
         self.assertEqual([[], [(0, 3)], [(0, 0)], [(4, 7)]], spans)
+
+    def test_a_long_line_should_be_lexed_in_linear_time(self):
+        # A minified bundle is one line of megabytes with tens of thousands of string literals. Looking for every token again after every
+        # literal took minutes for 1 MB; with remembered positions it takes milliseconds
+        line = 'a("k","v");' * 40000 + " /* TODO real */"
+        lexer = CommentLexer(COMMENT_SYNTAX["js"])
+
+        started = time.perf_counter()
+        spans = lexer.comment_spans(line)
+        elapsed = time.perf_counter() - started
+
+        self.assertEqual([(len(line) - len(" TODO real */"), len(line) - len("*/"))], spans)
+        self.assertLess(elapsed, 5)
+
+    def test_remembered_token_positions_should_not_change_the_result(self):
+        # Several steps over one line, with tokens that are absent, that occur only before the current column, or that occur again later
+        for extension, line, expected in (
+            ("js", 'x = "a" /* one */ y = "b" // two "c" /* no', [" one ", '// two "c" /* no']),
+            ("js", "a /* x */ b /* y */ c /* z */ d // e", [" x ", " y ", " z ", "// e"]),
+            ("lua", "a --[[ one ]] b -- two", [" one ", "-- two"]),
+            ("py", 'a = """x""" # c """ d', ['# c """ d']),
+        ):
+            with self.subTest(line=line):
+                spans = CommentLexer(COMMENT_SYNTAX[extension]).comment_spans(line)
+
+                self.assertEqual(expected, [line[start:end] for start, end in spans])
 
     def test_stateful_property_should_follow_the_syntax(self):
         self.assertTrue(CommentLexer(COMMENT_SYNTAX["c"]).stateful)

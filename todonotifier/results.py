@@ -210,6 +210,9 @@ class TodoItem:
         """Converts the item to a legacy `models.TODO`, so the existing summary generators can consume it
 
         A missing due date becomes the legacy sentinel (`constants.DEFAULT_COMPLETION_DATE`) and a missing author the legacy unknown user.
+        A default (computed) due date becomes the sentinel too: the legacy structure has only one date and cannot say where it came from, and the
+        legacy "Expired" and "Upcoming Week" reports would present a computed date as a deadline that somebody set. Only explicit dates mean
+        "expired" there, as in decision D4; stale items are reported by the table, the digests and the JSON output.
 
         Returns:
             TODO: Legacy object
@@ -217,7 +220,7 @@ class TodoItem:
         return TODO(
             msg=self.message,
             user=USER(self.author or UNKNOWN_USER_NAME),
-            completion_date_str=self.due_date.isoformat() if self.due_date else "",
+            completion_date_str=self.due_date.isoformat() if self.due_date and self.due_source != DUE_SOURCE_DEFAULT else "",
             module=self.file,
             position=POSITION(self.line),
             tag=self.tag,

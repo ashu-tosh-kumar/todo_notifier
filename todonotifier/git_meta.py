@@ -48,6 +48,11 @@ WARNING_GIT_NOT_INSTALLED = (
 WARNING_NOT_A_GIT_REPO = (
     "git blame skipped: {path} is not inside a git repository (or git could not read it). Authors, creation dates and default due dates are unavailable."
 )
+WARNING_UNSAFE_REPO = (
+    'git blame skipped: git refuses to read {path} because it belongs to another user ("dubious ownership", typical in containers and CI jobs that '
+    "run as a different user). Fix it with `git config --global --add safe.directory {path}`. Until then authors, creation dates, default due dates "
+    "and .gitignore are unavailable."
+)
 WARNING_SHALLOW_CLONE = (
     "The repository is a shallow clone, so git blame authors and creation dates may be wrong (every line may be attributed to the newest commit). "
     "Fetch the full history, e.g. `fetch-depth: 0` for actions/checkout."
@@ -139,6 +144,8 @@ def _locate_git_root(path: str) -> tuple[Optional[str], Optional[str]]:
 
     root: str = process.stdout.decode("utf-8", errors="replace").strip()
     if process.returncode != 0 or not root:
+        if b"dubious ownership" in process.stderr:  # git's own words; without this hint the repository looks like it is not one
+            return None, WARNING_UNSAFE_REPO.format(path=directory)
         return None, WARNING_NOT_A_GIT_REPO.format(path=path)
 
     return root, None
@@ -159,7 +166,8 @@ def find_git_root(path: str) -> Optional[str]:
 def _decode_paths(output: bytes, directory: str) -> list[str]:
     """Turns the NUL separated output of `git ls-files -z` into sorted absolute paths of the files that exist on disk"""
     relative_paths: list[str] = [os.fsdecode(entry) for entry in output.split(b"\0") if entry]
-    absolute_paths: set[str] = {os.path.join(directory, relative_path) for relative_path in relative_paths}
+    # git prints "/" on every system; normpath makes the separators the ones of the platform, so that the paths can be compared with other paths
+    absolute_paths: set[str] = {os.path.normpath(os.path.join(directory, relative_path)) for relative_path in relative_paths}
 
     return sorted(path for path in absolute_paths if os.path.isfile(path))
 
@@ -232,9 +240,9 @@ def filter_git_listed(paths: list[str]) -> Optional[list[str]]:
         process = _run_git(["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", *chunk], directory, LIST_FILES_TIMEOUT_SECONDS)
         if process is None or process.returncode != 0:
             return None
-        listed.update(_decode_paths(process.stdout, directory))
+        listed.update(os.path.normcase(path) for path in _decode_paths(process.stdout, directory))
 
-    return [path for path in paths if path in listed]
+    return [path for path in paths if os.path.normcase(os.path.normpath(path)) in listed]
 
 
 def is_shallow_repository(root: str) -> bool:

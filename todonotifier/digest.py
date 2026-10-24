@@ -243,7 +243,11 @@ def safe_url(url: Optional[str]) -> Optional[str]:
     if not url or _UNSAFE_URL_CHARS.search(url):
         return None
 
-    parts = urlsplit(url)
+    try:
+        parts = urlsplit(url)
+    except ValueError:  # e.g. an unclosed IPv6 bracket in a mistyped repository URL
+        return None
+
     if parts.scheme not in ("http", "https") or not parts.netloc:
         return None
 
