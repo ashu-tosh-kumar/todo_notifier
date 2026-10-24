@@ -1,0 +1,49 @@
+name: Feature request
+description: Suggest an improvement or a new capability.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! If you are not sure yet, start a thread in [Discussions](https://github.com/ashu-tosh-kumar/todo_notifier/discussions).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the situation, not only the solution. For example "our overdue TODOs are noticed too late".
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to see?
+      description: The behaviour you have in mind, a command line example or a config sketch.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Workarounds, other tools, or other designs.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Command line
+        - Config file
+        - Detection (tags, languages, comment syntax)
+        - Owners and dates (git blame, aliases)
+        - Notifications (Slack, Teams, webhook, email)
+        - Reports and output formats
+        - CI integration (GitHub Actions, pre-commit)
+        - Python API
+        - Documentation
+        - Other
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to work on this (see CONTRIBUTING.md)

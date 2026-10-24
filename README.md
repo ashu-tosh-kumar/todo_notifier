@@ -2,10 +2,10 @@
 
 <div align="center">
 
-[![PyPI version](https://badge.fury.io/py/todonotifier.svg)](https://badge.fury.io/py/todonotifier)
+[![PyPI version](https://img.shields.io/pypi/v/todonotifier.svg)](https://pypi.org/project/todonotifier/)
 [![Python Support](https://img.shields.io/pypi/pyversions/todonotifier.svg)](https://pypi.org/project/todonotifier/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Downloads](https://pepy.tech/badge/todonotifier)](https://pepy.tech/project/todonotifier)
+[![Downloads](https://static.pepy.tech/badge/todonotifier)](https://pepy.tech/projects/todonotifier)
 [![CI](https://img.shields.io/github/actions/workflow/status/ashu-tosh-kumar/todo_notifier/python-app.yml?label=CI)](https://github.com/ashu-tosh-kumar/todo_notifier/actions/workflows/python-app.yml)
 [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/ashu-tosh-kumar/todo_notifier?label=openssf%20scorecard)](https://scorecard.dev/viewer/?uri=github.com/ashu-tosh-kumar/todo_notifier)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000)](https://github.com/psf/black)
@@ -20,6 +20,7 @@
 [Configuration](#configuration-file) •
 [Notifications](#notifications) •
 [Python API](#python-api) •
+[How it compares](#how-it-compares) •
 [Documentation](https://ashu-tosh-kumar.github.io/todo_notifier/) •
 [Contributing](#contributing)
 
@@ -27,6 +28,11 @@
 src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f4ac-4462-a2d7-0fe8f5836aca">
 
 </div>
+
+TODO Notifier helps you **track TODO comments** in a codebase. It is a **TODO deadline reminder** and **FIXME tracker**: it finds `TODO`, `FIXME`,
+`HACK` and `XXX` comments, gives each one an owner (from `@user` or `git blame`) and a due date, flags every **overdue TODO**, and tells your team
+in the terminal, in CI, and by Slack, Teams, webhook or email. Use it as a lightweight **technical debt tracker** that fails the build when a TODO
+has expired. It runs in any CI system today (see [Quick Start](#quick-start)); a dedicated **TODO GitHub Action** is coming soon.
 
 ## Features
 
@@ -43,6 +49,35 @@ src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f
 - **Multiple Integration Methods** - Works with Git repositories, local directories, or
   single files
 - **Export Options** - Save reports as HTML files for sharing and archiving
+
+## How it compares
+
+Several good tools deal with TODO comments, and they solve different problems. This table shows what each one documents, so you can pick the
+right tool or combine them.
+
+| | **TODO Notifier** | [todo-to-issue-action](https://github.com/alstr/todo-to-issue-action) | [Todo Tree](https://github.com/Gruntfuggly/todo-tree) (VS Code) | [Ruff `TD` rules](https://docs.astral.sh/ruff/rules/#flake8-todos-td) |
+|---|---|---|---|---|
+| **Main job** | Track deadlines and owners, remind and gate CI | Turn committed TODOs into GitHub issues | Show TODOs in the editor | Lint the format of TODO comments |
+| **Deadlines** | ✅ `{2026-12-31}` dates, plus a default due date for undated TODOs | ❌ not described | ❌ not described | ❌ no `TD` rule checks dates |
+| **Owners** | ✅ `@user`, `TAG(user)` or `git blame` | ✅ `TODO(@user)` or an `assignees:` option assigns the new issue | ❌ not described | ◐ `TD002` requires an author to be present; it does not resolve or assign one |
+| **Overdue alerts** | ✅ `--fail-on expired`, annotations, digests | ❌ not described | ❌ not described | ❌ |
+| **Digests** | ✅ Slack, Teams, webhook, email | ❌ not described | ❌ not described (status bar and badge counts only) | ❌ |
+| **PR checks** | ✅ `scan --since BASE --format github` annotations plus an exit code | ◐ runs on push and creates issues; not described as a check | ❌ editor only | ⚠️ unverified (the pages checked do not describe CI use) |
+| **Issue creation** | ❌ (use todo-to-issue for this) | ✅ creates, updates and closes issues | ❌ not described | ❌ (`TD003` requires an issue link, it does not create one) |
+| **IDE view** | ❌ terminal table, HTML reports | ❌ | ✅ tree view, highlighting, status bar | ◐ diagnostics through Ruff's editor integrations, no TODO list |
+| **Language support** | Comment-aware detection for 37 file extensions (27 scanned by default) | 62 languages listed | Regex based: default regex matches tags after common comment markers; ⚠️ no language list stated | Python only (Ruff is a Python linter) |
+
+✅ supported · ◐ partly · ❌ not supported, or not described in the source linked below (absence in a README is not proof that a feature does not
+exist) · ⚠️ could not be verified from the sources.
+
+**Which one should I use?** Use Ruff `TD` for TODO *format* linting, todo-to-issue for turning TODOs into issues, and TODO Notifier for
+deadlines, owners and reminders. They work well together.
+
+Sources, all checked on 2026-10-23 (these tools change, so check their current docs before relying on a row):
+[todo-to-issue-action README](https://github.com/alstr/todo-to-issue-action),
+[Todo Tree README](https://github.com/Gruntfuggly/todo-tree),
+[Ruff rules: flake8-todos (TD)](https://docs.astral.sh/ruff/rules/#flake8-todos-td) and the
+[Ruff documentation home](https://docs.astral.sh/ruff/). Spot a mistake? Please [open an issue](https://github.com/ashu-tosh-kumar/todo_notifier/issues/new/choose).
 
 ## Quick Start
 
@@ -733,42 +768,14 @@ class CustomConfig(BaseConfig):
 
 ## Contributing
 
-We welcome contributions! Here's how you can help:
+We welcome contributions: bug reports, ideas, docs and code. The full guide is in [CONTRIBUTING.md](CONTRIBUTING.md): development setup with
+Poetry on Python 3.10+, running the checks (tests with 100% coverage, black, isort, flake8, pre-commit hooks), commit style, and how to add a
+language's comment syntax or a notifier.
 
-### Development Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/ashu-tosh-kumar/todo_notifier.git
-cd todo_notifier
-
-# Setup a virtual environment
-pyenv virtualenv 3.10 todonotifier
-
-# Install dependencies
-pip install poetry  # not limited poetry version as of now
-poetry install --with dev
-
-# Set pre-commit hook
-pre-commit install
-
-# Run tests
-pytest tests
-```
-
-### Ways to Contribute
-
-- **Bug Reports**: Open an issue with details and reproduction steps
-- **Feature Requests**: Suggest new features or improvements
-- **Documentation**: Improve docs, examples, or tutorials
-- **Code**: Submit pull requests for bug fixes or features
-
-### Guidelines
-
-- Follow the existing code style (Black, isort, flake8)
-- Add tests for new functionality
-- Update documentation for new features
-- Keep commits focused and descriptive
+- **Bug reports and feature requests**: [open an issue](https://github.com/ashu-tosh-kumar/todo_notifier/issues/new/choose)
+- **Questions and ideas**: [GitHub Discussions](https://github.com/ashu-tosh-kumar/todo_notifier/discussions)
+- **First contribution**: look for issues labelled [good first issue](https://github.com/ashu-tosh-kumar/todo_notifier/labels/good%20first%20issue)
+- **Security**: see [SECURITY.md](SECURITY.md)
 
 ## License
 
@@ -876,6 +883,10 @@ details.
   releases to PyPI with Trusted Publishing and creates the GitHub Release; this repository's own config is in
   `[tool.todonotifier]`; the legacy `user_driver.py` moved to `examples/python_api_example.py`; the committed
   `.report/` output was removed and is git-ignored.
+
+- Discoverability and contributor on-ramp: richer PyPI metadata (description, keywords, classifiers, Changelog, Documentation and Issue
+  Tracker links); a "How it compares" section; fixed badge row (PyPI version and Downloads badges); `CONTRIBUTING.md` (the development setup moved
+  there from the README), GitHub issue forms, a pull request template and a Discussions/security contact page.
 
 ### v1.4.0
 
