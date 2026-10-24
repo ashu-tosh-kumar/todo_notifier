@@ -414,7 +414,12 @@ def _config_start(paths: list[str]) -> str:
 
     cwd: str = os.getcwd()
     absolute: list[str] = [os.path.abspath(path) for path in paths]
-    if any(os.path.isfile(path) for path in absolute) and all(os.path.commonpath([cwd, path]) == cwd for path in absolute):
+    try:
+        all_inside: bool = all(os.path.commonpath([cwd, path]) == cwd for path in absolute)
+    except ValueError:  # Windows: a path on another drive than the current directory has no common path with it, so it is outside
+        return paths[0]
+
+    if any(os.path.isfile(path) for path in absolute) and all_inside:
         return cwd
 
     return paths[0]

@@ -40,7 +40,12 @@ def _resolve_root(abs_paths: list[str]) -> str:
         return abs_paths[0]
 
     cwd = os.getcwd()
-    if all(os.path.commonpath([cwd, path]) == cwd for path in abs_paths):
+    try:
+        all_inside: bool = all(os.path.commonpath([cwd, path]) == cwd for path in abs_paths)
+    except ValueError:  # Windows: a path on another drive than the current directory has no common path with it, so it is outside
+        all_inside = False
+
+    if all_inside:
         return cwd
 
     return os.path.commonpath([path if os.path.isdir(path) else os.path.dirname(path) for path in abs_paths])
