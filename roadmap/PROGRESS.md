@@ -47,7 +47,7 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | [#176](https://github.com/ashu-tosh-kumar/todo_notifier/pull/176) | ✅ done | See decision A3 and decisions A64 to A71; notes under "Notes per workstream" (1.1); maintainer steps to move it to its own repo are in `integrations/github-action/README.md` |
 | 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | [#177](https://github.com/ashu-tosh-kumar/todo_notifier/pull/177) | ✅ done | See decisions A72 to A80 and notes under "Notes per workstream" (1.3); maintainer steps (screenshots, Medium post, Pages setting) are listed there |
 | 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | [#178](https://github.com/ashu-tosh-kumar/todo_notifier/pull/178) | ✅ done | Drafts ready, posting is a maintainer step. Drafts in `roadmap/launch/` (index: `roadmap/launch/README.md`), baseline in `roadmap/metrics.md`; decisions A81 to A85 and notes under "Notes per workstream" (1.5) |
-| P1 | Phase 1 review | `roadmap/p1-review` | | 🟡 in progress | |
+| P1 | Phase 1 review | `roadmap/p1-review` | | ✅ done | [Phase 1 review notes](#phase-1-review): requirement table, 7 issues fixed (decisions A86 to A92), what was left |
 | 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | | ⬜ todo | |
 | 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | | ⬜ todo | |
 | 2.2 | Interview kit | `roadmap/2.2-interviews` | | ⬜ todo | |
@@ -148,6 +148,13 @@ product and engineering basis. Each one is easy to reverse.
 | A83 | Every terminal output in the drafts was produced by `todonotifier` 2.1.0 (this branch) on a throwaway sample repo (a small shop with Indian names, GST and a festive-sale hack, commits dated with fixed `GIT_AUTHOR_DATE`) on 2026-10-24. The sample repo lives in the scratchpad, not in this repository. The posts say the day counts depend on the run date. The pull request example (`--since main --format github`) comes from a branch of the same sample. | Real output, reproducible; nothing invented. |
 | A84 | The drafts state the known limitations openly (the table does not mark default due dates; plain `git blame` with no ignore-revisions; Linux-only testing; the Teams payload unverified; heuristic comment detection; no issue creation or editor view). The recommended "visible fix" for launch week is good first issue 3 (mark default due dates in the table), with issues 4 and 8 as fallbacks. | Honest tone; the fix answers a limitation the posts already admit. The maintainer decides. |
 | A85 | The drafts do not mention the SaaS, the waitlist or the working name Mendo. The checklist treats the landing page (2.1) as a soft dependency and tells the maintainer to add one line only if it is live. Reddit, Show HN, newsletter and curated-list rules are all marked ⚠️ unverified and nothing was fetched from those sites. The anchor post's `canonical_url` is the docs home page, as the brief says; the Medium note explains why a blog page on the docs site would be a better canonical target and leaves that optional. | Never claim a feature that does not exist; do not post or fetch. |
+| A86 | Release honesty: a short "release status" note says what to do while `todonotifier` 2.1.0 is not on PyPI and `v2.1.0` is not tagged (install from the repository, use a commit SHA for `rev:` and `@ref`, and `package:` for the Action). It is an admonition on the Quickstart and one line each in the README (Install), the pre-commit page, the CI page and the Action README. Each carries an HTML comment `release-note: delete ...`, and RELEASING.md ("After the release") says to remove them with `grep -rn release-note`. | The quickstart, the README and the hook snippet are written for 2.1.0 and fail for a reader who copies them before the maintainer publishes (`pipx install todonotifier` installs 1.4.0, which has no command). One note on the page that matters, a line elsewhere, and nothing else, so the docs stay uncluttered; the marker makes the removal mechanical. |
+| A87 | The README uses absolute URLs for the demo GIF (`https://raw.githubusercontent.com/ashu-tosh-kumar/todo_notifier/main/assets/demo.gif`) and for the links to `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE` and the Action README. | PyPI renders neither relative images nor relative links (the project page is built from the README alone). PyPI is published from `main` after the release merge, so `main` has the files by then. Consequence: until `development` is merged into `main`, the GIF is a 404 on the GitHub landing page (the default branch is `development`); RELEASING.md step 2 says to do the second merge soon after the first. `mkdocs build --strict` is not affected (the README is not in `docs_dir`; only its changelog section is included). |
+| A88 | The Action input `default-due-days` now defaults to an empty string, meaning "the config file's `default_due_days`, else 90" (the CLI default). It used to default to `"90"` and was always passed as `--default-due-days`, which beat the config file. A number (`0` too) is still passed on. `fail-on` stays `none` by default and decides on its own: a `fail_on` in the config file is not used by the Action (documented in its README). | The spec says "default 90"; the effective default is the same, but a team's own `default_due_days = 30` was silently ignored. `tags` and `extensions` already worked this way. |
+| A89 | In `pr` mode the Scan step runs `git fetch --no-tags --depth=1 origin <base sha>` (with `GIT_TERMINAL_PROMPT=0`) when the base commit is not in the checkout, and prints a `::warning title=Base commit missing` if that fails. The scan then fails with exit 2 as before. | The default `actions/checkout` of a pull request is depth 1, and `--since` then failed for every user who did not read the README. One commit is enough for the diff; owners and ages still need `fetch-depth: 0`, and the shallow-clone warning stays. |
+| A90 | `digest.escape_markdown` puts a zero width space (`@&#8203;`) after an `@` that starts a name. | A backslash does not stop GitHub from turning `@user` or `@org/team` into a mention, so a TODO message in the sticky pull request comment could notify any user or team (the digest escaped `#123` and links, but not this). |
+| A91 | `docs.yml`: the workflow-level permission is `contents: read` only. The `build` job adds `pages: write` (for `configure-pages`), the `deploy` job keeps `pages: write` and `id-token: write`. Deploying from `main` while the default branch is `development` is kept, and documented for the maintainer in RELEASING.md ("After the release": Pages source, the `github-pages` environment's deployment branches may allow only the default branch). `release.yml` keeps the `v*` tag trigger, with a RELEASING.md note to tag only `main` (the `pypi` environment reviewer is the safety net). | `main` is the release branch (A1), so a docs deploy on release is intended. Moving the deploy to `development` would publish docs for an unreleased version. Neither workflow can be run from here, so the `pages` permission of the build job is kept rather than guessed away. |
+| A92 | The Action is documented as tested on `ubuntu-latest` only (README of the Action, CI page); no Windows or macOS job was added to the self-test. | The steps use `bash`, `python`, `git`, `gh` and `jq`, which hosted runners of all three systems have, but nothing was run on them. Saying so is cheaper and more honest than a matrix nobody has seen pass. |
 
 ## Notes per workstream
 
@@ -573,7 +580,7 @@ Follow-ups:
 - [ ] After `todonotifier` 2.1.0 is on PyPI and `v2.1.0` is tagged: run the Quickstart once on a real project (`pipx install todonotifier`, the Action and the hook with `v2.1.0`), and check the Action `@v2.1.0` reference resolves.
 - [ ] Add the Slack and Teams screenshots (`site_src/assets/slack-digest.png`, `teams-digest.png`), replacing the two "Screenshot placeholder" admonitions in `site_src/notifications.md`. Verify the Teams payload against a real tenant (open since 0.5).
 - [ ] Edit the Medium article to link to the docs (the docs do not link to it as a guide; the README does, as an old article).
-- [ ] PyPI does not render the README's relative `assets/demo.gif`: after the stack is on `main`, switch the `<img src>` to `https://raw.githubusercontent.com/ashu-tosh-kumar/todo_notifier/main/assets/demo.gif`. Re-record with `vhs assets/demo.tape` (the header of the tape lists the requirements) whenever the table format changes.
+- [x] (Done in the Phase 1 review, A87.) PyPI does not render the README's relative `assets/demo.gif`; the `<img src>` is the raw GitHub URL on `main` now. Re-record with `vhs assets/demo.tape` (the header of the tape lists the requirements) whenever the table format changes.
 
 **Follow-ups:**
 - Material for MkDocs 9.7 prints a banner about MkDocs 2.0 on every build; it is only a message, but `mkdocs-material` is pinned `<10` and MkDocs `1.6` comes with it, so check before upgrading either.
@@ -601,3 +608,112 @@ Follow-ups:
 - pypistats `/recent` (21 downloads in 30 days) and `/overall` without mirrors (42) disagree; pick one source for the weekly table (the sums of `/overall`) and keep it.
 - The table output marks no default due dates, which the posts admit. Good first issue 3 fixes it.
 - The Acceptance criteria "blog post, Show HN and 2 Reddit posts published" and "feedback captured as labelled issues" need the maintainer; they cannot be met from here.
+
+### Phase 1 review
+
+Reviewer: the P1 review agent, branch `roadmap/p1-review` (on top of Phase 0 and 1.4, 1.2, 1.1, 1.3, 1.5). Method: read the whole Phase 1 diff
+(`git diff origin/roadmap/p0-review...HEAD`, 60 files); ran the `run:` scripts of `action.yml` with `bash -e -o pipefail` in throw-away repositories (a scan
+from a subdirectory, a depth 1 clone that lacks the base commit, no webhook, a failing notifier, a bad `default-due-days`), `shellcheck` on every script of
+`action.yml`, `actionlint` 1.7.12 on all workflows, `pre-commit try-repo` against a throw-away repository, `poetry check` and `poetry build` (METADATA
+read), `mkdocs build --strict`, `pdoc`, and the quickstart sample project from the page. Every `--flag` in `README.md`, `site_src/`, `CONTRIBUTING.md`,
+`AGENTS.md`, `RELEASING.md`, the Action README, `roadmap/launch/` and `roadmap/good-first-issues.md` was compared with `todonotifier --help` and the
+subcommand helps (the only unknown one is the proposed `--only-if-items` of good first issue 7), every `toml` block of the docs was loaded with
+`load_config`, and the Python snippets of `python-api.md` were checked against the real signatures. Facts taken from the PRs: the GitHub CI run of PR #176
+passed the jobs "pr mode", "digest mode" and "fail-on" of the Action self-test on real runners, and PR #177 passed the docs build.
+
+#### Requirements audit
+
+Status: met / partly / not met / maintainer step. "Evidence" is a test, a command that was run on this branch, or a CI run.
+
+| # | Requirement | Status | Evidence |
+|---|---|---|---|
+| 1.1 | AC: `pr` mode shows annotations on a PR that adds an overdue TODO, and fails with `fail-on: expired` | partly (mechanics met; a sample repo using the published ref is a maintainer step) | CI of PR #176: jobs "pr mode" and "fail-on" green on runners (`fail-on: expired` makes the step fail, asserted as `outcome == failure`). Local: `test_action_render.py::TestRender::test_annotation_paths_are_relative_to_the_repository_root`, `::TestCheck::test_the_condition_met_fails_with_the_rule_of_the_command_line`; run: a scan from `working-directory: pkg` printed `::notice file=pkg/sub/m.py,line=2,...`. A real PR needs the action at a ref that exists (A3, tag `v2.1.0`) |
+| 1.1 | AC: `digest` mode on `workflow_dispatch` posts to a test Slack webhook and uploads the artifact | partly | CI of PR #176: job "digest mode" green (summary, reports, artifact upload, outputs asserted). No secret exists in CI, so Slack delivery was not exercised there: `test_notifier.py::TestSnapshots`, new `test_action_render.py::TestScanStep::test_notify_reads_each_webhook_from_the_environment_and_masks_it`, and the 1.1 run against a local HTTPS server. A real Slack channel is a maintainer step |
+| 1.1 | AC: the Marketplace listing is live | maintainer step | Needs the `todonotifier-action` repo (D2, A3); steps in the Action README ("Moving to the todonotifier-action repo") |
+| 1.1 | Scope: composite action, pip cache, the 11 inputs of the spec (plus `webhook-url`, `github-token`, `python-version`, `package`, `artifact-name`), the 5 outputs | met | `TestActionFiles::test_action_yml_declares_the_documented_inputs_and_outputs`; `actionlint` and `shellcheck` clean |
+| 1.1 | Scope: `pr` mode (annotations from `--since <base sha>`, summary, opt-in sticky comment, `fail-on`) and `digest` mode (full scan, notifiers, reports as an artifact, summary) | met | CI jobs above; `TestRender`, `TestCheck`, `TestBuildComment`; the comment step run with a fake `gh` (PATCH when the marker exists, POST when not) in the 1.1 notes |
+| 1.1 | Scope: shallow-clone warning as `::warning`, least-privilege `permissions:` documented, injection safety | met | `Prepare git` step; Action README "Least privilege"; `test_inputs_and_event_data_never_appear_inside_a_run_script`; no `${{ }}` in any `run:` (also in the docs, see issue 6 below) |
+| 1.1 | Scope: examples for both modes, self-test workflow with fixtures | met | Action README, `.github/workflows/action-selftest.yml` and `test_the_selftest_workflow_expects_what_the_fixtures_contain` |
+| 1.1 | Scope: new public repo `todonotifier-action`, tags `v1.0.0` and `v1`, Marketplace categories | maintainer step | A3 (built in `integrations/github-action/`) |
+| 1.2 | AC: `pre-commit try-repo . todonotifier --files tests/sample_test_file.py` runs and gives the expected result | met | Run: `Passed` in this repo (its config excludes `tests`); from a throw-away repo holding only that file (no config): `Failed`, exit 1, and `todonotifier-strict` also exit 1 |
+| 1.2 | AC: under 2 s for about 10 files | met | Run: `pre-commit run todonotifier --files <10 files>` with the environment installed: 0.35 s, 0.40 s, 0.39 s (the 1.2 notes: 0.39 to 0.45 s). `try-repo` itself takes 4.7 s because it clones and installs every time |
+| 1.2 | Scope: hooks `todonotifier` and `todonotifier-strict` (`language: python`, `pass_filenames`, `types: [text]`), no full-repo walk, blame off by default and how to turn it on, docs with `rev: v2.1.0` | met (`rev: v2.1.0` resolves after the tag) | `tests/test_pre_commit_hooks.py`; `TestExplicitFiles::test_scanning_files_needs_one_ls_files_call_and_no_blame`; `site_src/pre-commit.md` (release status note and the Python 3.10 note were added here, A86) |
+| 1.3 | AC: a new user finishes the Quickstart in 5 minutes | met for the machine part; the `pipx install todonotifier` step works after the release | Run again here: the page's sample project and its `scan`, `--fail-on expired` (exit 1) and `--fail-on incomplete` commands print exactly what the page shows. The 1.3 notes timed the commands (about 12 s of machine time). Reading time is the person's. Before the release the first step installs 1.4.0 (PyPI says latest 1.4.0): the new "release status" note covers it (A86) |
+| 1.3 | AC: the configuration reference is generated from code and CI fails if it is stale | met | `scripts/gen_docs_reference.py --check` exit 0; after appending a line to `site_src/reference/cli.md` it printed "out of date" and exited 1; the check is a step of `python-app.yml` and `docs.yml`, and `tests/test_docs_reference.py` |
+| 1.3 | AC: the docs site deploys from `main` | partly (maintainer step for the first deploy) | `docs.yml` deploys on `push` to `main` only. CI of PR #177: the docs build job green. Local `mkdocs build --strict` exit 0 and `pdoc` builds. The first deploy needs the Pages source "GitHub Actions" and, possibly, `main` in the `github-pages` environment's branches (RELEASING.md, A91) |
+| 1.3 | Scope: pages (quickstart, syntax, configuration, CLI, CI, pre-commit, notifications, Python API, comparison, FAQ), README landing page, `/api/` kept | met | `site_src/`, `mkdocs.yml` nav; built site has all of them |
+| 1.3 | Scope: screenshots of Slack and Teams, a Slack digest screenshot in the demo | partly | Two admonition placeholders in `site_src/notifications.md` (the maintainer adds the images) |
+| 1.3 | Scope: demo GIF with a committed tape file | met | `assets/demo.tape`, `assets/demo.gif`; the README points to the raw URL on `main` (A87) |
+| 1.3 | Scope: port the Medium guide, link Medium to the docs | not met (blocked) | A77: Medium answered 403; the README links the article as "old"; editing the article is a maintainer step |
+| 1.4 | AC: the badges render correctly on GitHub | met | The 9 badge image URLs of the README return HTTP 200 today (`curl`); no literal `\n` in the badge row. The Python-versions badge shows 3.10+ only after the release |
+| 1.4 | AC: `poetry check` passes and the built metadata shows the keywords and classifiers | met | `poetry check` exit 0 (deprecation warnings only, A56); `poetry build`, `unzip -p dist/*.whl '*/METADATA'`: Summary, 12 Keywords, 14 Classifiers, 5 Project-URLs, `Requires-Python: >=3.10,<4.0`; `dist/` deleted |
+| 1.4 | AC: the PR lists the manual GitHub settings | met | "Manual GitHub settings for the maintainer" in the 1.4 notes |
+| 1.4 | Scope: CONTRIBUTING, issue forms, PR template, comparison table, SEO wording | met | files exist; the comparison was not re-fetched (dated 2026-10-23, two cells marked unverified) |
+| 1.4 | Scope: 5 or more `good first issue` issues | partly | 9 issues are drafted in `roadmap/good-first-issues.md`; creating them (and the labels) on GitHub is a maintainer step |
+| 1.5 | AC: baseline metrics recorded with the date | met | `roadmap/metrics.md` (2026-10-24, with sources). The pypistats mismatch is written down |
+| 1.5 | AC: blog post, Show HN and 2 Reddit posts published | maintainer step | Drafts in `roadmap/launch/`; nothing was posted by design |
+| 1.5 | AC: feedback captured as labelled issues | maintainer step | Needs the posts; the `feedback` and `launch` labels are described in the checklist |
+| Exit | The GitHub Action is listed on the Marketplace | maintainer step | See 1.1 |
+| Exit | The pre-commit hook is usable from this repo | met | `try-repo` above (needs the tag for `rev: v2.1.0`) |
+| Exit | The docs site has a 5-minute quickstart | met | See 1.3 |
+| Exit | PyPI metadata and the README are optimized | met in the package; visible on PyPI after the release | METADATA above; README now uses absolute links and image URL (A87); the Python-versions badge and project links appear after the release |
+| Exit | The launch posts are out, and baseline metrics were recorded before launch | partly (baseline met, posts are a maintainer step) | `roadmap/metrics.md`; `roadmap/launch/` |
+
+Totals: 19 met, 6 partly, 1 not met (blocked), 5 maintainer steps (31 rows).
+
+#### Issues found and fixed
+
+1. **The Action ignored `default_due_days` of the config file.** `default-due-days` defaulted to `"90"` and was always passed as `--default-due-days 90` (to `scan` and
+   `notify`), and the command line beats the file. Now empty by default, meaning "config file, else 90" (A88). Tests: `TestScanStep::test_an_empty_default_due_days_leaves_the_choice_to_the_config_file`
+   (fails without the fix), `test_a_default_due_days_that_is_not_a_number_is_rejected`.
+2. **`pr` mode failed on the default checkout.** `actions/checkout` fetches one commit for a pull request, so `--since <base sha>` ended with "Unknown git ref" (exit 2) unless
+   the workflow had `fetch-depth: 0`. The Scan step fetches the base commit (A89). Tests: `TestScanStep::test_a_base_commit_missing_from_a_shallow_checkout_is_fetched` (a real depth 1 clone;
+   fails without the fix) and `::test_an_unfetchable_base_commit_is_a_warning_and_the_scan_reports_the_exit_code`.
+3. **`@mentions` in a TODO message notified people.** The sticky comment is the Markdown digest, and `escape_markdown` did not touch `@`, so `# TODO @org/security-team ...` in a pull request
+   mentioned that team from the bot's comment (A90). Tests: `test_digest.py::TestHelpers::test_escape_markdown_stops_mentions_but_keeps_other_at_signs`, `::test_markdown_digest_does_not_mention_users_named_in_a_message`.
+4. **A digest that sends nothing looked like success.** A misspelled secret (`${{ secrets.SLAK_WEBHOOK }}`) is an empty input and the Notify step was skipped silently. It prints
+   `::notice title=No digest sent` now. Tests: `TestScanStep::test_notify_without_a_webhook_says_that_nothing_is_sent_and_does_not_run_the_tool` and two more for the Notify step.
+5. **Windows: a path on another drive crashed the scan.** `os.path.commonpath` raises `ValueError` when the current directory and a PATH are on different drives. `cli._config_start` (new in
+   1.2) and `scanner._resolve_root` now treat such a path as outside the current directory. Test: `TestExplicitFiles::test_a_path_on_another_drive_is_outside_the_current_directory` (fails without the fix).
+6. **The CI page taught `${{ github.base_ref }}` inside a `run:` script.** A branch name is not trusted text. The snippet passes it through `env:` (the page for the Action already said never to do this).
+7. **PyPI renders no relative links or images.** The README had a relative GIF and four relative links; they are absolute now (A87).
+
+Smaller changes: the Action README and the CI page say that only `ubuntu-latest` is tested (A92) and that the config file's `fail_on` is not used by the Action; the pre-commit page says the hook environment needs
+Python 3.10 (`default_language_version`); the FAQ privacy list names the one other network use (a repository URL handed to the Python API to clone) and its performance numbers were refreshed (the old ones
+named a file count that no longer matched); the "release status" notes (A86); `docs.yml` permissions (A91); RELEASING.md "After the release" and a branch note; the launch checklist no longer tells the maintainer
+to fix the GIF and says the docs deploy from `main`.
+
+#### Checked and fine
+
+- `action.yml`: no `${{ }}` in any `run:` (every input and event field goes through `env:`); webhook secrets are read from the environment only, masked with `::add-mask::`, and never on a command line (`--*-webhook-env NAME`);
+  `set -e -o pipefail` is the shell default of `shell: bash` and the scripts handle the expected failures themselves (`if !`, `|| warn`, `exit 0` after saving the exit code); `shellcheck` is clean; the scan exit codes 2 and 3
+  skip `render` and make the last step fail with an explanatory `::error`; zero TODOs print a count line, write the summary and (digest mode) empty reports; annotation paths are repository-relative when `working-directory`
+  is a subdirectory; a failing comment (fork, missing permission) is a warning; the outputs are numbers and paths, so the `$GITHUB_OUTPUT` writes cannot be broken by a newline; the comment is cut at a line end below
+  60,000 characters (`TestBuildComment`); on `pull_request_target` the comment still works and the README says not to use that event. Fork PRs have no secrets, so `digest` mode cannot run there.
+- CLI additions: `--fail-on incomplete` (rule and message, `TestFailOnIncomplete`), `--blame` / `--no-blame` (last wins), `--*-webhook-env` (a pasted URL is rejected without being echoed: run), explicit files obey
+  `exclude_dirs`, `.gitignore` and the config of the current directory, a nonexistent file is exit 2.
+- Docs: every flag, default, exit code and config key checked as described above; the sample outputs match a fresh run; `mkdocs build --strict` exits 0; `gen_docs_reference.py --check` exits 0.
+- Workflows: `actionlint` is clean for all of `.github/workflows/`; every `uses:` in `python-app.yml`, `docs.yml`, `release.yml`, `action-selftest.yml` and `action.yml` is SHA-pinned with a version comment;
+  `release.yml` passes the tag through `env:`, publishes with OIDC in a separate job, and its GitHub Release job needs the publish job; `action-selftest.yml` has `contents: read` only.
+- Privacy: the only network code in the package is `notifier.py` (webhooks, SMTP) and `connect.py` (`GIT_CLONE`, Python API only); there is no telemetry, and the report templates load no external resource. The
+  statements "nothing leaves your machine unless you configure a notifier" in the README, the docs landing page, the FAQ and the launch drafts are therefore true; the FAQ now lists the clone case too.
+
+#### Left unfixed on purpose
+
+- **Table `DUE` column** does not mark default due dates for items that are not yet due (good first issue 3, the launch-week visible fix). Left as the roadmap says.
+- **`release.yml` runs for any `v*` tag on any branch**, and **`docs.yml` deploys from `main` while the default branch is `development`**: both are consistent with A1 (`main` is the release branch). Documented in RELEASING.md
+  instead of changed; the `pypi` environment reviewer is the real gate. Whether the `github-pages` environment accepts `main` cannot be checked from here.
+- **The `build` job of `docs.yml` keeps `pages: write`** for `configure-pages`, which also applies to pull requests from the same repository. Narrowing it further needs a real run.
+- **The Action uses config-file notifiers (for example email) only when a webhook input is also given**, and a config `fail_on` is ignored (documented). A `notify: auto|true|false` input is the 1.1 follow-up.
+- **The sticky comment is found by its hidden marker anywhere in a comment body**: someone who quotes the bot's comment in a reply can make the next run fail to update (PATCH is refused) and post a new comment.
+- **`git config --global --add safe.directory "$GITHUB_WORKSPACE"`** stays in the global git config of a self-hosted runner user (documented), and does not match a checkout in a `path:` subdirectory.
+- **Windows and macOS** are untested for the Action and the CLI (A92, A55). `scanner._resolve_root` still raises `ValueError` (exit 3 with the message) when several PATH arguments are on different drives.
+- **Competitor claims** in the comparison table were not fetched again (dated 2026-10-23, two cells marked unverified), and the ⚠️ rules in the launch drafts (HN, Reddit, newsletters, curated lists) stay for the maintainer.
+- **`poetry check` deprecation warnings** and the `Homepage` project URL that points to the PyPI page itself (A56): a `[project]` migration is its own change.
+- **Raw URLs in a TODO message are auto-linked** in Markdown comments and by Slack and Teams (the Phase 0 note); `_ENV_NAME_PATTERN` accepts a trailing newline (harmless: no such variable exists).
+- **Screenshots, the Medium article, the labels and issues, the GitHub settings, the first release and the Marketplace listing** are the maintainer steps listed in the 1.1 to 1.5 notes.
+
+#### Numbers
+
+841 tests pass (831 before the review); `coverage report` is 100% (2581 statements, `fail_under = 100` holds); `black --check .`, `isort --check-only .`, `flake8 . --config ./tox.ini`,
+`pre-commit run --all-files`, `scripts/gen_docs_reference.py --check`, `mkdocs build --strict` and `actionlint` are clean; `todonotifier scan . --fail-on expired` on this repository exits 0 ("No TODOs found (91 files scanned)").
