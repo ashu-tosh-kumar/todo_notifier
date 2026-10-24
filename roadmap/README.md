@@ -12,7 +12,7 @@ the unit of work for one agent and one pull request.
 | [phase-0-core.md](phase-0-core.md) | 0: Core and CLI | Remove setup friction: CLI, config file, git-aware ownership, accurate detection, chat notifiers | This repo |
 | [phase-1-distribution.md](phase-1-distribution.md) | 1: Distribution | Be where developers already are: GitHub Action, pre-commit, docs, discoverability, launch | This repo + new `todonotifier-action` repo |
 | [phase-2-validation.md](phase-2-validation.md) | 2: SaaS validation | Prove teams will pay before building anything hosted | Mostly non-code (landing page, interviews) |
-| [phase-3-saas-mvp.md](phase-3-saas-mvp.md) | 3: SaaS MVP | GitHub App, dashboard, digests, billing | New private repo `<brand>-cloud` (working name `mendo-cloud`, see D6) |
+| [phase-3-saas-mvp.md](phase-3-saas-mvp.md) | 3: SaaS MVP | GitHub App, dashboard, digests, billing | New private repo `<brand>-cloud` (working name `mendo-cloud`, see D6 and the note on Mendo there) |
 
 **Positioning (from D6):** the SaaS is a generic **technical debt tracker**. TODO comments
 are its first debt source, not its only one. The open-source library keeps its name
@@ -140,8 +140,10 @@ Everyone adds to `README.md`'s changelog. Resolve those conflicts by keeping all
   `dataclasses`, `json`). Adding a runtime dependency needs a one-line justification in the PR.
   Pydantic is not used in the library. It is used in the SaaS backend (Phase 3).
 - **Backwards compatibility:** Phase 0 ships as `v2.1.0`. Apart from dropping Python 3.9 (D1),
-  it is a non-breaking minor release. pip keeps 3.9 users on `2.0.x` automatically, because
-  `python_requires` excludes them, and the changelog must say so.
+  it is a non-breaking minor release. pip keeps 3.9 users on the older release automatically, because
+  `python_requires` excludes them, and the changelog must say so. (In practice that release is `1.4.0`: 2.0.0 was never
+  published, so its breaking changes ship in `v2.1.0` too, listed first in the changelog. See decision A46 in
+  [PROGRESS.md](PROGRESS.md).)
   `todonotifier.driver.run(connect, config)`, `DefaultConfig`, `Connect`, `ConnectMethod`,
   `BaseSummaryGenerator`, `BaseNotifier` and `EmailNotifier` must keep working unchanged.
   New behavior is opt-in through the library API, and on by default only through the new CLI
@@ -169,12 +171,12 @@ and ask.
 
 | ID | Decision | Status | What it means for the work |
 |---|---|---|---|
-| D1 | Minimum Python version | ✅ **3.10** | `python = "^3.10"` (set in 0.1). CI matrix 3.10 to 3.14 (0.7). Docs workflow moves off 3.9. 3.9 users stay on `2.0.x`. Note: 3.10 reaches end of life in Oct 2026 ([python.org](https://devguide.python.org/versions/)), so plan to raise the minimum to 3.11 in a later major release. |
+| D1 | Minimum Python version | ✅ **3.10** | `python = "^3.10"` (set in 0.1). CI matrix 3.10 to 3.14 (0.7). Docs workflow moves off 3.9. 3.9 users stay on the older release (`1.4.0`: 2.0.0 was never published, see A46 in [PROGRESS.md](PROGRESS.md)). Note: 3.10 reaches end of life in Oct 2026 ([python.org](https://devguide.python.org/versions/)), so plan to raise the minimum to 3.11 in a later major release. |
 | D2 | Where the GitHub Action lives | ✅ **Separate public repo** `todonotifier-action` | 1.1 creates it. Rebranding the Action under the D6 name is out of scope until the SaaS ships. |
 | D3 | SaaS code | ✅ **Private repo**. The library stays MIT. | Phase 3 lives in `<brand>-cloud`. Nothing SaaS-specific is added to this repo. |
 | D4 | Default due date when `{date}` is missing | ✅ **Yes, apply a default due date** | See "D4 design" below. |
 | D5 | Default file extensions | ✅ **Common-languages preset** for the CLI and config file. `DefaultConfig` keeps `["py"]`. | 0.4, 0.6 |
-| D6 | SaaS name and domain | 🟡 **Shortlisted.** Working name **Mendo**, pending 2.0 checks. | Use "Mendo" as a placeholder in Phase 2 and 3 drafts. Finalise in [2.0](phase-2-validation.md#20-name-and-brand-checks) before buying a domain or building the landing page. |
+| D6 | SaaS name and domain | 🟡 **Shortlisted.** Working name **Mendo**, pending 2.0 checks. | Use "Mendo" as a placeholder in Phase 2 and 3 drafts. Finalise in [2.0](phase-2-validation.md#20-name-and-brand-checks) before buying a domain or building the landing page. **Update from 2.0 (not a decision):** the research in [decision-name.md](decision-name.md) found a funded SaaS company already called Mendo and recommends taking **Fragmo** forward provisionally (fallback Paydown). The maintainer decides. Until then "Mendo" stays here and in Phase 3 as the roadmap's placeholder, the landing page draft uses "Fragmo" (provisional, one constant), and the interview kit says `[Brand]`. |
 
 ### D4 design: default due dates without noisy CI
 

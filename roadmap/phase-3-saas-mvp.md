@@ -9,7 +9,8 @@ PR checks. The first paying customers come from the waitlist and design partners
 ⚠️ Estimated effort: 6 to 10 weeks for one developer with agents.
 
 **Positioning (D6):** a generic **technical debt tracker** (working name **Mendo**, pending
-[2.0](phase-2-validation.md#20-name-and-brand-checks)). The MVP tracks one kind of debt, TODO
+[2.0](phase-2-validation.md#20-name-and-brand-checks); the 2.0 research recommends dropping Mendo, see
+[decision-name.md](decision-name.md), so read `mendo` and `mendo-cloud` below as placeholders for `<brand>`). The MVP tracks one kind of debt, TODO
 comments, but the data model, UI wording and URLs must not assume TODOs are the only kind
 (see 3.3).
 
