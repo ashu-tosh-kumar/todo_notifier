@@ -45,8 +45,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | [#174](https://github.com/ashu-tosh-kumar/todo_notifier/pull/174) | ✅ done | See "Notes per workstream" (1.4); maintainer GitHub settings checklist there |
 | 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | [#175](https://github.com/ashu-tosh-kumar/todo_notifier/pull/175) | ✅ done | See "Notes per workstream" (1.2); decisions A60 to A63 |
 | 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | [#176](https://github.com/ashu-tosh-kumar/todo_notifier/pull/176) | ✅ done | See decision A3 and decisions A64 to A71; notes under "Notes per workstream" (1.1); maintainer steps to move it to its own repo are in `integrations/github-action/README.md` |
-| 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | | ✅ done | See decisions A72 to A80 and notes under "Notes per workstream" (1.3); maintainer steps (screenshots, Medium post, Pages setting) are listed there |
-| 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | | ⬜ todo | Posting is a maintainer step |
+| 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | [#177](https://github.com/ashu-tosh-kumar/todo_notifier/pull/177) | ✅ done | See decisions A72 to A80 and notes under "Notes per workstream" (1.3); maintainer steps (screenshots, Medium post, Pages setting) are listed there |
+| 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | | ✅ done | Drafts ready, posting is a maintainer step. Drafts in `roadmap/launch/` (index: `roadmap/launch/README.md`), baseline in `roadmap/metrics.md`; decisions A81 to A85 and notes under "Notes per workstream" (1.5) |
 | P1 | Phase 1 review | | | ⬜ todo | |
 | 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | | ⬜ todo | |
 | 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | | ⬜ todo | |
@@ -143,6 +143,11 @@ product and engineering basis. Each one is easy to reverse.
 | A78 | `docs.yml`: `pull_request` builds only (configure-pages and the Pages artifact run on `push`, the `deploy` job has `if: github.event_name == 'push'`), PRs upload the built site as the artifact `site-preview` (7 days), the concurrency group is `pages-${{ github.ref }}` (a PR run must not cancel or queue behind a deployment). Same SHA pins and permissions as before. | A PR run in the shared `pages` group could have replaced a queued deployment. |
 | A79 | Screenshots of Slack and Teams are admonition placeholders (`site_src/notifications.md`), not images; the GitLab CI page says that GitLab has no native format for the result and keeps a table in the log plus the JSON as an artifact (no invented GitLab feature); `faq.md` says that only Linux was tested (A55). | Brief; honesty. |
 | A80 | Quickstart outputs are real: they come from `todonotifier` 2.1.0 (this checkout) run on the sample project in the page (its block was run verbatim and gives the same table). Two things differ from what a reader sees after release: `pipx install` printed `installed package todonotifier 2.1.0, installed using Python 3.13.17` from the local path, and the pre-commit `[INFO]` lines named the local checkout instead of the GitHub URL (`rev:` was a local commit, since `v2.1.0` is not tagged). The GitHub Action step has no local output: the page shows the output of the same scan limited to a pull request (`--since main --format github`), and says so. | The action runs on GitHub only. |
+| A81 | Baseline metrics (`roadmap/metrics.md`) come from 5 HTTP calls on 2026-10-24: pypistats `/recent`, `/overall` (fetched twice, once only to look at it), and the GitHub repository API. Dependents, Insights traffic, Marketplace usage and waitlist are "manual", "0 / n.a." or "0", never guessed. pepy.tech was not fetched. The weekly table uses sums of the `without_mirrors` rows of `/overall`, because `/recent` and `/overall` disagree (21 against 42 downloads in 30 days) and I could not tell why. Watchers are `subscribers_count` (1), not `watchers_count` (6, a legacy alias of stars). | The brief: real numbers only, with sources. The mismatch is written down instead of hidden. |
+| A82 | The posts use the Action path `ashu-tosh-kumar/todo_notifier/integrations/github-action@v2.1.0` (decision A3), not the future `todonotifier-action` repo, and never say "Marketplace". The checklist and `curated-lists.md` say to update the links if the Action moves, and that awesome-actions may need the move first. | Never claim what does not exist yet. |
+| A83 | Every terminal output in the drafts was produced by `todonotifier` 2.1.0 (this branch) on a throwaway sample repo (a small shop with Indian names, GST and a festive-sale hack, commits dated with fixed `GIT_AUTHOR_DATE`) on 2026-10-24. The sample repo lives in the scratchpad, not in this repository. The posts say the day counts depend on the run date. The pull request example (`--since main --format github`) comes from a branch of the same sample. | Real output, reproducible; nothing invented. |
+| A84 | The drafts state the known limitations openly (the table does not mark default due dates; plain `git blame` with no ignore-revisions; Linux-only testing; the Teams payload unverified; heuristic comment detection; no issue creation or editor view). The recommended "visible fix" for launch week is good first issue 3 (mark default due dates in the table), with issues 4 and 8 as fallbacks. | Honest tone; the fix answers a limitation the posts already admit. The maintainer decides. |
+| A85 | The drafts do not mention the SaaS, the waitlist or the working name Mendo. The checklist treats the landing page (2.1) as a soft dependency and tells the maintainer to add one line only if it is live. Reddit, Show HN, newsletter and curated-list rules are all marked ⚠️ unverified and nothing was fetched from those sites. The anchor post's `canonical_url` is the docs home page, as the brief says; the Medium note explains why a blog page on the docs site would be a better canonical target and leaves that optional. | Never claim a feature that does not exist; do not post or fetch. |
 
 ## Notes per workstream
 
@@ -576,3 +581,23 @@ Follow-ups:
 - `site_src/changelog.md` shows `###` headings under an `h1` (the include cannot change the level).
 - The README's "comment-aware detection for 37 file extensions" and the docs' languages table come from different places (the README number is typed): bump it when `COMMENT_SYNTAX` changes, or generate it.
 - Offline search and a version selector (`mike`) were not added; there is one version of the docs.
+
+### 1.5 Launch and community
+
+**Built (content only, no library code):**
+- `roadmap/metrics.md`: baseline of 2026-10-24 (PyPI downloads from pypistats, stars, forks, subscribers from the GitHub API; manual rows for dependents and Insights traffic; Marketplace 0 / n.a.; waitlist 0) and an empty 6-week tracking table.
+- `roadmap/launch/`: `anchor-post.md` (dev.to or Hashnode, `canonical_url` to the docs, about 1,360 words of prose plus code, Medium cross-post note), `show-hn.md` (77-character title, first comment), `reddit.md` (r/Python, r/devops, r/developersIndia, each with a ⚠️ rules checklist), `social.md` (LinkedIn post, 6-post X/Bluesky thread, all at most 265 characters), `newsletters.md`, `curated-lists.md`, `launch-week-checklist.md`, and an index `README.md` with every draft marked "draft, maintainer to post".
+- Nothing was posted, submitted, published or fetched from Reddit, HN or the newsletters. No labels or issues were created.
+
+**Maintainer steps:**
+- [ ] Review and edit every draft; check the ⚠️ items (subreddit rules and flairs, HN guidelines, newsletter processes, whether awesome-pre-commit exists, the current awesome-python and awesome-actions rules).
+- [ ] Publish `v2.1.0`, deploy the docs, and decide whether the Action moves to its own repo before posting (update the `uses:` lines if so). See the pre-launch checks in `roadmap/launch/launch-week-checklist.md`.
+- [ ] Create the `feedback` and `launch` labels, and the `good first issue` issues from `roadmap/good-first-issues.md`.
+- [ ] Fill in dependents and Insights -> Traffic in `roadmap/metrics.md` (GitHub keeps only 14 days of traffic data), then one row per week for 6 weeks.
+- [ ] Post in the order of the checklist, reply to every comment within 24 hours, and ship one visible fix in launch week.
+
+**Findings and follow-ups:**
+- The repository's GitHub default branch is `development` (API `default_branch`), while the docs workflow deploys on pushes to `main`, and scheduled workflows run on the default branch. Before the launch, check which branch GitHub shows to visitors and that the README GIF (a relative path, which PyPI cannot render) points to a branch that exists.
+- pypistats `/recent` (21 downloads in 30 days) and `/overall` without mirrors (42) disagree; pick one source for the weekly table (the sums of `/overall`) and keep it.
+- The table output marks no default due dates, which the posts admit. Good first issue 3 fixes it.
+- The Acceptance criteria "blog post, Show HN and 2 Reddit posts published" and "feedback captured as labelled issues" need the maintainer; they cannot be met from here.
