@@ -41,13 +41,13 @@ sourced benchmarks). Say it is research, say how long it takes, and say what hap
 
 ## 3. Waitlist follow-up
 
-For people who joined the waitlist. They gave their email for early access, so say so and make the interview optional.
+For people who joined the waitlist and ticked the interview box. Say why you are writing and make the interview optional.
 
 **Subject:** You joined the waitlist: can I ask you a few questions?
 
 > Hi [Name],
 >
-> Thank you for joining the waitlist for [Brand]. You are getting this one message because you signed up. Before building anything, I am talking to
+> Thank you for joining the waitlist for [Brand]. You are getting this one message because you ticked "OK to contact me for a 20-minute interview" when you signed up. Before building anything, I am talking to
 > engineering managers and tech leads about how their teams handle tech debt today. Would you give me 20 to 25 minutes? I mostly want to hear about
 > what happens now, and what you tried. [link]
 >
@@ -58,8 +58,8 @@ For people who joined the waitlist. They gave their email for early access, so s
 > Hi [Name], one reminder about the 20 minute chat on tech debt. A one-line reply with the best day works. If not, no problem, and I will not ask
 > again. Thanks, [Your name]
 
-⚠️ The landing page form has no "may we contact you for an interview" checkbox (see the README for what to do). Send this message once, to people who
-answered the form, and honour any request to stop at once. Check the rules that apply to you (for example the GDPR for EU contacts and India's DPDP
+The landing page form has an optional "OK to contact me for a 20-minute interview" checkbox (`interview_ok` in the sheet). Send this message once,
+only to people who ticked it (waitlist signups who did not tick it agreed to early access emails, not to research calls). Honour any request to stop at once. Check the rules that apply to you (for example the GDPR for EU contacts and India's DPDP
 Act); this is not legal advice.
 
 ## 4. Launch commenter reply
