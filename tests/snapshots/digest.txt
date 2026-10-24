@@ -1,0 +1,24 @@
+TODO digest 2026-05-01
+10 open, 4 overdue, 3 stale, 2 due this week, 4 unowned, 2 new
+
+Overdue (4)
+  alice (2)
+    src/app.py:10  Remove the legacy path (30 days overdue)  https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/app.py#L10
+    src/app.py:99  Handle <None> & empty input (10 days overdue)  https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/app.py#L99
+  bob (1)
+    src/db.py:5  Add an index (60 days overdue)  https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/db.py#L5
+  ...and 1 more
+
+Stale (3)
+  alice (1)
+    src/old.py:3  Rewrite this module (120 days stale)  https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/old.py#L3
+  bob (1)
+    src/api.py:12  Paginate the list endpoint (11 days stale)  https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/api.py#L12
+  Unowned (1)
+    src/old.py:40  Split into two functions (20 days stale)  https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/old.py#L40
+
+Due this week (2)
+  carol (1)
+    src/api.py:80  Cache the lookup (due 2026-05-03)  https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/src/api.py#L80
+  Unowned (1)
+    docs/guide.md:4  Document the new flags (due 2026-05-08)  https://github.com/acme/widgets/blob/0123456789abcdef0123456789abcdef01234567/docs/guide.md#L4

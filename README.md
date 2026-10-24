@@ -33,6 +33,7 @@ src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f
 - **User Assignment** - Assign TODOs to specific team members
 - **Multiple Report Types** - Module-wise, user-wise, and deadline-based summaries
 - **Email Notifications** - Automated email reports with HTML formatting
+- **Chat Notifications** - Slack, Microsoft Teams and webhook digests
 - **Flexible Configuration** - Extensive customization options for different workflows
 - **Multiple Integration Methods** - Works with Git repositories, local directories, or
   single files
@@ -281,7 +282,7 @@ command line and config file, and off in the library (`ScanSettings`, `DefaultCo
 - **Connect Layer**: Handles different source types (Git, local directory, single file)
 - **Configuration System**: Flexible settings for scanning, filtering, and reporting
 - **Summary Generators**: Pluggable report generators with HTML output
-- **Notification System**: Extensible notification framework (Email included)
+- **Notification System**: Extensible notification framework (Email, Slack, Teams and webhook included)
 
 ## Configuration file
 
@@ -375,6 +376,116 @@ from todonotifier.settings_file import resolve_settings
 settings = resolve_settings({"tags": ["TODO"]}, start="src")  # CLI-style overrides win; None means "not given"
 ```
 
+## Notifications
+
+`ScanResult` (see "Structured Scan Results") can be turned into a **digest** and sent to Slack, Microsoft Teams, any webhook or email.
+The digest (`todonotifier.digest.build_digest`) has these totals: open, overdue, stale, due this week, unowned and, when known, new TODOs.
+Below them come three sections, **Overdue**, **Stale** and **Due this week**, each grouped by owner (most items first, unowned last) with the
+most overdue item first and a deep link when the repository URL and commit are known. "Overdue" means an explicit `{date}` has passed, "Stale"
+means a default due date has passed (see `default_due_days`). Each section shows at most `max_items` TODOs (default 10) and ends with
+"...and N more".
+
+```python
+import os
+
+from todonotifier.digest import build_digest, render_markdown, render_text
+from todonotifier.notifier import SlackWebhookNotifier
+from todonotifier.scanner import scan
+from todonotifier.settings import ScanSettings
+
+result = scan(ScanSettings(paths=["src"], use_git_blame=True, default_due_days=90))
+print(render_text(build_digest(result, top_n=5)))  # also render_markdown(...) for a GitHub step summary
+
+SlackWebhookNotifier(os.environ["TODO_SLACK_WEBHOOK"]).notify_result(result, reports=[])
+```
+
+Rules shared by all HTTP notifiers: the standard library only (`urllib`), a 10 s timeout, 2 retries with exponential backoff (1 s, 2 s) on HTTP 5xx,
+429 (a numeric `Retry-After` is honoured, up to 30 s) and network errors, and no retry on other 4xx errors. When delivery finally fails a
+`NotificationError` is raised. Only `https://` URLs are accepted (`http://` only for `localhost` and `127.0.0.1`, for tests). A webhook URL is a
+secret: it, the request headers and the response body never appear in logs or exception messages (logs say, for example,
+`Slack webhook POST failed with HTTP 500 (attempt 2/3)`). Keep them in environment variables, and name the variable in the config file.
+
+Notifiers are also created from the config file with `todonotifier.notifier.build_notifiers(project_config.notify)`, which skips tables with
+`enabled = false` and reads the secrets from the environment variables named by the `*_env` keys (a missing variable raises `NotifierConfigError`,
+which names the variable and never a value). The keys of each table are listed in "Configuration file".
+
+### Slack
+
+1. Create an [incoming webhook](https://api.slack.com/messaging/webhooks) for the channel and store its URL in a secret, e.g. `TODO_SLACK_WEBHOOK`.
+2. Add the table to your config (or use `SlackWebhookNotifier(url, max_items=10)` in Python):
+
+```toml
+[tool.todonotifier.notify.slack]
+webhook_env = "TODO_SLACK_WEBHOOK"
+max_items = 10
+```
+
+The message is a Block Kit message: a header, a section with the totals, and one section per digest group, with `<url|file:line>` links and a
+plain `text` fallback for notifications. It respects Slack's limits (3000 characters per section, 50 blocks) and says how many TODOs did not fit.
+
+### Microsoft Teams
+
+⚠️ **Verify against the current Microsoft documentation.** Microsoft is retiring the Office 365 connectors in favour of Power Automate Workflows,
+and the format may change.
+
+1. In the channel, create a workflow from the template "Post to a channel when a webhook request is received" (trigger "When a Teams webhook
+   request is received") and copy its URL into a secret, e.g. `TODO_TEAMS_WEBHOOK`.
+2. Add the table:
+
+```toml
+[tool.todonotifier.notify.teams]
+webhook_env = "TODO_TEAMS_WEBHOOK"
+max_items = 10
+```
+
+It posts `{"type": "message", "attachments": [{"contentType": "application/vnd.microsoft.card.adaptive", ...}]}` with an Adaptive Card (version
+1.4) made of `TextBlock`s and a `FactSet`. Teams limits a message to about 28 KB, so keep `max_items` modest.
+
+### Generic webhook
+
+POSTs `{"event": "todonotifier.scan", "result": <ScanResult.to_dict()>, "digest": {"open": ..., "overdue": ..., "stale": ..., "due_soon": ...,
+"unowned": ...}}` as JSON, for Discord bridges, Zapier, n8n or internal tools. `headers_env` names a variable that holds a JSON object of extra
+headers, e.g. `{"Authorization": "Bearer ..."}`; the headers are not forwarded if the server redirects.
+
+```toml
+[tool.todonotifier.notify.webhook]
+url_env = "TODO_WEBHOOK_URL"
+headers_env = "TODO_WEBHOOK_HEADERS"
+```
+
+### Email
+
+`EmailNotifier(sender_email, password, host, port, receivers)` keeps working as before (SSL, usually port 465, `notify(reports)` sends the HTML
+reports). New: `starttls=True` connects on a plain port (usually 587) and upgrades with STARTTLS, `username=` is the login if it is not the sender,
+and `EmailNotifier.from_env()` reads the settings from the environment:
+
+| Variable (prefix `TODO_SMTP_`) | Meaning |
+|---|---|
+| `HOST`, `SENDER`, `RECIPIENTS` (comma separated), `PASSWORD` | required |
+| `PORT` | optional, default 587 with `STARTTLS`, else 465 |
+| `USERNAME` | optional, default: the sender |
+| `STARTTLS` | optional, `1`/`true`/`yes`/`on`, default off |
+
+With `notify_result`, the email has the digest (a plain text part and an HTML part, escaped) and the generated HTML reports below it. In the
+config file, `smtp_port` defaults the same way (587 with `starttls = true`, else 465):
+
+```toml
+[tool.todonotifier.notify.email]
+smtp_host = "smtp.example.com"
+smtp_port = 587
+starttls = true
+sender = "todo@example.com"
+recipients = ["team@example.com"]
+username_env = "TODO_SMTP_USER"       # optional
+password_env = "TODO_SMTP_PASSWORD"
+```
+
+### Custom notifiers
+
+`BaseNotifier.notify_result(result, reports)` is called with the `ScanResult` next to the reports. Its default implementation calls
+`notify(reports)`, so notifiers written for earlier versions keep working. Subclass `DigestNotifier` (it provides `max_items`, `new_count` and
+`make_digest(result)`) to build your own digest based notifier.
+
 ## Customization
 
 ### Custom Summary Generators
@@ -405,11 +516,17 @@ class CustomGenerator(BaseSummaryGenerator):
 ```python
 from todonotifier.notifier import BaseNotifier
 
-class SlackNotifier(BaseNotifier):
+class PagerNotifier(BaseNotifier):
     def notify(self, summary):
-        # Send to Slack webhook
+        # `summary` is a list of (report name, report html) pairs
+        pass
+
+    def notify_result(self, result, reports):
+        # Optional: `result` is the ScanResult. The default calls `self.notify(reports)`
         pass
 ```
+
+Slack, Teams, webhook and email notifiers are built in, see "Notifications".
 
 ### File/Directory Filtering
 
@@ -565,6 +682,14 @@ details.
   as an owner and one colon after the tag, owner, date or user is dropped (`# TODO(ashu): fix`).
   Binary files are skipped, text is read as UTF-8 with `errors="replace"`, and `.git` is excluded by
   default.
+
+- Added chat and webhook notifications (see "Notifications"): `todonotifier.digest` builds a channel-neutral digest of a
+  `ScanResult` (totals, then Overdue, Stale and Due this week grouped by owner, top N each with "...and N more", deep links) and renders it as
+  text or Markdown. New notifiers `SlackWebhookNotifier` (Block Kit), `TeamsWebhookNotifier` (Workflows, Adaptive Card) and `WebhookNotifier`
+  (JSON), all on `urllib` with a 10 s timeout, 2 retries on 5xx/429 and no URLs, headers or bodies in logs or errors (`NotificationError`).
+  `BaseNotifier.notify_result(result, reports)` (default: calls `notify(reports)`, so existing notifiers are unchanged), `EmailNotifier`
+  gets `starttls`, `username`, `from_env()` and a digest email, and `build_notifiers()` creates notifiers from the config file's
+  `[notify.*]` tables.
 
 ### v2.0.0 (Unreleased)
 
