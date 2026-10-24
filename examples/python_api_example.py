@@ -1,3 +1,7 @@
+# Legacy Python API example (`driver.run`). Most users want the command line tool instead:
+#   pipx install todonotifier && todonotifier scan .
+# See "Python API" in the README. Copy this file, edit the placeholders below, and keep real
+# credentials out of version control.
 from todonotifier.config import BaseConfig, DefaultConfig
 from todonotifier.connect import Connect, ConnectMethod
 from todonotifier.driver import run as driver_run

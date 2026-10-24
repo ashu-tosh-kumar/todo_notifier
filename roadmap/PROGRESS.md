@@ -39,8 +39,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | [#168](https://github.com/ashu-tosh-kumar/todo_notifier/pull/168) | ✅ done | See "Notes per workstream" below |
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | [#169](https://github.com/ashu-tosh-kumar/todo_notifier/pull/169) | ✅ done | See "Notes per workstream" below |
 | 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | [#170](https://github.com/ashu-tosh-kumar/todo_notifier/pull/170) | ✅ done | See "Notes per workstream" below |
-| 0.6 | CLI | `roadmap/0.6-cli` | | ✅ done | See "Notes per workstream" below |
-| 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | | ⬜ todo | Tag/publish is a maintainer step |
+| 0.6 | CLI | `roadmap/0.6-cli` | [#171](https://github.com/ashu-tosh-kumar/todo_notifier/pull/171) | ✅ done | See "Notes per workstream" below |
+| 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | | ✅ done | Tag and publish pending maintainer, see [RELEASING.md](../RELEASING.md) and "Notes per workstream" below |
 | P0 | Phase 0 review | (fixes on the tip branch) | | ⬜ todo | |
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | | ⬜ todo | |
 | 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | | ⬜ todo | |
@@ -104,6 +104,11 @@ product and engineering basis. Each one is easy to reverse.
 | A39 | Table, `github` and `sarif` show paths relative to the git root (`git_meta.to_repo_path`) when it is known, else relative to the scan root. Severity: overdue = error, stale or due within 7 days = warning, else notice (SARIF: note). `github` titles are `TODO overdue by 30d`, `TODO stale by 20d`, `TODO due in 3d`. Control characters in untrusted text are replaced in the table, the message of an annotation is one line (max 300 characters). SARIF has no tool version, so snapshots do not change on every release. | GitHub resolves annotation paths against the repository root. Terminal escape sequences in a TODO must not reach the user's terminal. |
 | A40 | CLI logging: a handler that writes to the current `sys.stderr` is installed on the `todonotifier` logger (format `LEVEL: message`, with time and logger name for `-v`) and the previous handlers and level are restored when `main` returns. Colors only if stdout is a TTY, `NO_COLOR` is unset or empty, `TERM` is not `dumb` and there is no `--output`. Output that the terminal encoding cannot show is printed with `?` instead of crashing. | `main` must be callable repeatedly (tests, embedding) without leaking logging state. |
 | A41 | `jsonschema` is a dev dependency only (`>=4.18,<5`). The JSON Schema is open for additional item properties (new optional fields do not bump `schema_version`) and validates the `date` format in the tests with the format checker. `utils.store_html` now returns the file path and writes UTF-8. | Spec and brief; the encoding fix avoids `UnicodeEncodeError` on non-UTF-8 locales. |
+| A42 | CI is one job with a matrix (Python 3.10 to 3.14, `fail-fast: false`), Poetry installed with `pipx install poetry` before `setup-python` (`cache: poetry`), one `poetry install --with dev` per job. Steps: `black --check`, `isort --check-only`, `flake8` (all findings fail), `coverage run -m pytest`, `coverage report -m` (a separate `if: always()` step appends the Markdown table to `$GITHUB_STEP_SUMMARY`), then the self-check `todonotifier scan . --fail-on expired --format github` (`fetch-depth: 0` for blame). `pull_request` has no branch filter, `push` stays on `main` and `development`. | Stacked PRs target `roadmap/*` branches. |
+| A43 | `fail_under = 100` in `[tool.coverage.report]` (the package is at 100%, 2478 statements). The repo scans itself with `[tool.todonotifier.exclude_dirs] name = ["tests", "sample_reports"]` (no `fail_on` in the file: CI passes `--fail-on expired`). | Dogfooding shows only real TODOs. |
+| A44 | Actions in the workflows touched (`python-app`, `docs`, `release`) are pinned by full SHA with a version comment (checkout v7.0.1, setup-python v6.3.0, upload-artifact v7.0.2, download-artifact v8.0.2, configure-pages v6.0.0, upload-pages-artifact v5.0.0, deploy-pages v5.0.1, `pypa/gh-action-pypi-publish` v1.14.3; annotated tag dereferenced with `^{}`). SHAs were read with `git ls-remote`. | Repo convention (security workflows); Dependabot updates them. |
+| A45 | `release.yml` has three jobs: `build` (tag must equal `v` + `poetry version`, `twine check`, upload `dist/`), `publish` (`environment: pypi`, `id-token: write`, no token) and `github-release` (`contents: write`, needs `build` and `publish`, so a GitHub Release only exists for what reached PyPI). Release notes come from `.github/scripts/changelog_section.py` (a file, not inline, so it can be run and linted locally); a tag that is not plain `vX.Y.Z` is created with `--prerelease`. Tag names go through `env:` variables, never inline `${{ }}` in `run:`. | Safer against injection through tag names; testable script. |
+| A46 | PyPI has 1.4.0 as the latest release and no 2.0.0, so the README changelog has one `### v2.1.0` section (2.0.0 notes merged, breaking changes first, "2.0.0 was never released"). "Python 3.9 users stay on 1.x" (1.4.0). The heading no longer says "(Unreleased)": the section is final for the tag. `docs.yml` runs on Python 3.12. The CI badge row had a literal `\n` between badges, which was fixed (trivial). | Checked with `curl https://pypi.org/pypi/todonotifier/json` on 2026-10-23. |
 
 ## Notes per workstream
 
@@ -258,3 +263,42 @@ Follow-ups:
 - argparse needs the PATH arguments to be contiguous (`scan a.py --tags X b.py` is rejected). A `BrokenPipeError` (`... | head`) shows as an unexpected error (exit 3).
 - `changed_lines` counts the lines of every untracked, not ignored file (streaming); a huge untracked data file slows `--since` down.
 - 0.7: `--version` reads the installed metadata (`unknown` in a bare checkout); `poetry.lock` changed only by `jsonschema` and its four dependencies (`attrs`, `referencing`, `rpds-py`, `jsonschema-specifications`); remember to run the docs build (`pdoc`) once, `__main__.py` is guarded by `if __name__ == "__main__"`.
+
+### 0.7 Release prep v2.1.0 and housekeeping
+
+Built: the CI matrix and self-check (A42), `fail_under = 100` and the repo's own `[tool.todonotifier]` section (A43), SHA-pinned
+actions (A44), `.github/workflows/release.yml` and `.github/scripts/changelog_section.py` (A45), `docs.yml` on Python 3.12 (pdoc output
+unchanged; `pdoc -o docs --docformat google todonotifier/` was run locally and builds), the README restructure (value proposition, Quick Start with
+`pipx install` / `scan` / `init` / CI snippet with plain `pip install`, then Command line, Configuration file, Notifications, TODO Format, Exit codes,
+Python API with the old `driver.run` examples, Generated Reports, Customization, Architecture) and the changelog reconciliation (A46),
+`.report/` untracked and gitignored, `user_driver.py` moved to `examples/python_api_example.py` (README has no reference to it; AGENTS.md updated),
+version `2.1.0` (`todonotifier --version` prints `todonotifier 2.1.0` after `poetry install`), `RELEASING.md`, AGENTS.md (commands, CI, gotchas).
+
+**Not done on purpose (A4): no tag, no PyPI upload, no GitHub Release.** Maintainer steps are in [RELEASING.md](../RELEASING.md).
+The acceptance criteria "CI is green on every version", "`pipx install todonotifier==2.1.0` works" and "a GitHub Release exists" can only be
+checked after the stack is pushed, merged and tagged.
+
+One-time maintainer setup for `release.yml` (also in RELEASING.md):
+1. PyPI > project `todonotifier` > Manage > Publishing > add a GitHub trusted publisher: owner `ashu-tosh-kumar`, repository `todo_notifier`,
+   workflow `release.yml`, environment `pypi`.
+2. GitHub > Settings > Environments > create `pypi` (optionally with required reviewers).
+
+Verification done locally (Python 3.10): 670 tests pass, coverage 100% (2478 statements), black, isort and flake8 clean;
+`todonotifier scan . --fail-on expired --format github` on this repo prints `0 TODOs` (exit 0); `poetry build` gives
+`todonotifier-2.1.0` wheel and sdist, `twine check` passes, the wheel holds `templates/*.html` (3 report templates and `digest_email.html`) and
+`schemas/scan_result.schema.json`, and has no `tests/`; in a clean Python 3.10 venv the wheel installs and `todonotifier --version`,
+`todonotifier scan .` and `python -m todonotifier --help` work. All workflow files parse with PyYAML (`actionlint` is not installed).
+The workflows themselves (matrix on 3.11 to 3.14, `cache: poetry`, release) could not be run here.
+
+Follow-ups:
+- Check the first CI run on the stack: Python 3.14 resolves all locked dependencies, and `pipx install poetry` + `poetry env use "$(which python)"` picks
+  the matrix interpreter. If `cache: poetry` misbehaves, drop it.
+- `dependency-review.yml` has a comment saying we "still support 3.9" (stale), and `pyproject.toml` keeps a `black` constraint for Python `<3.10`
+  that can no longer apply; both can be cleaned up (the second needs a `poetry lock`).
+- 1.4 owns the badge row: the PyPI version badge still uses `badge.fury.io` and the Downloads badge `pepy.tech`; the Python Support badge shows 3.9 until 2.1.0 is on PyPI.
+- Other workflows (`bandit`, `codeql`, `dependency-review`, `scorecard`) still only run for PRs against `main` and `development`, and `codeql.yml` uses
+  `github/codeql-action@v3` tags rather than SHAs.
+- `--fail-on expired` in CI uses `git blame`, hence `fetch-depth: 0`; 1.1 (the Action) should do the same by default or document it.
+- `pre-commit run --all-files` disagrees with the CI checks (its own pinned black/isort/flake8 reformat `todonotifier/cli.py`, `tests/test_cli.py`,
+  `tests/test_settings_file.py` and report W503 in `cli.py`). The changes were discarded; align the hook versions/args in `.pre-commit-config.yaml`
+  with `pyproject.toml` / `tox.ini` (1.2 touches this file anyway).
