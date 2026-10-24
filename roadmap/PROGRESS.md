@@ -48,8 +48,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | [#177](https://github.com/ashu-tosh-kumar/todo_notifier/pull/177) | ✅ done | See decisions A72 to A80 and notes under "Notes per workstream" (1.3); maintainer steps (screenshots, Medium post, Pages setting) are listed there |
 | 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | [#178](https://github.com/ashu-tosh-kumar/todo_notifier/pull/178) | ✅ done | Drafts ready, posting is a maintainer step. Drafts in `roadmap/launch/` (index: `roadmap/launch/README.md`), baseline in `roadmap/metrics.md`; decisions A81 to A85 and notes under "Notes per workstream" (1.5) |
 | P1 | Phase 1 review | `roadmap/p1-review` | [#179](https://github.com/ashu-tosh-kumar/todo_notifier/pull/179) | ✅ done | [Phase 1 review notes](#phase-1-review): requirement table, 7 issues fixed (decisions A86 to A92), what was left |
-| 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | | ✅ done | Research done, maintainer decides. See [decision-name.md](decision-name.md), decisions A93 to A95 and notes under "Notes per workstream" (2.0) |
-| 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | | ⬜ todo | |
+| 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | [#180](https://github.com/ashu-tosh-kumar/todo_notifier/pull/180) | ✅ done | Research done, maintainer decides. See [decision-name.md](decision-name.md), decisions A93 to A95 and notes under "Notes per workstream" (2.0) |
+| 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | | 🟡 in progress | |
 | 2.2 | Interview kit | `roadmap/2.2-interviews` | | ⬜ todo | |
 | 2.3 | GO / NO-GO decision template | `roadmap/2.3-decision` | | ⬜ todo | Decision is the maintainer's |
 | P2 | Phase 2 review + final review | | | ⬜ todo | |
