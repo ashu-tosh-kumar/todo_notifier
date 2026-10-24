@@ -52,7 +52,7 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | [#181](https://github.com/ashu-tosh-kumar/todo_notifier/pull/181) | ✅ done | Draft ready; hosting, form and analytics are maintainer steps. See [landing-page/README.md](landing-page/README.md) |
 | 2.2 | Interview kit | `roadmap/2.2-interviews` | [#182](https://github.com/ashu-tosh-kumar/todo_notifier/pull/182) | ✅ kit ready; interviews are a maintainer step | See "Notes per workstream" below |
 | 2.3 | GO / NO-GO decision template | `roadmap/2.3-decision` | [#183](https://github.com/ashu-tosh-kumar/todo_notifier/pull/183) | ✅ done | Template ready in [decision-saas.md](decision-saas.md); the decision is the maintainer's, 4 to 6 weeks after launch |
-| P2 | Phase 2 review + final review | `roadmap/final-review` | | ✅ done | [Phase 2 review](#phase-2-review) (audit table, 3 issues fixed) and the [final review and maintainer action list](#final-review-and-maintainer-action-list): fresh-user journey, library compatibility, all checks on Python 3.10 to 3.14, 2 more fixes (decisions A102 to A104) |
+| P2 | Phase 2 review + final review | `roadmap/final-review` | [#184](https://github.com/ashu-tosh-kumar/todo_notifier/pull/184) | ✅ done | [Phase 2 review](#phase-2-review) (audit table, 3 issues fixed) and the [final review and maintainer action list](#final-review-and-maintainer-action-list): fresh-user journey, library compatibility, all checks on Python 3.10 to 3.14, 2 more fixes (decisions A102 to A104) |
 
 Legend: ✅ done · 🟡 in progress · ⬜ todo · ⛔ blocked (needs the maintainer)
 
@@ -89,11 +89,11 @@ tested against the pre-2.1 code. 857 tests pass at 100% line coverage on Python 
 
 One ordered list, without duplicates, gathered from every workstream note. Do the groups in this order. The link on each line goes to the note it came from.
 
-#### Review and merge the stack (bottom-up, #165 → #183)
+#### Review and merge the stack (bottom-up, #165 → #184)
 
-- [ ] Open the pull request for `roadmap/final-review` (the P2 row has no PR number yet) and push it with the rest of the stack. [How the work is laid out](#how-the-work-is-laid-out)
+- [x] Open the pull request for `roadmap/final-review`: done, [#184](https://github.com/ashu-tosh-kumar/todo_notifier/pull/184). [How the work is laid out](#how-the-work-is-laid-out)
 - [ ] Read the "please review" [decisions table](#decisions-made-without-the-maintainer-please-review), starting with the ids listed below, and veto what you disagree with. [Decisions](#decisions-made-without-the-maintainer-please-review)
-- [ ] Merge the PRs bottom-up into `development` (#165, then #166 to #183; GitHub retargets a child PR to `development` when its parent branch is merged and deleted, otherwise retarget it by hand). A1 stacks them on `development`, not `main`. [How the work is laid out](#how-the-work-is-laid-out), A1
+- [ ] Merge the PRs bottom-up into `development` (#165, then #166 to #184; GitHub retargets a child PR to `development` when its parent branch is merged and deleted, otherwise retarget it by hand). A1 stacks them on `development`, not `main`. [How the work is laid out](#how-the-work-is-laid-out), A1
 - [ ] Check the first CI run of the stack on Python 3.10 to 3.14: 3.14 resolves every locked dependency, `pipx install poetry` plus `poetry env use` picks the matrix interpreter, and drop `cache: poetry` if it misbehaves. [0.7 follow-ups](#07-release-prep-v210-and-housekeeping)
 - [ ] Check that the "Action self-test" workflow and the docs build are green on the merged `development`. [1.1](#11-github-action), [Phase 1 review](#phase-1-review)
 
