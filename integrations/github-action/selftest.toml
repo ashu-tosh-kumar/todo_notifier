@@ -1,0 +1,5 @@
+# Config of the self-test workflow (.github/workflows/action-selftest.yml). It is passed with `config:` and sits outside the scanned folders, so the
+# [tool.todonotifier] table of pyproject.toml (which excludes tests/ on purpose) does not apply to the fixtures that the self-test scans.
+extensions = "common"
+require_comment = true
+respect_gitignore = true

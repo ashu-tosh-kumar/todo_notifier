@@ -40,7 +40,7 @@ name = ["tests", "sample_reports"]
 [tool.poetry]
 name = "todonotifier"
 version = "2.1.0"
-description = "Track TODO and FIXME comments with deadlines and owners. Overdue TODO reminders via CLI, CI, Slack, Teams and email."
+description = "Track TODO and FIXME comments with deadlines and owners. Overdue TODO reminders via CLI, pre-commit hook, GitHub Action, Slack, Teams and email."
 authors = ["Ashutosh <37182127+ashu-tosh-kumar@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"

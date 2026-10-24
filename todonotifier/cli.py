@@ -18,6 +18,7 @@ Results go to stdout (or to `--output`). Logs and errors go to stderr: warnings 
 import argparse
 import logging
 import os
+import re
 import sys
 import traceback
 from contextlib import contextmanager
@@ -206,6 +207,24 @@ def _comma_list(value: str) -> list[str]:
     return items
 
 
+_ENV_NAME_PATTERN: re.Pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+# Flag, notifier name in `build_notifiers`, and the key of its table that names the environment variable. The values of the variables are secrets
+_ENV_NOTIFIER_FLAGS: tuple[tuple[str, str, str], ...] = (
+    ("slack_webhook_env", "slack", "webhook_env"),
+    ("teams_webhook_env", "teams", "webhook_env"),
+    ("webhook_url_env", "webhook", "url_env"),
+)
+
+
+def _env_var_name(value: str) -> str:
+    """Argument type: the NAME of an environment variable. The error never repeats the value, in case a secret was pasted here by mistake"""
+    if not _ENV_NAME_PATTERN.match(value):
+        raise argparse.ArgumentTypeError("expected the NAME of an environment variable (for example TODO_SLACK_WEBHOOK), not its value")
+
+    return value
+
+
 def _add_common_options(parser: argparse.ArgumentParser) -> None:
     """Adds the options that scan, report and notify have in common"""
     scanning = parser.add_argument_group("what to scan")
@@ -299,13 +318,20 @@ def build_parser() -> argparse.ArgumentParser:
     notify_parser = subparsers.add_parser(
         "notify",
         help="send the digest to the notifiers of the config file",
-        description="Scan, then send the result to every notifier in the [notify.<name>] tables of the config file (slack, teams, webhook, email). "
+        description="Scan, then send the result to every notifier in the [notify.<name>] tables of the config file (slack, teams, webhook, email) "
+        "and to those added with --slack-webhook-env, --teams-webhook-env and --webhook-url-env. "
         "All notifiers are tried; each failure is printed.",
         epilog=EXIT_CODES_HELP,
         formatter_class=raw,
     )
     _add_common_options(notify_parser)
     _add_output_options(notify_parser, None, "write the result to FILE instead of stdout (only with --format)")
+    env_group = notify_parser.add_argument_group(
+        "extra notifiers", "Add a notifier without a config file. Each flag takes the NAME of an environment variable that holds the secret URL."
+    )
+    env_group.add_argument("--slack-webhook-env", type=_env_var_name, metavar="NAME", help="also send to the Slack webhook URL in this variable")
+    env_group.add_argument("--teams-webhook-env", type=_env_var_name, metavar="NAME", help="also send to the Teams webhook URL in this variable")
+    env_group.add_argument("--webhook-url-env", type=_env_var_name, metavar="NAME", help="also POST the JSON digest to the URL in this variable")
     notify_parser.set_defaults(handler=_command_notify)
 
     init_parser = subparsers.add_parser(
@@ -478,8 +504,16 @@ def _is_incomplete(item: TodoItem) -> bool:
     return item.author_source != AUTHOR_SOURCE_ANNOTATION or item.due_source != DUE_SOURCE_EXPLICIT
 
 
-def _fail_on_message(result: ScanResult, fail_on: str) -> Optional[str]:
-    """Explains why `--fail-on` is met, or returns None if it is not"""
+def fail_on_message(result: ScanResult, fail_on: str) -> Optional[str]:
+    """Explains why a `--fail-on` condition is met. Public so that integrations (the GitHub Action) apply exactly the rule of the command line
+
+    Args:
+        result (ScanResult): The result to check (already narrowed by `--since`, if that is used)
+        fail_on (str): One of `settings_file.FAIL_ON_CHOICES`; "none" is never met
+
+    Returns:
+        str | None: A short explanation such as "2 overdue TODOs (an explicit date has passed)", or None if the condition is not met
+    """
     overdue: int = len(result.overdue())
     stale: int = len(result.stale())
     total: int = len(result.items)
@@ -498,7 +532,7 @@ def _fail_on_message(result: ScanResult, fail_on: str) -> Optional[str]:
 
 def _exit_code_for(result: ScanResult, fail_on: str) -> int:
     """`EXIT_FAIL_ON` (with a line on stderr saying why) if the `--fail-on` condition is met, else `EXIT_OK`"""
-    message: Optional[str] = _fail_on_message(result, fail_on)
+    message: Optional[str] = fail_on_message(result, fail_on)
     if message is None:
         return EXIT_OK
 
@@ -527,6 +561,7 @@ def _explain_no_notifiers(project: ProjectConfig) -> None:
         f"todonotifier: {reason}\n"
         f'Add a notifier table to your config, for example [tool.todonotifier.notify.slack] with webhook_env = "TODO_SLACK_WEBHOOK" '
         f"(or teams, webhook, email; in {DOT_FILE_NAME} drop the 'tool.todonotifier.' prefix).\n"
+        f"Or add one for this run: --slack-webhook-env NAME, --teams-webhook-env NAME or --webhook-url-env NAME (NAME is a variable that holds the URL).\n"
         f"Run 'todonotifier init' for a starter config. See {NOTIFICATIONS_URL}",
         file=sys.stderr,
     )
@@ -546,10 +581,26 @@ def _send(notifier: BaseNotifier, result: ScanResult, reports: list[tuple[str, s
     return None
 
 
+def _flag_notifiers(args: argparse.Namespace) -> list[BaseNotifier]:
+    """The notifiers of `--slack-webhook-env`, `--teams-webhook-env` and `--webhook-url-env`, on top of those of the config file
+
+    Each flag names an environment variable, and only that variable is read. A missing or empty one raises `NotifierConfigError`, which names the
+    variable and never shows a value.
+    """
+    notifiers: list[BaseNotifier] = []
+    for flag, name, key in _ENV_NOTIFIER_FLAGS:
+        variable: Optional[str] = getattr(args, flag)
+        if variable:
+            notifiers += build_notifiers({name: {key: variable}})
+
+    return notifiers
+
+
 def _command_notify(args: argparse.Namespace) -> int:
     """`notify`: scan, then try every configured notifier"""
     project: ProjectConfig = _load_project(args)
     notifiers: list[BaseNotifier] = build_notifiers(project.notify)
+    notifiers += _flag_notifiers(args)
     if not notifiers:
         _explain_no_notifiers(project)
         return EXIT_USAGE

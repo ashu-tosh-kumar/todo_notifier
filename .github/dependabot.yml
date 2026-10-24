@@ -19,3 +19,12 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+
+  # The composite action in integrations/github-action pins its own actions (setup-python, cache, upload-artifact)
+  - package-ecosystem: "github-actions"
+    directory: "/integrations/github-action"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions-composite:
+        patterns: ["*"]

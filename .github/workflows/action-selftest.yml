@@ -1,0 +1,138 @@
+# Self-test of the GitHub Action in integrations/github-action. It installs the checked out code (`package: ${{ github.workspace }}`) instead of a
+# release from PyPI, runs the action on fixtures and asserts the outputs. No secrets are used: with no webhook input the notifiers are skipped.
+name: Action self-test
+
+on:
+  # No branch filter: stacked pull requests target other branches (for example `roadmap/*`).
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # tests/fixtures/languages has 41 TODOs with a config that does not exclude it (EXPECTED_FIXTURE_ITEMS in tests/test_languages.py)
+  EXPECTED_FIXTURE_TOTAL: "41"
+
+jobs:
+  digest:
+    name: digest mode
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Run the action
+        id: action
+        uses: ./integrations/github-action
+        with:
+          package: ${{ github.workspace }}
+          mode: digest
+          working-directory: tests/fixtures/languages
+          config: ${{ github.workspace }}/integrations/github-action/selftest.toml
+          fail-on: none
+          artifact-name: selftest-digest
+      - name: Check the outputs
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+          OVERDUE: ${{ steps.action.outputs.overdue }}
+          STALE: ${{ steps.action.outputs.stale }}
+          NEW: ${{ steps.action.outputs.new }}
+          REPORT_PATH: ${{ steps.action.outputs.report-path }}
+        run: |
+          echo "total=$TOTAL overdue=$OVERDUE stale=$STALE new='$NEW' report-path=$REPORT_PATH"
+          test "$TOTAL" = "$EXPECTED_FIXTURE_TOTAL"
+          [[ "$OVERDUE" =~ ^[0-9]+$ ]]
+          [[ "$STALE" =~ ^[0-9]+$ ]]
+          test -z "$NEW"
+          test -d "$REPORT_PATH"
+          ls "$REPORT_PATH"/*.html
+
+  pull-request:
+    name: pr mode
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Run the action
+        id: action
+        uses: ./integrations/github-action
+        with:
+          package: ${{ github.workspace }}
+          mode: pr
+          working-directory: tests/fixtures/languages
+          config: ${{ github.workspace }}/integrations/github-action/selftest.toml
+          fail-on: none
+      - name: Check the outputs
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+          NEW: ${{ steps.action.outputs.new }}
+          OVERDUE: ${{ steps.action.outputs.overdue }}
+        run: |
+          echo "total=$TOTAL new=$NEW overdue=$OVERDUE"
+          # Only the lines that the pull request changes count, and the fixtures are changed by few pull requests; whatever the number is, it is one
+          [[ "$TOTAL" =~ ^[0-9]+$ ]]
+          test "$TOTAL" = "$NEW"
+          [[ "$OVERDUE" =~ ^[0-9]+$ ]]
+
+  fail-on:
+    name: fail-on
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # tests/fixtures/action has two TODOs with explicit dates in the past
+      - name: Run with fail-on none
+        id: none
+        uses: ./integrations/github-action
+        with:
+          package: ${{ github.workspace }}
+          mode: digest
+          working-directory: tests/fixtures/action
+          config: ${{ github.workspace }}/integrations/github-action/selftest.toml
+          fail-on: none
+          artifact-name: selftest-fail-on-none
+      - name: Run with fail-on expired
+        id: expired
+        continue-on-error: true
+        uses: ./integrations/github-action
+        with:
+          package: ${{ github.workspace }}
+          mode: digest
+          working-directory: tests/fixtures/action
+          config: ${{ github.workspace }}/integrations/github-action/selftest.toml
+          fail-on: expired
+          artifact-name: selftest-fail-on-expired
+      - name: Run with a config file that does not exist
+        id: broken
+        continue-on-error: true
+        uses: ./integrations/github-action
+        with:
+          package: ${{ github.workspace }}
+          mode: digest
+          working-directory: tests/fixtures/action
+          config: does-not-exist.toml
+          artifact-name: selftest-fail-on-broken
+      - name: Check the results
+        env:
+          NONE_OUTCOME: ${{ steps.none.outcome }}
+          NONE_TOTAL: ${{ steps.none.outputs.total }}
+          NONE_OVERDUE: ${{ steps.none.outputs.overdue }}
+          EXPIRED_OUTCOME: ${{ steps.expired.outcome }}
+          BROKEN_OUTCOME: ${{ steps.broken.outcome }}
+        run: |
+          echo "none: $NONE_OUTCOME total=$NONE_TOTAL overdue=$NONE_OVERDUE; expired: $EXPIRED_OUTCOME; broken config: $BROKEN_OUTCOME"
+          test "$NONE_OUTCOME" = "success"
+          test "$NONE_TOTAL" = "3"
+          test "$NONE_OVERDUE" = "2"
+          test "$EXPIRED_OUTCOME" = "failure"
+          test "$BROKEN_OUTCOME" = "failure"

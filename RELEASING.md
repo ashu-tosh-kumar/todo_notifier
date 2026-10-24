@@ -18,7 +18,9 @@ replace the version for later releases.
 ## Release steps
 
 1. Check that the release branch has what you want: the version in `pyproject.toml` (`2.1.0`) and a `### v2.1.0` section
-   in the README changelog (the workflow uses it as the GitHub Release notes). CI must be green.
+   in the README changelog (the workflow uses it as the GitHub Release notes). CI must be green. The `version` default in
+   [integrations/github-action/action.yml](integrations/github-action/action.yml) must be the same version (a test checks it): the GitHub Action
+   installs that release from PyPI, so publish to PyPI before anyone uses the action without `package:`.
 2. Merge the roadmap stack into `development`, then merge `development` into `main`.
 3. Tag the merge commit on `main` and push the tag:
 

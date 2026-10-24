@@ -44,7 +44,7 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | P0 | Phase 0 review | `roadmap/p0-review` | [#173](https://github.com/ashu-tosh-kumar/todo_notifier/pull/173) | ✅ done | [Phase 0 review notes](#phase-0-review): requirement table, 7 known issues and 13 new findings fixed, what was left |
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | [#174](https://github.com/ashu-tosh-kumar/todo_notifier/pull/174) | ✅ done | See "Notes per workstream" (1.4); maintainer GitHub settings checklist there |
 | 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | [#175](https://github.com/ashu-tosh-kumar/todo_notifier/pull/175) | ✅ done | See "Notes per workstream" (1.2); decisions A60 to A63 |
-| 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | | 🟡 in progress | See decision A3 |
+| 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | | ✅ done | See decision A3 and decisions A64 to A71; notes under "Notes per workstream" (1.1); maintainer steps to move it to its own repo are in `integrations/github-action/README.md` |
 | 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | | ⬜ todo | |
 | 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | | ⬜ todo | Posting is a maintainer step |
 | P1 | Phase 1 review | | | ⬜ todo | |
@@ -119,13 +119,21 @@ product and engineering basis. Each one is easy to reverse.
 | A54 | The starter written by `todonotifier init` contains none of the default tags (not even in comments, and not "todo@example.com" for case-insensitive scans). | The first scan after `init` reported the config file's own comments as TODOs. |
 | A55 | `Development Status :: 5 - Production/Stable`. | The package has had several 1.x releases on PyPI, has 716 tests at 100% line coverage and a stable CLI/API contract; "Beta" would undersell it. The classifier set also has `Environment :: Console`, `Intended Audience :: Developers`, `Operating System :: OS Independent` (as asked; only Linux was tested here) and the two Topic classifiers of the spec. |
 | A56 | The `[tool.poetry]` layout stays; `homepage`, `repository` and `documentation` moved into `[tool.poetry.urls]` (Homepage, Repository, Documentation, plus Changelog and Issue Tracker). `poetry check` passes (exit 0) but still prints deprecation warnings for the whole `[tool.poetry]` table (name, description, license, authors, keywords, urls, scripts, "License classifiers"). | Moving to `[project]` would change how Poetry fills classifiers and also needs the `License ::` classifier, scripts and dependencies moved and re-checked with `poetry build`; it is a release-engineering change, not a quick win. Left for the maintainer (follow-up below). |
-| A57 | The PyPI `description` does not mention the GitHub Action or pre-commit hook of the spec's example. | Neither exists yet (1.1, 1.2); metadata must not promise them. Update the description when they ship. |
+| A57 | The PyPI `description` does not mention the GitHub Action or pre-commit hook of the spec's example. | Neither exists yet (1.1, 1.2); metadata must not promise them. Update the description when they ship. (Done in 1.1, see A71.) |
 | A58 | Badges: PyPI version uses shields.io (`pypi/v`) and links to PyPI; Downloads uses `static.pepy.tech/badge/todonotifier` and links to `pepy.tech/projects/todonotifier`. | `pepy.tech/badge/...` answers with a 308 redirect to the static host; using the final URLs avoids a hop that has broken before. All other badge URLs were requested and returned 200 (CI badge reads `passing`, Scorecard badge shows a score). |
 | A59 | The comparison table uses `❌` for "not described in the source" and says so under the table; `⚠️ unverified` where a claim could not be confirmed. | A README not mentioning a feature is weaker evidence than a doc saying it is absent. |
 | A60 | `--fail-on incomplete` is met by an item with `author_source != "annotation"` or `due_source != "explicit"`: the owner must be written in the comment (`@user` or `TODO(user)`) and the date as `{date}`. A `git blame` author and a default due date do not count. It is a valid `fail_on` in the config file too (`FAIL_ON_CHOICES`). The message counts the items. | The strict hook asks for what the author wrote; blame is off in the hook anyway. |
 | A61 | `--blame` was added; `--no-blame` and `--blame` share `dest="blame"` (last one wins, neither is exclusive). | pre-commit appends `args` after `entry`, and a flag in `entry` cannot be removed, so the hook ships `--no-blame` and a consumer undoes it with `args: [--blame]`. A later `--fail-on` wins by argparse's normal rule. |
 | A62 | Files named on the command line obey `exclude_dirs` (the directories between the file and the scan root) as well as `exclude_files`, through the same `_is_excluded` as the directory listing. When files are named and every path is inside the current directory, config discovery starts at the current directory instead of the first path. | Before this, `scan tests/x.py` ignored `exclude_dirs = ["tests"]`, and pre-commit would have flagged files a plain `scan .` skips. Passing a file from a nested package could silently use that package's config for all files. Paths outside the current directory keep the old behavior (first path). |
 | A63 | A pre-commit run with nothing to scan (all files excluded, binary or of an unknown extension) prints the existing one-line `No files were scanned...` hint and exits 0; it was not made silent. | pre-commit hides the output of a passing hook, and the hint is useful for `scan wrongdir`. |
+| A64 | The Action scans once: `todonotifier scan --format json --fail-on none` and keeps the exit code in a step output. `integrations/github-action/scripts/render.py` (subcommands `render` and `check`, run with `python -I`) renders everything from that JSON with the library (`format_result`, `build_digest`, `render_markdown`, `write_reports`). The last step (`check`) fails the action for scan exit 2 or 3, a failed notify, or `cli.fail_on_message` (public since 1.1, the same rule as `--fail-on`). | The summary, the outputs and the notifications must exist even when the check fails, and the rule must not be duplicated. `-I` keeps a `todonotifier/` folder of the scanned repository from shadowing the installed package. |
+| A65 | In `pr` mode `total`, `overdue`, `stale`, the summary, the comment and `fail-on` all refer to the lines the pull request adds or changes (the scan uses `--since`). `new` equals `total` in `pr` mode and is empty in `digest` mode. If the event has no base commit, `pr` mode scans everything and says so in a notice. | A PR check that fails because of an old TODO somewhere else blocks unrelated changes; one scan cannot produce both the changed-lines and the whole-repository numbers. |
+| A66 | Extra input `artifact-name` (default `todonotifier-report`), and the HTML reports are written by `render.py` from the scan JSON instead of a third scan with `todonotifier report`. | `actions/upload-artifact` v4+ rejects two artifacts of the same name in one run, and the self-test uses the action three times. Writing the reports from the JSON keeps the one-scan rule (`digest` mode still scans a second time inside `todonotifier notify`, because that command is the public way to use the config file's notifiers). |
+| A67 | pip cache with `actions/cache` (SHA-pinned) on the pip cache directory, keyed on OS, Python and `version`, not `setup-python`'s `cache: pip`. | `cache: pip` fails when the consumer repository has no `requirements.txt` or similar, and `cache-dependency-path` cannot point outside the workspace. |
+| A68 | `notify --slack-webhook-env NAME`, `--teams-webhook-env NAME` and `--webhook-url-env NAME` add notifiers on top of the config file's (a second `build_notifiers` call per flag, so the same kind in the file and on the command line sends twice). They accept only a variable NAME (`_env_var_name`, the error never repeats the value). In the Action, `notify` runs only when a webhook input is given (a config file with only an email notifier is not used by the Action yet). | Secrets stay out of argv and the config file; the old tests that patch `cli.build_notifiers` with a one-argument lambda keep working. A `notify` input (`auto`/`true`/`false`) is a follow-up. |
+| A69 | A failing pull request comment (a fork's read-only token, a missing `pull-requests: write`) is a `::warning`, not a failure; the comment step is skipped with a `::notice` when the event is neither `pull_request` nor `pull_request_target`. | The comment is a courtesy; the annotations, the summary and `fail-on` are the check. |
+| A70 | Self-test fixtures: `tests/fixtures/languages` (41 TODOs, none overdue until 2030) and the new `tests/fixtures/action/expired.py` (3 TODOs, 2 with explicit dates in 2020 and 2021), both scanned with `integrations/github-action/selftest.toml`. `tests/test_action_render.py` checks that the numbers in `.github/workflows/action-selftest.yml` match the fixtures, that no `run:` script contains `${{`, that every `uses:` is SHA-pinned, and that the `version` default equals the package version (RELEASING.md says to bump both). Dependabot also watches `/integrations/github-action`. | The numbers in a workflow that only runs on GitHub would otherwise rot unnoticed. |
+| A71 | The PyPI `description` now mentions the pre-commit hook and the GitHub Action (the follow-up of A57). | Both exist now. The `version` default `2.1.0` of the Action is only usable after the maintainer publishes `todonotifier` 2.1.0 on PyPI. |
 
 ## Notes per workstream
 
@@ -421,6 +429,58 @@ New findings:
 
 716 tests pass (670 before the review); `coverage report` is 100% (2541 statements, `fail_under = 100` holds); `black --check .`, `isort --check-only .`,
 `flake8 . --config ./tox.ini` and `pre-commit run --all-files` are clean; `todonotifier scan . --fail-on expired --format github` on this repo exits 0.
+
+### 1.1 GitHub Action
+
+**Built** (decision A3: in `integrations/github-action/` of this repo, ready to be copied to the root of `todonotifier-action`):
+- `action.yml` (composite): `actions/setup-python` v6.3.0 (3.12 default), pip cache with `actions/cache` v6.1.0, `pip install "$PACKAGE"` (`todonotifier==<version>`, default
+  `2.1.0`, or the advanced `package` input), `safe.directory` and the `git_meta.WARNING_SHALLOW_CLONE` text as `::warning`, one scan, `render`, optional sticky
+  comment (`gh api`, hidden marker `<!-- todonotifier-action -->`, PATCH or POST), `notify` (digest mode, with `::add-mask::` and the new `--*-env` flags),
+  `actions/upload-artifact` v7.0.2 and the final `check` step. SHAs from `git ls-remote` (cache v6.1.0 `55cc8345...`; setup-python, upload-artifact and checkout as in the
+  other workflows). Inputs: the 15 of the brief plus `artifact-name` (A66). Outputs: `total`, `overdue`, `stale`, `new`, `report-path`. Every input reaches a script through `env:`.
+- `scripts/render.py`, `README.md` (positioning, both workflows, inputs and outputs tables, least privilege, security, troubleshooting, "Moving to the todonotifier-action
+  repo"), `selftest.toml`.
+- `cli.py`: `fail_on_message` is public; `notify --slack-webhook-env / --teams-webhook-env / --webhook-url-env` (A68); the "no notifiers" hint mentions them.
+- `.github/workflows/action-selftest.yml` (digest job with the 41 fixture TODOs, pr job on pull requests, a job with `fail-on: expired` and a missing config as
+  `continue-on-error` steps whose outcome must be `failure`); Dependabot entry; RELEASING.md note; main README ("GitHub Action" section, the notify flags, no more "coming
+  soon"), changelog, AGENTS.md, PyPI description (A71).
+
+**Tests:** 813 passed, 100% line coverage of the package, black, isort, flake8 and `pre-commit run --all-files` clean, `todonotifier scan . --fail-on expired` exits 0.
+New: `tests/test_action_render.py` (32 tests, `render.py` imported by path: every branch of `render`/`check`/`build_comment`, the end-to-end CLI JSON, the checks on
+`action.yml` and the workflow) and `TestEnvNotifierFlags` and `TestFailOnMessage` in `tests/test_cli.py`.
+
+**Verified locally (2026-10-24, Python 3.10 venv, no GitHub runner available).** `action.yml` and both workflows load with PyYAML; `actionlint` v1.7.12 (installed with
+`go install`) reports nothing for `.github/workflows/action-selftest.yml` (it does not lint `action.yml`); every `run:` script of `action.yml` passes `shellcheck`.
+The `run:` scripts of `action.yml` were then executed with `bash -e -o pipefail`, in the order of the action, with `${{ }}` resolved by a small table and
+`GITHUB_OUTPUT`, `GITHUB_STEP_SUMMARY` and `RUNNER_TEMP` pointing to temp files (script in the session scratchpad, not committed):
+- digest, `tests/fixtures/languages` + `selftest.toml`: outputs `total=41 overdue=0 stale=0 new= report-path=<dir>` (the 3 HTML files exist), 41 annotations with
+  repository-relative paths, the Markdown table in the summary, shallow-clone `::warning` (this sandbox clone is shallow), fail-on step exit 0.
+- pr, a temp repo with a base commit (1 old TODO) and a PR commit (2 TODOs), `--since <base sha>`: `total=2 overdue=1 new=2`, only the new file annotated, the comment
+  body ("This PR adds 2 TODOs: 0 without an owner, 1 overdue, 0 stale." plus the table) sent through a fake `gh` as PATCH when a marked comment exists and as POST when not;
+  `fail-on: expired` makes the last step exit 1 with `::error title=fail-on expired::--fail-on expired: 1 overdue TODO ...`.
+- digest + notify against a local HTTPS server (self-signed certificate through `SSL_CERT_FILE`): Slack and generic webhook payloads received, `::add-mask::` lines emitted,
+  `exit-code=0`, the URL appears nowhere else in the log.
+- failures: a missing config file gives scan exit 2 and the final step prints `::error title=todonotifier scan failed::...exited with 2: usage or configuration error`;
+  an unreachable webhook gives notify exit 3 (summary and reports were written first) and `::error ... notify exited with 3`, with no URL in the output;
+  `mode: weekly` and `fail-on: "expired; touch ..."` are rejected by the validation; `tags` / `extensions` containing `$(touch ...)` and backticks stay data (the file was
+  not created).
+- `fail-on: expired` against `tests/fixtures/action`: scan exit 0, check exit 1, 2 overdue.
+
+**Not verified:** a real run on GitHub (the self-test workflow, `actions/cache` and `upload-artifact` behavior, the `gh api` calls against the real API, annotations in the
+UI, the Slack message in a real channel). The acceptance criteria that need a GitHub run (annotations on a PR, `workflow_dispatch` posting to a Slack test webhook, the
+Marketplace listing) are for the maintainer after `todonotifier` 2.1.0 is on PyPI and the folder is moved (steps in `integrations/github-action/README.md`).
+
+**Deviations:** the spec asks for `uses: <owner>/todonotifier-action@v1` (A3); `todonotifier report --out` is replaced by `render.py` writing the reports from the JSON (A66);
+`default` of `version` points to a release that is not on PyPI yet (A71). The brief names `Claude Opus 5.5` in the commit trailer; the session's own reminder says
+`Claude Sonnet 5.5`, which is used.
+
+**Follow-ups:**
+- A `notify` input (`auto`/`true`/`false`) so that a config file with only an email notifier can be used by the Action without a webhook input; an `--only-if-items` flag for `notify`.
+- `pr` mode diffs against `pull_request.base.sha`; if the base branch moved after the event, `git merge-base` with the merge commit's first parent would be more exact.
+- SARIF upload (`github/codeql-action/upload-sarif`) as an opt-in input (`--format sarif` exists); the Action has no Windows/macOS run in the self-test.
+- Marketplace: check that the name "TODO Notifier" is free before the first release (names must be unique), and that the account accepted the Developer Agreement.
+- The `todonotifier-action` repo needs its own Dependabot entry and a copy of the self-test (see the README of the Action).
+- The HTML report generators log every table at INFO level (`render.py` silences them for its own run); consider logging sizes instead of content.
 
 ### 1.2 pre-commit hook
 

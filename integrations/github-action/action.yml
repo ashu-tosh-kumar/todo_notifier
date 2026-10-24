@@ -1,0 +1,278 @@
+name: TODO Notifier
+description: Deadlines, owners and digests for TODO comments. Annotate and gate pull requests, and send a weekly digest to Slack, Teams or a webhook.
+author: ashu-tosh-kumar
+
+branding:
+  icon: clock
+  color: orange
+
+inputs:
+  mode:
+    description: >-
+      "pr" scans the lines a pull request adds or changes (annotations, job summary, optional comment, fail-on).
+      "digest" scans the whole repository, writes the HTML reports, uploads them as an artifact and notifies Slack, Teams or a webhook.
+    required: false
+    default: pr
+  version:
+    description: Version of the todonotifier package from PyPI to install.
+    required: false
+    default: 2.1.0
+  package:
+    description: >-
+      Advanced. A pip requirement that replaces "todonotifier==<version>", for example a path to a checkout or a git URL.
+      The self-test of this repository uses it to install the code under test.
+    required: false
+    default: ""
+  config:
+    description: >-
+      Path of a todonotifier config file (.todonotifier.toml or a pyproject.toml with [tool.todonotifier]), relative to working-directory.
+      Default: the file that is found in the repository.
+    required: false
+    default: ""
+  working-directory:
+    description: Directory to scan and to look for the config in, relative to the repository root.
+    required: false
+    default: .
+  fail-on:
+    description: >-
+      Fail the action when such a TODO exists: none, expired (an explicit date has passed), stale (also default due dates), any, or
+      incomplete (no owner or no explicit date written in the comment). In pr mode only the TODOs on changed lines count.
+    required: false
+    default: none
+  default-due-days:
+    description: A TODO without a date turns stale this many days after git blame says it was added. 0 turns this off.
+    required: false
+    default: "90"
+  tags:
+    description: Comma separated tags to look for, for example "TODO,FIXME". Default is the tags of the config, else TODO,FIXME,HACK,XXX.
+    required: false
+    default: ""
+  extensions:
+    description: Comma separated file extensions without the dot, for example "py,js", or "common". Default is the extensions of the config, else "common".
+    required: false
+    default: ""
+  slack-webhook:
+    description: Slack incoming webhook URL (digest mode). Pass a secret.
+    required: false
+    default: ""
+  teams-webhook:
+    description: Microsoft Teams webhook URL (digest mode). Pass a secret.
+    required: false
+    default: ""
+  webhook-url:
+    description: URL that receives the digest as JSON (digest mode). Pass a secret.
+    required: false
+    default: ""
+  comment:
+    description: >-
+      "true" posts one sticky comment on the pull request and updates it on every push (pr mode). Needs "pull-requests: write" for the token.
+    required: false
+    default: "false"
+  github-token:
+    description: Token used to post the comment. Only needed when comment is "true".
+    required: false
+    default: ${{ github.token }}
+  python-version:
+    description: Python version used to run todonotifier (3.10 or newer).
+    required: false
+    default: "3.12"
+  artifact-name:
+    description: Name of the artifact that holds the HTML reports (digest mode). Must be unique within a workflow run.
+    required: false
+    default: todonotifier-report
+
+outputs:
+  total:
+    description: Number of TODOs found (in pr mode, on the lines the pull request adds or changes).
+    value: ${{ steps.render.outputs.total }}
+  overdue:
+    description: Number of TODOs whose explicit date has passed.
+    value: ${{ steps.render.outputs.overdue }}
+  stale:
+    description: Number of TODOs whose default due date has passed.
+    value: ${{ steps.render.outputs.stale }}
+  new:
+    description: Number of TODOs on the lines the pull request adds or changes (pr mode). Empty in digest mode.
+    value: ${{ steps.render.outputs.new }}
+  report-path:
+    description: Directory with the HTML reports (digest mode). Empty in pr mode.
+    value: ${{ steps.render.outputs.report-path }}
+
+runs:
+  using: composite
+  steps:
+    # Every input reaches a script through `env:` and is quoted there. Never write ${{ inputs.* }} or ${{ github.event.* }} inside a `run:` script: a value
+    # such as a branch name or an input could then run as shell code.
+    - name: Set up Python
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Find the pip cache
+      id: pip-cache
+      shell: bash
+      run: echo "dir=$(python -m pip cache dir)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache pip downloads
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: todonotifier-pip-${{ runner.os }}-py${{ inputs.python-version }}-${{ inputs.version }}
+        restore-keys: todonotifier-pip-${{ runner.os }}-py${{ inputs.python-version }}-
+
+    - name: Install todonotifier
+      shell: bash
+      env:
+        PACKAGE: ${{ inputs.package || format('todonotifier=={0}', inputs.version) }}
+      run: python -m pip install --disable-pip-version-check "$PACKAGE"
+
+    - name: Prepare git
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        # git refuses repositories of another user ("dubious ownership"), which happens in containers and with some checkouts
+        if ! git config --global --get-all safe.directory | grep -qxF "$GITHUB_WORKSPACE"; then
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+        fi
+        # Blame, default due dates and --since need the full history
+        if [ "$(git rev-parse --is-shallow-repository 2>/dev/null || true)" = "true" ]; then
+          python -I -c 'from todonotifier.git_meta import WARNING_SHALLOW_CLONE; print("::warning title=Shallow clone::" + WARNING_SHALLOW_CLONE)'
+        fi
+
+    # One scan. Its exit code is kept, not applied: the summary and the outputs are written first, and the last step decides.
+    - name: Scan
+      id: scan
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        MODE: ${{ inputs.mode }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        CONFIG: ${{ inputs.config }}
+        DEFAULT_DUE_DAYS: ${{ inputs.default-due-days }}
+        TAGS: ${{ inputs.tags }}
+        EXTENSIONS: ${{ inputs.extensions }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      run: |
+        case "$MODE" in
+          pr|digest) ;;
+          *) echo "::error title=Invalid input::mode must be pr or digest"; exit 1 ;;
+        esac
+        case "$FAIL_ON" in
+          none|expired|stale|any|incomplete) ;;
+          *) echo "::error title=Invalid input::fail-on must be none, expired, stale, any or incomplete"; exit 1 ;;
+        esac
+        case "$DEFAULT_DUE_DAYS" in
+          ''|*[!0-9]*) echo "::error title=Invalid input::default-due-days must be a whole number"; exit 1 ;;
+        esac
+
+        rm -f "$RUNNER_TEMP/todonotifier.json"
+        args=(scan --format json --output "$RUNNER_TEMP/todonotifier.json" --fail-on none --default-due-days "$DEFAULT_DUE_DAYS")
+        if [ -n "$CONFIG" ]; then args+=(--config "$CONFIG"); fi
+        if [ -n "$TAGS" ]; then args+=(--tags "$TAGS"); fi
+        if [ -n "$EXTENSIONS" ]; then args+=(--ext "$EXTENSIONS"); fi
+        if [ "$MODE" = "pr" ]; then
+          if [ -n "$BASE_SHA" ]; then
+            args+=(--since "$BASE_SHA")
+          else
+            echo "::notice title=Not a pull request::There is no pull request base commit, so the whole repository is scanned (pull_request events have one)."
+          fi
+        fi
+
+        set +e
+        todonotifier "${args[@]}"
+        code=$?
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        exit 0
+
+    - name: Render annotations, summary and outputs
+      id: render
+      if: steps.scan.outputs.exit-code == '0'
+      shell: bash
+      env:
+        MODE: ${{ inputs.mode }}
+        COMMENT: ${{ inputs.comment }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        args=(--input "$RUNNER_TEMP/todonotifier.json" --mode "$MODE")
+        if [ "$MODE" = "digest" ]; then args+=(--report-dir "$RUNNER_TEMP/todonotifier-report"); fi
+        if [ "$MODE" = "pr" ] && [ "$COMMENT" = "true" ]; then args+=(--comment-file "$RUNNER_TEMP/todonotifier-comment.md"); fi
+        python -I "$ACTION_PATH/scripts/render.py" render "${args[@]}"
+
+    - name: Post or update the pull request comment
+      if: steps.render.outcome == 'success' && inputs.mode == 'pr' && inputs.comment == 'true' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target')
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        marker='<!-- todonotifier-action -->'
+        file="$RUNNER_TEMP/todonotifier-comment.md"
+        warn() { echo "::warning title=Pull request comment::$1 The comment needs 'pull-requests: write' (pull requests from forks get a read-only token)."; }
+
+        if ! ids=$(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" | jq -r --arg marker "$marker" '.[] | select(.body | contains($marker)) | .id'); then
+          warn "Could not list the comments of the pull request."
+          exit 0
+        fi
+        id=$(printf '%s\n' "$ids" | head -n 1)
+        if [ -n "$id" ] && gh api --method PATCH "repos/$REPO/issues/comments/$id" -F body=@"$file" > /dev/null; then
+          exit 0
+        fi
+        gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@"$file" > /dev/null || warn "Could not post the comment."
+
+    - name: Skip the pull request comment
+      if: inputs.mode == 'pr' && inputs.comment == 'true' && github.event_name != 'pull_request' && github.event_name != 'pull_request_target'
+      shell: bash
+      run: echo "::notice title=Pull request comment::The comment is only posted on pull_request and pull_request_target events, so it was skipped."
+
+    - name: Notify
+      id: notify
+      if: steps.render.outcome == 'success' && inputs.mode == 'digest' && (inputs.slack-webhook != '' || inputs.teams-webhook != '' || inputs.webhook-url != '')
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        TODONOTIFIER_SLACK_WEBHOOK: ${{ inputs.slack-webhook }}
+        TODONOTIFIER_TEAMS_WEBHOOK: ${{ inputs.teams-webhook }}
+        TODONOTIFIER_WEBHOOK_URL: ${{ inputs.webhook-url }}
+        CONFIG: ${{ inputs.config }}
+        DEFAULT_DUE_DAYS: ${{ inputs.default-due-days }}
+        TAGS: ${{ inputs.tags }}
+        EXTENSIONS: ${{ inputs.extensions }}
+      run: |
+        # Secrets are masked by GitHub already; this covers values that were not passed as a secret. The values are only ever read from the environment.
+        for name in TODONOTIFIER_SLACK_WEBHOOK TODONOTIFIER_TEAMS_WEBHOOK TODONOTIFIER_WEBHOOK_URL; do
+          if [ -n "${!name}" ]; then echo "::add-mask::${!name}"; fi
+        done
+
+        args=(notify --fail-on none --default-due-days "$DEFAULT_DUE_DAYS")
+        if [ -n "$CONFIG" ]; then args+=(--config "$CONFIG"); fi
+        if [ -n "$TAGS" ]; then args+=(--tags "$TAGS"); fi
+        if [ -n "$EXTENSIONS" ]; then args+=(--ext "$EXTENSIONS"); fi
+        if [ -n "$TODONOTIFIER_SLACK_WEBHOOK" ]; then args+=(--slack-webhook-env TODONOTIFIER_SLACK_WEBHOOK); fi
+        if [ -n "$TODONOTIFIER_TEAMS_WEBHOOK" ]; then args+=(--teams-webhook-env TODONOTIFIER_TEAMS_WEBHOOK); fi
+        if [ -n "$TODONOTIFIER_WEBHOOK_URL" ]; then args+=(--webhook-url-env TODONOTIFIER_WEBHOOK_URL); fi
+
+        set +e
+        todonotifier "${args[@]}"
+        code=$?
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        exit 0
+
+    - name: Upload the HTML reports
+      if: ${{ !cancelled() && steps.render.outputs.report-path != '' }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.render.outputs.report-path }}
+        if-no-files-found: warn
+
+    # The only step that fails the action because of the scan: the outputs, the summary and the notifications are done by now.
+    - name: Apply fail-on
+      if: ${{ !cancelled() && steps.scan.outcome == 'success' }}
+      shell: bash
+      env:
+        FAIL_ON: ${{ inputs.fail-on }}
+        SCAN_EXIT: ${{ steps.scan.outputs.exit-code }}
+        NOTIFY_EXIT: ${{ steps.notify.outputs.exit-code || '0' }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: python -I "$ACTION_PATH/scripts/render.py" check --input "$RUNNER_TEMP/todonotifier.json" --fail-on "$FAIL_ON" --scan-exit "$SCAN_EXIT" --notify-exit "$NOTIFY_EXIT"
