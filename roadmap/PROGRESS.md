@@ -48,7 +48,7 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | [#177](https://github.com/ashu-tosh-kumar/todo_notifier/pull/177) | ✅ done | See decisions A72 to A80 and notes under "Notes per workstream" (1.3); maintainer steps (screenshots, Medium post, Pages setting) are listed there |
 | 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | [#178](https://github.com/ashu-tosh-kumar/todo_notifier/pull/178) | ✅ done | Drafts ready, posting is a maintainer step. Drafts in `roadmap/launch/` (index: `roadmap/launch/README.md`), baseline in `roadmap/metrics.md`; decisions A81 to A85 and notes under "Notes per workstream" (1.5) |
 | P1 | Phase 1 review | `roadmap/p1-review` | [#179](https://github.com/ashu-tosh-kumar/todo_notifier/pull/179) | ✅ done | [Phase 1 review notes](#phase-1-review): requirement table, 7 issues fixed (decisions A86 to A92), what was left |
-| 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | | 🟡 in progress | |
+| 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | | ✅ done | Research done, maintainer decides. See [decision-name.md](decision-name.md), decisions A93 to A95 and notes under "Notes per workstream" (2.0) |
 | 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | | ⬜ todo | |
 | 2.2 | Interview kit | `roadmap/2.2-interviews` | | ⬜ todo | |
 | 2.3 | GO / NO-GO decision template | `roadmap/2.3-decision` | | ⬜ todo | Decision is the maintainer's |
@@ -155,6 +155,9 @@ product and engineering basis. Each one is easy to reverse.
 | A90 | `digest.escape_markdown` puts a zero width space (`@&#8203;`) after an `@` that starts a name. | A backslash does not stop GitHub from turning `@user` or `@org/team` into a mention, so a TODO message in the sticky pull request comment could notify any user or team (the digest escaped `#123` and links, but not this). |
 | A91 | `docs.yml`: the workflow-level permission is `contents: read` only. The `build` job adds `pages: write` (for `configure-pages`), the `deploy` job keeps `pages: write` and `id-token: write`. Deploying from `main` while the default branch is `development` is kept, and documented for the maintainer in RELEASING.md ("After the release": Pages source, the `github-pages` environment's deployment branches may allow only the default branch). `release.yml` keeps the `v*` tag trigger, with a RELEASING.md note to tag only `main` (the `pypi` environment reviewer is the safety net). | `main` is the release branch (A1), so a docs deploy on release is intended. Moving the deploy to `development` would publish docs for an unreleased version. Neither workflow can be run from here, so the `pages` permission of the build job is kept rather than guessed away. |
 | A92 | The Action is documented as tested on `ubuntu-latest` only (README of the Action, CI page); no Windows or macOS job was added to the self-test. | The steps use `bash`, `python`, `git`, `gh` and `jq`, which hosted runners of all three systems have, but nothing was run on them. Saying so is cheaper and more honest than a matrix nobody has seen pass. |
+| A93 | `decision-name.md` recommends **dropping Mendo** and taking **Fragmo** forward provisionally, with **Paydown** as the fallback and **Mora** dropped. The status stays "Recommendation pending maintainer checks", and the "Mendo" placeholder across `roadmap/` is **not** replaced. | A Paris company named Mendo (`mendo.cloud`, EUR 12 million Series A in June 2026, enterprise GenAI adoption SaaS) is in the same software classes, and `mendo.com`, `.dev`, `.app`, `getmendo.com` and `mendohq.com` are all registered. Fragmo has no product found and `fragmo.dev`, `getfragmo.com`, `fragmohq.com` look free. The human checks (attorney, language, recall) can still overturn it. |
+| A94 | GitHub user and org availability is left as a manual check for all four names. | The sandbox proxy returns HTTP 403 for `api.github.com/users/<name>` ("sessions are bound to their configured repositories"). A user search is not an availability check. |
+| A95 | `.io` is marked manual, not "free". The 404 for `.io` comes from rdap.org ("No RDAP service is available"), not from the registry. The other TLDs were read from real registry answers. `README.md`'s changelog and `AGENTS.md` were not changed (research and documents only, no library change). | A false "free" for `.io` would be worse than no answer. |
 
 ## Notes per workstream
 
@@ -717,3 +720,21 @@ to fix the GIF and says the docs deploy from `main`.
 
 841 tests pass (831 before the review); `coverage report` is 100% (2581 statements, `fail_under = 100` holds); `black --check .`, `isort --check-only .`, `flake8 . --config ./tox.ini`,
 `pre-commit run --all-files`, `scripts/gen_docs_reference.py --check`, `mkdocs build --strict` and `actionlint` are clean; `todonotifier scan . --fail-on expired` on this repository exits 0 ("No TODOs found (91 files scanned)").
+
+### 2.0 Name and brand checks
+
+**Built (documents only, no library code):** `roadmap/decision-name.md`: side-by-side evidence for Mendo and Fragmo, a lighter fallback pass for Paydown and Mora, a recommendation with reasoning, tagline candidates, kits for the trademark register searches, the language check and the recall test, the ordered maintainer checklist, and empty "Domains and handles registered" and "Final decision" sections. Nothing was bought, registered or reserved, no accounts were created, and "Mendo" was not replaced anywhere.
+
+**Method and budget (2026-10-24):** 31 `curl` calls (18 RDAP lookups, 8 PyPI and npm lookups, 5 GitHub API attempts that were all blocked) and 5 web searches or fetches (one fetch returned HTTP 403).
+
+**Key findings:**
+- **Mendo is taken as a brand.** Mendo (Paris, `mendo.cloud`) sells a GenAI adoption and analytics platform to large companies and raised EUR 12 million in June 2026. The Phase 3 working repo name `mendo-cloud` is almost their domain. The shortlist's note "no developer tool found" is still literally true, but it understates the conflict.
+- **Mendo domains:** `.com` (since 1998), `.dev`, `.app`, `getmendo.com` and `mendohq.com` are registered. `mendohq.com` expires 2026-10-31 (renewal expected, ⚠️ unknown).
+- **Fragmo domains:** `.com` is registered since 2019 and sits on Squadhelp nameservers (⚠️ probably for sale); `.app` was registered 2026-08-25 by an unknown party; `.dev`, `getfragmo.com` and `fragmohq.com` look free. PyPI and npm are free for both Mendo and Fragmo.
+- **Not verifiable here (marked ⚠️):** `.io` (no RDAP), GitHub, X, LinkedIn, Marketplace, the trademark registers, prices, and what is actually hosted on any registered domain.
+
+**Maintainer steps:** the ordered list is in `decision-name.md`, section 8 (decide on Mendo, manual handles, look at `fragmo.com` and `.app`, register searches, language check, recall test, attorney, final decision, then replace the placeholder and mark D6 in `roadmap/README.md`).
+
+**Follow-ups:**
+- When the name is chosen, replace "Mendo" and `mendo-cloud` across `roadmap/` (README D6 and the table, `phase-2-validation.md`, `phase-3-saas-mvp.md`), and update the landing page work in 2.1.
+- `roadmap/README.md` D6 still says "Working name Mendo"; it was left on purpose.
