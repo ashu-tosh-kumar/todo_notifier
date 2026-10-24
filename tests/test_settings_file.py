@@ -15,6 +15,7 @@ from todonotifier.settings_file import (
     ConfigError,
     ProjectConfig,
     find_config_file,
+    has_pyproject_table,
     load_config,
     resolve_project_config,
     resolve_settings,
@@ -313,6 +314,25 @@ class TestDiscovery(ConfigTestCase):
         self.write("pyproject.toml", "tool = 1\n")
 
         self.assertIsNone(find_config_file(self.root))
+
+
+class TestHasPyprojectTable(ConfigTestCase):
+    def test_should_tell_whether_the_table_exists_even_if_it_is_empty(self):
+        with_table = self.write("a/pyproject.toml", "[tool.todonotifier]\n")
+        other_tools = self.write("b/pyproject.toml", "[tool.black]\nline-length = 100\n")
+        no_tool = self.write("c/pyproject.toml", "[project]\nname = 'x'\n")
+
+        self.assertTrue(has_pyproject_table(with_table))
+        self.assertFalse(has_pyproject_table(other_tools))
+        self.assertFalse(has_pyproject_table(no_tool))
+
+    def test_should_raise_for_invalid_toml_and_a_table_of_the_wrong_type(self):
+        broken = self.write("d/pyproject.toml", "[tool\n")
+        wrong_type = self.write("e/pyproject.toml", "[tool]\ntodonotifier = 1\n")
+
+        for path in (broken, wrong_type):
+            with self.subTest(path=path), self.assertRaises(ConfigError):
+                has_pyproject_table(path)
 
 
 class TestErrors(ConfigTestCase):

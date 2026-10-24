@@ -38,8 +38,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 0.2 | Config file | `roadmap/0.2-config-file` | [#167](https://github.com/ashu-tosh-kumar/todo_notifier/pull/167) | ✅ done | See "Notes per workstream" below |
 | 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | [#168](https://github.com/ashu-tosh-kumar/todo_notifier/pull/168) | ✅ done | See "Notes per workstream" below |
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | [#169](https://github.com/ashu-tosh-kumar/todo_notifier/pull/169) | ✅ done | See "Notes per workstream" below |
-| 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | ✅ done | See "Notes per workstream" below |
-| 0.6 | CLI | `roadmap/0.6-cli` | | ⬜ todo | |
+| 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | [#170](https://github.com/ashu-tosh-kumar/todo_notifier/pull/170) | ✅ done | See "Notes per workstream" below |
+| 0.6 | CLI | `roadmap/0.6-cli` | | ✅ done | See "Notes per workstream" below |
 | 0.7 | Release prep v2.1.0 + CI housekeeping | `roadmap/0.7-release` | | ⬜ todo | Tag/publish is a maintainer step |
 | P0 | Phase 0 review | (fixes on the tip branch) | | ⬜ todo | |
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | | ⬜ todo | |
@@ -95,6 +95,15 @@ product and engineering basis. Each one is easy to reverse.
 | A30 | The digest recomputes overdue/stale/days past due from `due_date`/`due_source` against `today` (default: the date of `generated_at`), instead of trusting the stored flags. "Due this week" is today up to 7 days ahead and does not overlap Overdue or Stale. | Makes `today` meaningful and the digest deterministic in tests. |
 | A31 | Custom headers of `WebhookNotifier` are sent with `Request.add_unredirected_header`, so urllib drops them when a server redirects to another host. Messages from `urlopen` failures that are not HTTP/network errors are replaced by the exception type. | A bearer token must not leak through a redirect or an exception message. |
 | A32 | Untrusted text (TODO messages, file names) is escaped per channel: Slack `& < >`, Markdown/Teams backslash escapes, HTML autoescape. Only http(s) links without whitespace or `<>|` are rendered (`digest.safe_url`). | A scanned repository can contain any text, including `<!channel>` or `[x](http://evil)`. |
+| A33 | `--format` and `--output` exist on `scan`, `report` and `notify`. `report` is `scan` with the default format `html` (`--out` is an alias of `--output`, the directory for the files, default `.report`); `notify` prints a result only if `--format` is given. `html` is handled by the CLI (it writes files), `formatters.format_result` only does the text formats. | The brief lists the flags as shared; one code path for all three keeps them consistent. |
+| A34 | Without PATH arguments, the `paths` of the config file apply (default `.`). PATH arguments override them and are left as given. | `scan` with a config that says `paths = ["src"]` should scan `src`. |
+| A35 | `init` without a flag: `.todonotifier.toml` if it exists (message, exit 0), else `pyproject.toml` if it exists (append unless it has `[tool.todonotifier]`, an empty table counts), else create `.todonotifier.toml`. `--pyproject` without a `pyproject.toml` is exit 2 (hint: `--standalone`). It works in the current directory only. | Discovery prefers `.todonotifier.toml`, so a section appended to `pyproject.toml` next to it would be ignored. `settings_file.has_pyproject_table` was added for the check. |
+| A36 | `notify` builds the notifiers before scanning (missing env var: exit 2; none configured or all disabled: message pointing to `init` and the README, exit 2). It tries all notifiers, prints one stderr line per failure (`NotificationError` text; any other exception only by type name, traceback with `-v`) and returns 3 if any failed, unless `--fail-on` is met (1). `Notified X` lines go to stderr (hidden by `-q`). | Follows the 0.5 suggestion; secrets cannot leak through an arbitrary exception message. |
+| A37 | `--since REF` compares the working tree with `REF` (staged and unstaged edits count) plus untracked files that are not ignored (counted in full). Renames are followed (`-M`), explicit `a/` `b/` prefixes make it independent of `diff.noprefix`/`mnemonicPrefix`, refs starting with `-` are rejected (no option injection, e.g. `--output=`), the ref is checked with `rev-parse --verify REF^{commit}` for a clear message. Unknown ref and "not a repository" are exit 2. `GitError` is the exception of `changed_lines`. | Matches the spec; the extra flags make parsing robust. |
+| A38 | `git_meta.filter_git_listed(paths)` replaces the per-file `_is_listed_by_git` of the scanner: one `rev-parse` plus one `ls-files -z --cached --others --exclude-standard -- :(literal)<path>...` from the common directory of the files (split into several calls only above `MAX_PATHSPEC_CHARS`, 24,000). If the common directory is not in a repository, all files count as listed. | 0.4 follow-up (pre-commit speed). |
+| A39 | Table, `github` and `sarif` show paths relative to the git root (`git_meta.to_repo_path`) when it is known, else relative to the scan root. Severity: overdue = error, stale or due within 7 days = warning, else notice (SARIF: note). `github` titles are `TODO overdue by 30d`, `TODO stale by 20d`, `TODO due in 3d`. Control characters in untrusted text are replaced in the table, the message of an annotation is one line (max 300 characters). SARIF has no tool version, so snapshots do not change on every release. | GitHub resolves annotation paths against the repository root. Terminal escape sequences in a TODO must not reach the user's terminal. |
+| A40 | CLI logging: a handler that writes to the current `sys.stderr` is installed on the `todonotifier` logger (format `LEVEL: message`, with time and logger name for `-v`) and the previous handlers and level are restored when `main` returns. Colors only if stdout is a TTY, `NO_COLOR` is unset or empty, `TERM` is not `dumb` and there is no `--output`. Output that the terminal encoding cannot show is printed with `?` instead of crashing. | `main` must be callable repeatedly (tests, embedding) without leaking logging state. |
+| A41 | `jsonschema` is a dev dependency only (`>=4.18,<5`). The JSON Schema is open for additional item properties (new optional fields do not bump `schema_version`) and validates the `date` format in the tests with the format checker. `utils.store_html` now returns the file path and writes UTF-8. | Spec and brief; the encoding fix avoids `UnicodeEncodeError` on non-UTF-8 locales. |
 
 ## Notes per workstream
 
@@ -219,3 +228,33 @@ Follow-ups:
 - Slack mentions from `author_aliases` (`<@U123>`) are not implemented; owners are shown as plain names.
 - Teams message size (about 28 KB) is not enforced; only `max_items` limits it.
 - Possible: a separate `max_items` for email, `Retry-After` HTTP-date support, discord-native payload.
+
+### 0.6 Command-line interface
+
+Built: `todonotifier/cli.py` (`main`, `build_parser`, `starter_config`, `get_version`, commands `scan`, `report`, `notify`, `init`), `__main__.py`,
+`[tool.poetry.scripts]`, `todonotifier/formatters.py` (`format_result` for `table`, `json`, `github`, `markdown`, `sarif`; `build_reports`, `write_reports`,
+`describe_due`, `severity`), `todonotifier/schemas/scan_result.schema.json`, `git_meta.changed_lines` / `parse_changed_lines` / `filter_git_listed` /
+`to_repo_path` / `GitError`, `settings_file.has_pyproject_table`, README "Command line" section and changelog, AGENTS.md. Decisions A33 to A41.
+Tests: `tests/test_cli.py` (pytest style, 100+ cases: every exit code path, flag mapping, fail-on matrix, formats, `--since`, notify with mocked
+network, init), `tests/test_formatters.py` (snapshots `table.txt`, `table_color.txt`, `github.txt`, `sarif.json`, schema validation), additions to
+`test_git_meta.py` (diff parsing, `changed_lines` in real repos, `filter_git_listed`), `test_scanner.py` (counts subprocess calls: one `ls-files` for 30
+files, no blame without `use_git_blame`, one blame per file with it), `test_settings_file.py`, `test_utils.py`. 100% line coverage of the package (670 tests).
+
+Real-world acceptance (venv with Python 3.13, `pip install .`, this repo = shallow clone, ~90 files, 78 TODOs, blame on, no config; venv deleted afterwards):
+`todonotifier scan .` 0.33 s, `--format github` 0.40 s, `--format json` 0.38 s (the 30 s limit is met by a wide margin). `poetry run todonotifier scan .` takes about
+1.1 s because of Poetry's own startup. `--fail-on expired` exits 1 with `14 overdue TODOs` (the fixtures of the tests have explicit past dates) and `--fail-on stale` exits 1.
+The wheel contains `schemas/scan_result.schema.json` and the templates.
+
+Deviations:
+- `format_result("html")` raises `ValueError`; HTML goes through `build_reports` / `write_reports` (it produces files, the function is pure).
+- `main` has no `today` parameter. Tests fix the day by patching `cli._today` or by using explicit past dates and 2020 commits.
+- The SARIF output was not validated against the official schema (no copy offline); it follows the 2.1.0 structure GitHub code scanning documents.
+
+Follow-ups:
+- The legacy HTML templates are fragments, not pages, and render an empty file when a report has nothing to show (typically "Upcoming Week"). The "Expired" report cannot tell overdue from stale (legacy structure), and the generators use the real date, not `--since`/`today`. A proper HTML report page is a 1.3/Phase 1 candidate.
+- 1.1 (Action): `scan --format github --since origin/$GITHUB_BASE_REF --fail-on expired`, `--format markdown >> $GITHUB_STEP_SUMMARY`, `--format sarif` for `upload-sarif`; shallow clones need `fetch-depth: 0` (blame and `--since`; the shallow warning text is in `git_meta`). GitHub shows at most 10 annotations of each level per step.
+- 1.2 (pre-commit): `todonotifier scan <staged files> --fail-on expired --no-blame` is the intended hook; with blame, one `git blame` runs per file.
+- `notify` always sends, even when the (filtered) result is empty; an `--only-if-items` flag could be added. With `--since`, `new_count` equals the number of items in the digest.
+- argparse needs the PATH arguments to be contiguous (`scan a.py --tags X b.py` is rejected). A `BrokenPipeError` (`... | head`) shows as an unexpected error (exit 3).
+- `changed_lines` counts the lines of every untracked, not ignored file (streaming); a huge untracked data file slows `--since` down.
+- 0.7: `--version` reads the installed metadata (`unknown` in a bare checkout); `poetry.lock` changed only by `jsonschema` and its four dependencies (`attrs`, `referencing`, `rpds-py`, `jsonschema-specifications`); remember to run the docs build (`pdoc`) once, `__main__.py` is guarded by `if __name__ == "__main__"`.

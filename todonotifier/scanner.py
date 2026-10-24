@@ -7,7 +7,7 @@ import os
 from datetime import date, datetime, time
 from typing import Optional
 
-from todonotifier.git_meta import enrich_with_git, list_git_files
+from todonotifier.git_meta import enrich_with_git, filter_git_listed, list_git_files
 from todonotifier.log import get_logger
 from todonotifier.results import ScanResult, TodoItem
 from todonotifier.settings import ScanSettings
@@ -86,26 +86,13 @@ def _git_files_below(directory: str, settings: ScanSettings) -> Optional[list[st
     return [path for path in git_files if not _is_excluded(path, directory, settings)]
 
 
-def _is_listed_by_git(path: str) -> bool:
-    """Tells whether git lists a file (tracked, or untracked and not ignored). Files outside a git repository count as listed
-
-    Args:
-        path (str): Absolute path of a file
-
-    Returns:
-        bool: False only if the file is in a git repository and git ignores it
-    """
-    git_files: Optional[list[str]] = list_git_files(os.path.dirname(path), pathspec=os.path.basename(path))
-
-    return git_files is None or path in git_files
-
-
 def _collect_files(abs_paths: list[str], settings: ScanSettings) -> list[str]:
     """Collects the files to parse from directories (walked recursively) and individual files
 
     Individual files are filtered by extension and `exclude_files`, just like files found while walking a directory. With
     `settings.respect_gitignore`, the files of a directory and the individual files that are in a git repository are limited to the ones git
-    lists (tracked, or untracked and not ignored); where there is no repository, the tree is walked as usual.
+    lists (tracked, or untracked and not ignored); where there is no repository, the tree is walked as usual. All individual files are checked
+    with one `git ls-files` call together (`git_meta.filter_git_listed`), because a pre-commit run passes many of them.
 
     Args:
         abs_paths (list[str]): Absolute paths of directories and files that exist
@@ -116,6 +103,7 @@ def _collect_files(abs_paths: list[str], settings: ScanSettings) -> list[str]:
     """
     extensions = tuple(f".{extension}" for extension in settings.extensions)
     files: set[str] = set()
+    named_files: list[str] = []
 
     for path in abs_paths:
         if os.path.isdir(path):
@@ -125,12 +113,17 @@ def _collect_files(abs_paths: list[str], settings: ScanSettings) -> list[str]:
             else:
                 files.update(get_files_in_dir(path, settings.extensions, settings.exclude_dirs, settings.exclude_files))
         elif path.endswith(extensions) and not _ignore_dir_or_file(path, settings.exclude_files):
-            if settings.respect_gitignore and not _is_listed_by_git(path):
-                logger.debug(f"Skipping file ignored by git: {path}")
-            else:
-                files.add(path)
+            named_files.append(path)
         else:
             logger.debug(f"Skipping file not matching extensions or excluded: {path}")
+
+    listed: Optional[list[str]] = filter_git_listed(named_files) if settings.respect_gitignore and named_files else None
+    if listed is None:
+        files.update(named_files)
+    else:
+        files.update(listed)
+        for path in set(named_files) - set(listed):
+            logger.debug(f"Skipping file ignored by git: {path}")
 
     return sorted(files)
 

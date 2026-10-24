@@ -260,10 +260,18 @@ class TestStoreHtml(unittest.TestCase):
         dummy_report_name = "unittest-report"
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            store_html(dummy_html, dummy_report_name, temp_dir)
+            returned_path = store_html(dummy_html, dummy_report_name, temp_dir)
             expected_file = os.path.join(temp_dir, f"{dummy_report_name}.html")
 
             self.assertTrue(os.path.isfile(expected_file))
+            self.assertEqual(expected_file, returned_path)
+
+    def test_store_html_should_write_non_ascii_text_as_utf8(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = store_html("<p>caf\u00e9 \u00b7 \u2713</p>", "unicode", temp_dir)
+
+            with open(path, "rb") as stored_file:
+                self.assertEqual("<p>caf\u00e9 \u00b7 \u2713</p>".encode("utf-8"), stored_file.read())
 
     def test_store_html_should_store_html_file_passed_with_extension(self):
         dummy_html = "<div>unittest-html</div>"

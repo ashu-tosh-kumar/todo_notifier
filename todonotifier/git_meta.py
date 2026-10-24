@@ -4,6 +4,8 @@
 default due dates (decision D4) and deep links. Everything degrades gracefully: if `git` is missing, the path is not a repository or a
 blame call fails, the items are left as they are and the reason is logged once per scan, never raised.
 
+`changed_lines` backs `--since GIT_REF` of the command line: it tells which lines of which files differ from a git ref.
+
 All git calls use `subprocess.run` with list arguments (never a shell) and a timeout. Credentials found in remote URLs are always dropped.
 """
 
@@ -32,6 +34,9 @@ logger = get_logger(__name__)
 BLAME_TIMEOUT_SECONDS = 60
 GIT_TIMEOUT_SECONDS = 10
 LIST_FILES_TIMEOUT_SECONDS = 60
+DIFF_TIMEOUT_SECONDS = 60
+# Pathspecs are passed on the command line. Windows allows about 32,000 characters, so long lists are split into several calls
+MAX_PATHSPEC_CHARS = 24000
 DEFAULT_BLAME_WORKERS = 8
 # Above this many lines in one file, a plain whole-file blame is used instead of one `-L` range per line, to keep the command line short
 MAX_BLAME_RANGES = 200
@@ -49,10 +54,15 @@ WARNING_SHALLOW_CLONE = (
 )
 INFO_UNCOMMITTED = "{count} TODO(s) are on lines that are not committed yet: author unknown, creation date set to today."
 
+_HUNK_PATTERN = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 _ZERO_SHA_PATTERN = re.compile(r"^0+$")
 _HEADER_PATTERN = re.compile(r"^([0-9a-f]{40}|[0-9a-f]{64}) \d+ (\d+)(?: \d+)?$")
 _SCP_LIKE_PATTERN = re.compile(r"^(?:[^@/\s]+@)?([^:/\s]+):(?!//)(.+)$")
 _SHA_PATTERN = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
+
+
+class GitError(Exception):
+    """Raised when a git query that the caller depends on fails, e.g. an unknown ref. The message is meant to be shown to the user"""
 
 
 @dataclass(frozen=True)
@@ -146,6 +156,14 @@ def find_git_root(path: str) -> Optional[str]:
     return _locate_git_root(path)[0]
 
 
+def _decode_paths(output: bytes, directory: str) -> list[str]:
+    """Turns the NUL separated output of `git ls-files -z` into sorted absolute paths of the files that exist on disk"""
+    relative_paths: list[str] = [os.fsdecode(entry) for entry in output.split(b"\0") if entry]
+    absolute_paths: set[str] = {os.path.join(directory, relative_path) for relative_path in relative_paths}
+
+    return sorted(path for path in absolute_paths if os.path.isfile(path))
+
+
 def list_git_files(directory: str, pathspec: Optional[str] = None) -> Optional[list[str]]:
     """Lists the files below `directory` that git does not ignore: tracked files plus untracked ones that `.gitignore` does not exclude
 
@@ -171,10 +189,52 @@ def list_git_files(directory: str, pathspec: Optional[str] = None) -> Optional[l
     if process is None or process.returncode != 0:
         return None
 
-    relative_paths: list[str] = [os.fsdecode(entry) for entry in process.stdout.split(b"\0") if entry]
-    absolute_paths: set[str] = {os.path.join(directory, relative_path) for relative_path in relative_paths}
+    return _decode_paths(process.stdout, directory)
 
-    return sorted(path for path in absolute_paths if os.path.isfile(path))
+
+def filter_git_listed(paths: list[str]) -> Optional[list[str]]:
+    """Keeps the files that git lists (tracked, or untracked and not ignored) among individually named files, with one `git ls-files` call
+
+    This is what a pre-commit run needs: many staged files, one question. The files are looked up together from their closest common directory
+    (long lists are split into a few calls, see `MAX_PATHSPEC_CHARS`), instead of asking once per file. Paths are matched literally, so names with
+    glob characters work.
+
+    Args:
+        paths (list[str]): Absolute paths of existing files
+
+    Returns:
+        list[str] | None: The files of `paths` that git lists, in the order given, or None if their common directory is not in a repository, git is
+            not installed, or a command failed or timed out. In that case callers should treat every file as listed
+    """
+    if not paths:
+        return []
+
+    try:
+        directory: str = os.path.commonpath([os.path.dirname(path) for path in paths])
+    except ValueError:  # Paths on different drives
+        return None
+
+    if find_git_root(directory) is None:
+        return None
+
+    pathspecs: list[str] = [":(literal)" + os.path.relpath(path, directory) for path in paths]
+    chunks: list[list[str]] = [[]]
+    size: int = 0
+    for pathspec in pathspecs:
+        if chunks[-1] and size + len(pathspec) > MAX_PATHSPEC_CHARS:
+            chunks.append([])
+            size = 0
+        chunks[-1].append(pathspec)
+        size += len(pathspec) + 1
+
+    listed: set[str] = set()
+    for chunk in chunks:
+        process = _run_git(["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", *chunk], directory, LIST_FILES_TIMEOUT_SECONDS)
+        if process is None or process.returncode != 0:
+            return None
+        listed.update(_decode_paths(process.stdout, directory))
+
+    return [path for path in paths if path in listed]
 
 
 def is_shallow_repository(root: str) -> bool:
@@ -449,7 +509,7 @@ def enrich_with_git(items: list[TodoItem], settings: ScanSettings, scan_root: st
     repo_paths: dict[int, str] = {}  # id(item) -> POSIX path relative to the repository root
     lines_by_file: dict[str, list[int]] = {}
     for item in items:
-        repo_path: str = os.path.relpath(os.path.join(real_scan_root, *item.file.split("/")), root).replace(os.sep, "/")
+        repo_path: str = to_repo_path(item.file, real_scan_root, root)
         repo_paths[id(item)] = repo_path
         lines_by_file.setdefault(repo_path, []).append(item.line)
 
@@ -488,3 +548,166 @@ def enrich_with_git(items: list[TodoItem], settings: ScanSettings, scan_root: st
             item.web_url = build_web_url(repo_web_url, commit_sha, repo_paths[id(item)], item.line)
 
     return items
+
+
+def to_repo_path(file: str, scan_root: str, repo_root: str) -> str:
+    """Converts the path of a `TodoItem` to a path relative to the repository root
+
+    Args:
+        file (str): POSIX path relative to `scan_root` (`TodoItem.file`)
+        scan_root (str): Directory the item paths are relative to (`ScanResult.root`). Symbolic links are resolved
+        repo_root (str): Repository root, as printed by `git rev-parse --show-toplevel` (so with symbolic links resolved)
+
+    Returns:
+        str: POSIX path relative to `repo_root`. It starts with `..` for a file outside the repository
+    """
+    absolute: str = os.path.join(os.path.realpath(scan_root), *file.split("/"))
+    return os.path.relpath(absolute, os.path.realpath(repo_root)).replace(os.sep, "/")
+
+
+def _unquote_diff_path(raw: str) -> str:
+    """Decodes a path from a `+++` line of `git diff`: git quotes names with special characters in C style (`"a\\tb"`, `"caf\\303\\251"`)
+
+    Args:
+        raw (str): The text after `+++ `, with or without the surrounding double quotes
+
+    Returns:
+        str: The plain path
+    """
+    if not (len(raw) >= 2 and raw.startswith('"') and raw.endswith('"')):
+        return raw
+
+    simple: dict[str, str] = {"a": "\a", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t", "v": "\v", '"': '"', "\\": "\\"}
+    data: bytearray = bytearray()
+    body: str = raw[1:-1]
+    index: int = 0
+    while index < len(body):
+        char: str = body[index]
+        if char != "\\" or index + 1 >= len(body):
+            data.extend(char.encode("utf-8"))
+            index += 1
+        elif body[index + 1] in simple:
+            data.extend(simple[body[index + 1]].encode("utf-8"))
+            index += 2
+        else:  # Octal byte, always three digits
+            start: int = index + 1
+            end: int = index + 4
+            digits: str = body[start:end]
+            try:
+                data.append(int(digits, 8))
+                index += 4
+            except ValueError:
+                data.extend(char.encode("utf-8"))
+                index += 1
+
+    return data.decode("utf-8", errors="replace")
+
+
+def parse_changed_lines(diff: str) -> dict[str, set[int]]:
+    """Parses the output of `git diff --unified=0` into the added or changed lines of each file
+
+    The paths come from the `+++ b/<path>` lines, so renamed files are reported under their new name. Deleted files and pure deletions have no
+    changed lines. The hunk header says how many lines the hunk has, which is used to tell the lines of a hunk from file headers (an added line
+    that reads `++ b/x` looks like a header otherwise).
+
+    Args:
+        diff (str): Output of `git diff --unified=0 --src-prefix=a/ --dst-prefix=b/`
+
+    Returns:
+        dict[str, set[int]]: 1-indexed line numbers in the new version of each file that has any, by POSIX path relative to the repository root
+    """
+    changed: dict[str, set[int]] = {}
+    current: Optional[str] = None
+    remaining_old: int = 0
+    remaining_new: int = 0
+    next_line: int = 0
+
+    for line in diff.split("\n"):
+        if remaining_old > 0 or remaining_new > 0:
+            if line.startswith("-"):
+                remaining_old -= 1
+            elif line.startswith("+"):
+                remaining_new -= 1
+                if current is not None:
+                    changed.setdefault(current, set()).add(next_line)
+                next_line += 1
+            continue
+
+        if line.startswith("+++ "):
+            raw: str = line[4:]
+            raw = raw[:-1] if raw.endswith("\t") else raw  # git ends the name with a tab if it contains a space
+            path: str = _unquote_diff_path(raw)
+            current = path[2:] if path.startswith("b/") else None  # Anything else is /dev/null (deleted file)
+            continue
+
+        hunk = _HUNK_PATTERN.match(line)
+        if hunk:
+            remaining_old = int(hunk.group(1)) if hunk.group(1) is not None else 1
+            remaining_new = int(hunk.group(3)) if hunk.group(3) is not None else 1
+            next_line = int(hunk.group(2))
+
+    return changed
+
+
+def _count_lines(path: str) -> int:
+    """Counts the lines of a file (a last line without a newline counts), reading it in chunks"""
+    count: int = 0
+    last: bytes = b"\n"
+    with open(path, "rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            count += chunk.count(b"\n")
+            last = chunk[-1:]
+
+    return count + (0 if last == b"\n" else 1)
+
+
+def changed_lines(root: str, ref: str) -> dict[str, set[int]]:
+    """Finds the lines that were added or changed in the working tree compared to a git ref
+
+    This is `git diff --unified=0 --no-color --no-ext-diff <ref> --` (working tree against `ref`, so staged and unstaged edits count and renames are
+    followed) plus the untracked files that `.gitignore` does not exclude, which count as changed in full.
+
+    Args:
+        root (str): Repository root. The paths of the result are relative to it
+        ref (str): Any commit-ish git understands, e.g. `HEAD~1`, `origin/main` or a tag
+
+    Returns:
+        dict[str, set[int]]: 1-indexed line numbers in the working tree, by POSIX path relative to `root`. Files without changed lines are left out
+
+    Raises:
+        GitError: Raised if `ref` is not a valid commit-ish, git is not installed or git fails or times out. The message is meant for the user
+    """
+    if not ref or ref.startswith("-"):
+        raise GitError(f"Invalid git ref {ref!r}. Use a commit, a branch or a tag, e.g. HEAD~1 or origin/main.")
+
+    verified = _run_git(["rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"], root)
+    if verified is None:
+        raise GitError("Could not run git. Is the git executable installed?")
+    if verified.returncode != 0:
+        raise GitError(f"Unknown git ref '{ref}'. Check the name, and fetch the history of a shallow clone (for GitHub Actions: fetch-depth: 0).")
+
+    process = _run_git(
+        ["diff", "--unified=0", "--no-color", "--no-ext-diff", "--no-textconv", "-M", "--src-prefix=a/", "--dst-prefix=b/", ref, "--"],
+        root,
+        DIFF_TIMEOUT_SECONDS,
+    )
+    if process is None or process.returncode != 0:
+        raise GitError(f"git diff against '{ref}' failed.")
+
+    changed: dict[str, set[int]] = parse_changed_lines(process.stdout.decode("utf-8", errors="replace"))
+
+    untracked = _run_git(["ls-files", "-z", "--others", "--exclude-standard"], root, LIST_FILES_TIMEOUT_SECONDS)
+    if untracked is None or untracked.returncode != 0:
+        raise GitError("git ls-files failed, so new files cannot be told apart from old ones.")
+
+    for entry in untracked.stdout.split(b"\0"):
+        if not entry:
+            continue
+        relative: str = os.fsdecode(entry)
+        full_path: str = os.path.join(root, relative)
+        if os.path.isfile(full_path):  # Nested repositories are listed as directories
+            lines: int = _count_lines(full_path)
+            if lines:
+                changed[relative.replace(os.sep, "/")] = set(range(1, lines + 1))
+
+    return changed

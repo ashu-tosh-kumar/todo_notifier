@@ -1,0 +1,13 @@
+<ESC>[1mLOCATION         TAG   OWNER  DUE                     MESSAGE<ESC>[0m
+src/app.py:10    TODO  alice  <ESC>[31m2026-04-01 overdue 30d<ESC>[0m  Remove the legacy path
+src/app.py:99    TODO  alice  <ESC>[31m2026-04-21 overdue 10d<ESC>[0m  Handle <None> & empty input
+src/db.py:5      TODO  bob    <ESC>[31m2026-03-02 overdue 60d<ESC>[0m  Add an index
+src/util.py:7    TODO  <ESC>[2m-    <ESC>[0m  <ESC>[31m2026-04-30 overdue 1d <ESC>[0m  Delete after the migration
+src/old.py:3     TODO  alice  <ESC>[33m2026-01-01 stale 120d <ESC>[0m  Rewrite this module
+src/old.py:40    TODO  <ESC>[2m-    <ESC>[0m  <ESC>[33m2026-04-11 stale 20d  <ESC>[0m  Split into two functions
+src/api.py:12    TODO  bob    <ESC>[33m2026-04-20 stale 11d  <ESC>[0m  Paginate the list endpoint
+src/api.py:80    TODO  carol  <ESC>[33m2026-05-03 due in 2d  <ESC>[0m  Cache the lookup
+docs/guide.md:4  TODO  <ESC>[2m-    <ESC>[0m  <ESC>[33m2026-05-08 due in 7d  <ESC>[0m  Document the new flags
+src/misc.py:1    TODO  <ESC>[2m-    <ESC>[0m  -                       Think about naming
+
+10 TODOs · <ESC>[31m4 overdue<ESC>[0m · <ESC>[33m3 stale<ESC>[0m · 4 unowned

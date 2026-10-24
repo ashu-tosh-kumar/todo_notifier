@@ -1,0 +1,11 @@
+::error file=src/app.py,line=10,title=TODO overdue by 30d::Remove the legacy path (@alice, due 2026-04-01)
+::error file=src/app.py,line=99,title=TODO overdue by 10d::Handle <None> & empty input (@alice, due 2026-04-21)
+::error file=src/db.py,line=5,title=TODO overdue by 60d::Add an index (@bob, due 2026-03-02)
+::error file=src/util.py,line=7,title=TODO overdue by 1d::Delete after the migration (due 2026-04-30)
+::warning file=src/old.py,line=3,title=TODO stale by 120d::Rewrite this module (@alice, default due 2026-01-01)
+::warning file=src/old.py,line=40,title=TODO stale by 20d::Split into two functions (default due 2026-04-11)
+::warning file=src/api.py,line=12,title=TODO stale by 11d::Paginate the list endpoint (@bob, default due 2026-04-20)
+::warning file=src/api.py,line=80,title=TODO due in 2d::Cache the lookup (@carol, due 2026-05-03)
+::warning file=docs/guide.md,line=4,title=TODO due in 7d::Document the new flags (due 2026-05-08)
+::notice file=src/misc.py,line=1,title=TODO::Think about naming
+10 TODOs: 4 overdue, 3 stale, 4 unowned
