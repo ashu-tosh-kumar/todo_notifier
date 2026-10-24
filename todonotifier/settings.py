@@ -42,14 +42,16 @@ class ScanSettings:
         exclude_dirs (dict[str, list[str]]): Directories to skip, with the same shape as `BaseConfig.exclude_dirs`. Defaults to `DEFAULT_EXCLUDE_DIRS`
         exclude_files (dict[str, list[str]]): Files to skip, with the same shape as `BaseConfig.exclude_files`. Defaults to `DEFAULT_EXCLUDE_FILES`
         require_comment (bool): Whether a tag must be inside a comment to count. Defaults to False. Reserved for the detection workstream
-        use_git_blame (bool): Whether to fill missing authors and dates from git blame. Defaults to False. Reserved for the git workstream
-        default_due_days (int | None): Days after the creation date at which an undated TODO becomes stale. None disables default due dates.
-            Defaults to None. Reserved for the git workstream
+        use_git_blame (bool): Whether to fill missing authors and dates from git blame. Defaults to False
+        default_due_days (int | None): Days after the creation date (from git blame, so it needs `use_git_blame`) at which an undated TODO
+            becomes stale. None or 0 disables default due dates. Defaults to None
         respect_gitignore (bool): Whether to skip files ignored by git. Defaults to False. Reserved for the detection workstream
-        repo_web_url (str | None): Web URL of the repository (e.g. https://github.com/org/repo), used with `commit_sha` to build deep links. Defaults to None
-        commit_sha (str | None): Commit the scanned tree corresponds to, used with `repo_web_url` to build deep links. Defaults to None
+        repo_web_url (str | None): Web URL of the repository (e.g. https://github.com/org/repo), used with `commit_sha` to build deep links.
+            Defaults to None, in which case it is detected from the environment or the `origin` remote when `use_git_blame` is on
+        commit_sha (str | None): Commit the scanned tree corresponds to, used with `repo_web_url` to build deep links.
+            Defaults to None, in which case it is detected (`GITHUB_SHA` or `HEAD`) when `use_git_blame` is on
         author_aliases (dict[str, str]): Maps git author emails (lower case) to the handle to show instead, filled from `[tool.todonotifier.authors]`
-            in the config file. Defaults to an empty dict. Reserved for the git workstream
+            in the config file. Defaults to an empty dict
     """
 
     paths: list[str] = field(default_factory=lambda: ["."])

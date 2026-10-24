@@ -7,6 +7,7 @@ import os
 from datetime import date, datetime, time
 from typing import Optional
 
+from todonotifier.git_meta import enrich_with_git
 from todonotifier.log import get_logger
 from todonotifier.results import ScanResult, TodoItem
 from todonotifier.settings import ScanSettings
@@ -74,8 +75,8 @@ def _collect_files(abs_paths: list[str], settings: ScanSettings) -> list[str]:
 def _enrich_items(items: list[TodoItem], settings: ScanSettings, root: str, today: date) -> list[TodoItem]:
     """Hook for adding information that is not in the source text, after parsing and before the result is built
 
-    Currently a no-op. Git blame (author, created date and default due date) plugs in here and must call `TodoItem.refresh_status`
-    on every item whose due date it changes.
+    With `settings.use_git_blame` it fills the author, creation date, default due date and deep link from git
+    (`git_meta.enrich_with_git`, which calls `TodoItem.refresh_status` on every item whose due date it changes). Otherwise it does nothing.
 
     Args:
         items (list[TodoItem]): Items found by the parser
@@ -86,6 +87,9 @@ def _enrich_items(items: list[TodoItem], settings: ScanSettings, root: str, toda
     Returns:
         list[TodoItem]: The enriched items
     """
+    if settings.use_git_blame:
+        return enrich_with_git(items, settings, root, today)
+
     return items
 
 

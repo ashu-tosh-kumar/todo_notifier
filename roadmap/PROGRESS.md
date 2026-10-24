@@ -35,8 +35,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 |---|---|---|---|---|---|
 | - | Roadmap docs + progress file | `claude/serene-hopper-qkult2` | [#165](https://github.com/ashu-tosh-kumar/todo_notifier/pull/165) | ✅ done | Merged latest `development` |
 | 0.1 | Foundation | `roadmap/0.1-foundation` | [#166](https://github.com/ashu-tosh-kumar/todo_notifier/pull/166) | ✅ done | See "Notes per workstream" below |
-| 0.2 | Config file | `roadmap/0.2-config-file` | | ✅ done | See "Notes per workstream" below |
-| 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | | ⬜ todo | |
+| 0.2 | Config file | `roadmap/0.2-config-file` | [#167](https://github.com/ashu-tosh-kumar/todo_notifier/pull/167) | ✅ done | See "Notes per workstream" below |
+| 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | | ✅ done | See "Notes per workstream" below |
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | | ⬜ todo | |
 | 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | ⬜ todo | |
 | 0.6 | CLI | `roadmap/0.6-cli` | | ⬜ todo | |
@@ -79,6 +79,10 @@ product and engineering basis. Each one is easy to reverse.
 | A14 | `default_due_days = 0` means "off" (stored as `None`), because TOML has no null. | `ScanSettings.default_due_days=None` needs a config spelling. |
 | A15 | `exclude_dirs` / `exclude_files` in the file or CLI overrides are **added** to the built-in exclusions (tables `name`, `pattern`, `abs_path`, any case), never replacing them. | Replacing would silently re-scan `venv` and friends. |
 | A16 | An explicit `--config` path to a `pyproject.toml` without `[tool.todonotifier]` is an error; any other explicit file name is read with top-level keys. A broken `pyproject.toml` met during discovery is an error too. | Fail loudly rather than silently ignore the user's file. |
+| A17 | Warning texts of `git_meta` are module constants (`WARNING_GIT_NOT_INSTALLED`, `WARNING_NOT_A_GIT_REPO`, `WARNING_SHALLOW_CLONE`) logged at WARNING once per `scan()`. Uncommitted lines are an INFO message (`INFO_UNCOMMITTED`, one per scan), not a warning. | Uncommitted lines are normal in pre-commit and local runs; warning every time would be noise. |
+| A18 | Repo web URL and commit SHA are detected (`GITHUB_*` env vars, then `origin` / `HEAD`) per value, only when `ScanSettings.repo_web_url` / `commit_sha` is None and `use_git_blame` is on. With blame on, `web_url` is always rebuilt from the repo-relative path. Non-hosted remotes (local paths, `file://`) give no URL. | Deep links with zero config; correct when scanning a subdirectory. |
+| A19 | Blame is limited to the TODO lines with repeated `-L n,n` (whole-file blame above 200 TODO lines in one file). `blame_file(root, rel_path, lines=None, today=None)`; `blame_files(root, rel_paths, max_workers=8, lines_by_file=None, today=None)`. Only the repository containing the scan root is used: files in a nested repo or submodule are treated as uncommitted. | Measured: `-L` is 25% faster on 1,500-line files. |
+| A20 | If blame has no author name, the author email is used; items on uncommitted lines keep `author=None`, `author_source="unknown"` but get `created_date=today` and a default due date (D4 only withholds it when blame is unavailable). `GITHUB_SHA` is used only if it is a 40 or 64 digit hex string. | Matches the brief; avoids garbage in deep links. |
 
 ## Notes per workstream
 
@@ -124,3 +128,29 @@ Follow-ups:
 - 0.5: consume `ProjectConfig.notify` (validated dicts with `enabled` always present; read the env vars named by `*_env` yourself, at send time). Extend `_NOTIFIER_SCHEMA` in `settings_file.py` if a notifier needs more keys.
 - 0.3: look up `ScanSettings.author_aliases` with the lower-cased git email.
 - 0.4: `require_comment`, `ignore_case`, `respect_gitignore` and `tags` are now settable from the file but still ignored by the scanner until 0.4.
+
+### 0.3 Git-aware ownership and TODO age
+
+Built: `todonotifier/git_meta.py` (`find_git_root`, `is_shallow_repository`, `parse_blame_porcelain`, `blame_file`, `blame_files`,
+`normalize_remote_url`, `detect_repo_web_url`, `detect_commit_sha`, `enrich_with_git`, `BlameLine`), wired into `scanner._enrich_items`
+(only when `use_git_blame`). Library defaults are unchanged (`use_git_blame=False`; `driver.run` and `DefaultConfig` untouched). Decisions A17 to A20.
+`tests/test_git_meta.py` (50 tests, real temp repos, two authors, fixed dates, shallow clone via `git clone --depth 1 file://`) plus a hook test in
+`test_scanner.py`. 100% line coverage of `git_meta.py` and `scanner.py`; full suite 303 tests; black, isort and flake8 clean.
+
+Performance (synthetic repo, 1,000 `.py` files, 100 TODOs in 100 files, two commits, 4 cores, git 2.43, best of 3, `today` fixed, script not committed):
+
+| Files | `use_git_blame` off | on (`-L` per TODO) | ratio | on, whole-file blame |
+|---|---|---|---|---|
+| 200 lines each | 0.088 to 0.107 s | 0.283 to 0.305 s | 2.8x to 3.2x | 0.308 s (3.5x) |
+| 1,500 lines each | 0.272 s | 0.616 s | 2.3x | 0.810 s (3.0x) |
+
+The 2x target is **missed** on tiny files and nearly met on realistic ones. Cause: cost is dominated by one `git blame` process per TODO file
+(about 3.7 ms each, 0.37 s sequential, 0.18 s with 4 workers, i.e. CPU-bound on this 4-core box; 8 to 16 workers are no faster than 4), while the
+no-blame scan of tiny files is a very fast ~90 ms. Absolute overhead is ~2 ms per TODO-containing file. `-L` ranges were added (A19) and
+re-measured; more workers do not help. The four setup git calls (`rev-parse` root, shallow, `remote`, `HEAD`) add ~20 ms.
+
+Follow-ups:
+- Possible speed-up if the ratio matters: run the four setup git calls concurrently with the blame pool (saves ~15 ms), or cache blame across runs keyed by file blob hash (0.6 CLI / SaaS).
+- 1.1 (Action): reuse `git_meta.WARNING_SHALLOW_CLONE` text, and set `fetch-depth: 0` in the Action docs. Safe-directory problems in containers ("dubious ownership") make git fail, which currently shows as the "not a git repository" warning; the Action should run `git config --global --add safe.directory`.
+- 0.6 CLI: set `ScanSettings.use_git_blame` / `default_due_days` from `CLI_DEFAULTS` (already done by `resolve_settings`); `--fail-on stale` should use `TodoItem.is_stale`.
+- Submodules and nested repos are not blamed with their own repository (A19).

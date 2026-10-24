@@ -515,6 +515,16 @@ details.
   Notifier settings reference environment variable names, never secrets. Added
   `ScanSettings.author_aliases` and `todonotifier.languages` (the `"common"` extension preset).
   New dependency: `tomli` on Python 3.10 (`tomllib` is used on 3.11+).
+- Added git-aware ownership and TODO age (`todonotifier.git_meta`, used by `scan()` when
+  `ScanSettings.use_git_blame` is on; off by default in the library). One `git blame` per file
+  that has TODOs, run in parallel, fills `TodoItem.author` (`author_source="git_blame"`, only
+  when there is no `@user`, mapped through `author_aliases`) and `created_date`. With
+  `default_due_days`, an undated TODO gets `due_date = created_date + days` and
+  `due_source="default"`, so it becomes *stale*, never *overdue*. The repository URL and
+  commit (for `web_url` deep links) are detected from `GITHUB_SERVER_URL`/`GITHUB_REPOSITORY`/
+  `GITHUB_SHA` or the `origin` remote (credentials are always stripped). If `git` is missing, the
+  path is not a repository or the clone is shallow, the scan still works and logs one warning
+  (for shallow clones: use `fetch-depth: 0`). Uncommitted lines have no author and are dated today.
 
 ### v2.0.0 (Unreleased)
 
