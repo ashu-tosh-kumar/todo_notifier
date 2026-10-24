@@ -1,5 +1,4 @@
-"""This module contains the core logic of the application
-"""
+"""This module contains the core logic of the application"""
 
 import os
 import re

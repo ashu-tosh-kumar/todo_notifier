@@ -1,4 +1,4 @@
-""" This module provides interface to define a notifier that notifies the users. It also
+"""This module provides interface to define a notifier that notifies the users. It also
 provides an EmailNotifier to notify over email.
 """
 

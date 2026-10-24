@@ -1,5 +1,4 @@
-"""This module defines the constants used in the application
-"""
+"""This module defines the constants used in the application"""
 
 DEFAULT_EXCLUDE_DIRS = {
     "PATTERN": [

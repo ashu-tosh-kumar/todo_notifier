@@ -115,6 +115,26 @@ connect = Connect(
 driver_run(connect=connect, config=DefaultConfig())
 ```
 
+To scan the directory in place, without copying it into a temporary directory, use
+`ConnectMethod.LOCAL` instead of `DRY_RUN_DIR`.
+
+#### Structured Scan Results
+
+`scan` is a pure function: it scans in place, writes and sends nothing, and returns a
+`ScanResult` that round-trips through JSON.
+
+```python
+import json
+from todonotifier.scanner import scan
+from todonotifier.settings import ScanSettings
+
+result = scan(ScanSettings(paths=["src"], extensions=["py"]))
+for item in result.overdue():
+    print(item.file, item.line, item.author, item.message)
+
+payload = json.dumps(result.to_dict())
+```
+
 #### Single File Analysis
 
 ```python
@@ -341,7 +361,7 @@ git clone https://github.com/ashu-tosh-kumar/todo_notifier.git
 cd todo_notifier
 
 # Setup a virtual environment
-pyenv virtualenv 3.9 todonotifier
+pyenv virtualenv 3.10 todonotifier
 
 # Install dependencies
 pip install poetry  # not limited poetry version as of now
@@ -382,6 +402,20 @@ details.
 - [Issue Tracker](https://github.com/ashu-tosh-kumar/todo_notifier/issues)
 
 ## Changelog
+
+### v2.1.0 (Unreleased)
+
+- **Requires Python ≥ 3.10. Python 3.9 users stay on 2.0.x.**
+- Added `todonotifier.scanner.scan(settings)`, a side-effect-free scan that works in place
+  and returns a structured, JSON-serializable `ScanResult` (`todonotifier.results`) made of
+  `TodoItem`s. "No date" is `due_date=None` instead of the `9999-12-25` sentinel.
+- Added `todonotifier.settings.ScanSettings`, the schema of every scan option, with
+  `ScanSettings.from_config(config)` to convert an existing `BaseConfig`.
+- Added `ConnectMethod.LOCAL`, which scans a directory in place without copying it.
+  `DRY_RUN_DIR` is unchanged.
+- Added `BaseSummaryGenerator.reset()` (does nothing by default; the built-in generators
+  clear their container). `driver.run` calls it before generating, so reusing a config
+  (including the shared `default_config`) across runs no longer duplicates report rows.
 
 ### v2.0.0 (Unreleased)
 
