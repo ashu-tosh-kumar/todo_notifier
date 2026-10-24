@@ -50,8 +50,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | P1 | Phase 1 review | `roadmap/p1-review` | [#179](https://github.com/ashu-tosh-kumar/todo_notifier/pull/179) | ✅ done | [Phase 1 review notes](#phase-1-review): requirement table, 7 issues fixed (decisions A86 to A92), what was left |
 | 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | [#180](https://github.com/ashu-tosh-kumar/todo_notifier/pull/180) | ✅ done | Research done, maintainer decides. See [decision-name.md](decision-name.md), decisions A93 to A95 and notes under "Notes per workstream" (2.0) |
 | 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | [#181](https://github.com/ashu-tosh-kumar/todo_notifier/pull/181) | ✅ done | Draft ready; hosting, form and analytics are maintainer steps. See [landing-page/README.md](landing-page/README.md) |
-| 2.2 | Interview kit | `roadmap/2.2-interviews` | | ✅ kit ready; interviews are a maintainer step | See "Notes per workstream" below |
-| 2.3 | GO / NO-GO decision template | `roadmap/2.3-decision` | | ⬜ todo | Decision is the maintainer's |
+| 2.2 | Interview kit | `roadmap/2.2-interviews` | [#182](https://github.com/ashu-tosh-kumar/todo_notifier/pull/182) | ✅ kit ready; interviews are a maintainer step | See "Notes per workstream" below |
+| 2.3 | GO / NO-GO decision template | `roadmap/2.3-decision` |  | ✅ done | Template ready in [decision-saas.md](decision-saas.md); the decision is the maintainer's, 4 to 6 weeks after launch |
 | P2 | Phase 2 review + final review | | | ⬜ todo | |
 
 Legend: ✅ done · 🟡 in progress · ⬜ todo · ⛔ blocked (needs the maintainer)
@@ -771,3 +771,11 @@ to fix the GIF and says the docs deploy from `main`.
 - Add an optional "may we contact you for a short interview" checkbox to the landing page form before launch (2.1).
 - The thresholds (5 who would pay or commit, 3 with pain 4 or more) are the 2.3 rules of thumb, not benchmarks; the tally prints them as "needed" and does not decide anything.
 - The tally counts one interview per team; two people from one team have to be merged by hand.
+
+### 2.3 GO / NO-GO decision (template)
+
+Built: `roadmap/decision-saas.md`. It has an inputs checklist that links metrics, the waitlist sheet, the interview tally and the synthesis. The evidence table has one row per GO criterion. A "threshold used" column records any change to a threshold before the actual value is filled in, which guards against moving the goalposts. The file also has reading guidance for GO, PIVOT and NO-GO (a stated willingness to pay without a commitment is never enough for GO), and consequence checklists per outcome. The "Source" column uses the exact labels that `roadmap/interviews/scripts/tally_interviews.py` prints.
+
+Written by the orchestrator directly, with no sub-agent, because it is a short template.
+
+Maintainer step: fill it in 4 to 6 weeks after the launch (1.5).
