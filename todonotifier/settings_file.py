@@ -22,7 +22,8 @@ Details that are not obvious from the types:
 - `default_due_days = 0` turns default due dates off (TOML has no null). `ScanSettings.default_due_days` is then `None`. The maximum is 36500 (100 years).
 - `exclude_dirs` and `exclude_files` are tables with the optional lists `name`, `pattern` and `abs_path`. They are added to the built-in
   exclusions, they do not replace them.
-- `fail_on` is `none`, `expired`, `stale` or `any`. It does not change the scan; the command line uses it to choose the exit code.
+- `fail_on` is `none`, `expired`, `stale`, `any` or `incomplete` (a TODO without an owner annotation or without an explicit date). It does not change
+  the scan; the command line uses it to choose the exit code.
 - `[authors]` maps git author emails to the handle to show, for example `"a@x.com" = "ashu"`. It fills `ScanSettings.author_aliases`.
 
 Notifier tables live under `[notify.<name>]` (`[tool.todonotifier.notify.<name>]` in `pyproject.toml`). Config files never hold secrets: they name
@@ -70,7 +71,7 @@ CLI_DEFAULTS: dict[str, Any] = {
 
 # 100 years. More would only overflow `date + timedelta` (year 9999), and "never" is spelled 0
 MAX_DEFAULT_DUE_DAYS: int = 36500
-FAIL_ON_CHOICES: tuple[str, ...] = ("none", "expired", "stale", "any")
+FAIL_ON_CHOICES: tuple[str, ...] = ("none", "expired", "stale", "any", "incomplete")
 DEFAULT_FAIL_ON: str = "none"
 
 # Notifier schema, shared with the notifier workstream. Each key maps to (kind, required).
@@ -104,7 +105,7 @@ class ProjectConfig:
 
     Attributes:
         settings (ScanSettings): Scan options with the `CLI_DEFAULTS` and the config file applied
-        fail_on (str): When the command line should exit non-zero: "none", "expired", "stale" or "any". Defaults to "none"
+        fail_on (str): When the command line should exit non-zero: "none", "expired", "stale", "any" or "incomplete". Defaults to "none"
         notify (dict[str, dict[str, Any]]): Validated notifier tables by name. They hold environment variable names, never secret values
         source (str | None): Path of the config file that was used, or None if there was none
     """

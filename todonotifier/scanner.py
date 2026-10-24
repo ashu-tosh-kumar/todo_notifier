@@ -86,10 +86,11 @@ def _git_files_below(directory: str, settings: ScanSettings) -> Optional[list[st
     return [path for path in git_files if not _is_excluded(path, directory, settings)]
 
 
-def _collect_files(abs_paths: list[str], settings: ScanSettings) -> list[str]:
+def _collect_files(abs_paths: list[str], settings: ScanSettings, root: str) -> list[str]:
     """Collects the files to parse from directories (walked recursively) and individual files
 
-    Individual files are filtered by extension and `exclude_files`, just like files found while walking a directory. With
+    Individual files are filtered by extension, `exclude_files` and `exclude_dirs` (the directories between the file and `root`), just like files found
+    while walking a directory, so the staged files that pre-commit passes obey the same exclusions as `scan .`. With
     `settings.respect_gitignore`, the files of a directory and the individual files that are in a git repository are limited to the ones git
     lists (tracked, or untracked and not ignored); where there is no repository, the tree is walked as usual. All individual files are checked
     with one `git ls-files` call together (`git_meta.filter_git_listed`), because a pre-commit run passes many of them.
@@ -97,11 +98,11 @@ def _collect_files(abs_paths: list[str], settings: ScanSettings) -> list[str]:
     Args:
         abs_paths (list[str]): Absolute paths of directories and files that exist
         settings (ScanSettings): Scan settings
+        root (str): Absolute path of the scan root (see `_resolve_root`), where the check of `exclude_dirs` for individual files stops
 
     Returns:
         list[str]: Sorted absolute paths of the files to parse, without duplicates
     """
-    extensions = tuple(f".{extension}" for extension in settings.extensions)
     files: set[str] = set()
     named_files: list[str] = []
 
@@ -112,7 +113,7 @@ def _collect_files(abs_paths: list[str], settings: ScanSettings) -> list[str]:
                 files.update(git_files)
             else:
                 files.update(get_files_in_dir(path, settings.extensions, settings.exclude_dirs, settings.exclude_files))
-        elif path.endswith(extensions) and not _ignore_dir_or_file(path, settings.exclude_files):
+        elif not _is_excluded(path, root, settings):
             named_files.append(path)
         else:
             logger.debug(f"Skipping file not matching extensions or excluded: {path}")
@@ -178,7 +179,7 @@ def scan(settings: ScanSettings, today: Optional[date] = None) -> ScanResult:
     generated_at: datetime = now if reference_day == now.date() else datetime.combine(reference_day, time.min).astimezone()
 
     root: str = _resolve_root(abs_paths)
-    files: list[str] = _collect_files(abs_paths, settings)
+    files: list[str] = _collect_files(abs_paths, settings, root)
     logger.info(f"Scanning {len(files)} files under {root}")
 
     # `parse_files_for_todo_items` makes paths relative to its first argument, which is the root here

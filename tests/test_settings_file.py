@@ -378,7 +378,7 @@ class TestErrors(ConfigTestCase):
             'commit_sha = " "': "'commit_sha' in .* must be a non-empty string, got str",
             'exclude_dirs = ["a"]': "'exclude_dirs' in .* must be a table",
             "exclude_dirs = { name = 1 }": "'name' of 'exclude_dirs' in .* must be a list",
-            'fail_on = "sometimes"': r"'fail_on' in .* must be one of none, expired, stale, any, got 'sometimes'",
+            'fail_on = "sometimes"': r"'fail_on' in .* must be one of none, expired, stale, any, incomplete, got 'sometimes'",
             "fail_on = 1": "'fail_on' in .* must be one of",
         }
         for body, pattern in cases.items():
