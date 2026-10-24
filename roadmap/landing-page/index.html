@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  DRAFT. Not deployed, not part of the library (roadmap workstream 2.1).
+  The brand name "Fragmo" is PROVISIONAL, pending roadmap/decision-name.md
+  (workstream 2.0 found that "Mendo" is taken by a funded SaaS company).
+  To change it: edit BRAND at the top of the inline script, or run the sed
+  one-liner in roadmap/landing-page/README.md, which replaces every copy.
+-->
+<title>Fragmo: track technical debt, starting with every TODO</title>
+<meta name="description" content="Fragmo is a planned technical debt tracker for engineering managers and tech leads. Start with every TODO in your GitHub org: owners, deadlines, weekly digests and PR checks. Not built yet; join the waitlist for early access." data-template="{brand} is a planned technical debt tracker for engineering managers and tech leads. Start with every TODO in your GitHub org: owners, deadlines, weekly digests and PR checks. Not built yet; join the waitlist for early access.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Fragmo: track technical debt, starting with every TODO" data-template="{brand}: track technical debt, starting with every TODO">
+<meta property="og:description" content="A planned technical debt tracker for engineering managers. Not built yet; the waitlist is for early access." data-template="A planned technical debt tracker for engineering managers. Not built yet; the waitlist is for early access.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0b6b5d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b6b5d'/%3E%3Cpath d='M9 10h14M9 16h9M9 22h5' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<!--
+  Analytics slot (optional, off by default). Pick ONE, fill in your values and remove
+  the comment markers. Check current pricing and the current snippet in the vendor
+  dashboard before use: the snippets below may be out of date.
+
+  Plausible (hosted, paid after a trial):
+    <script defer data-domain="YOUR-DOMAIN" src="https://plausible.io/js/script.js"></script>
+
+  Umami (hosted cloud or self-hosted):
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="YOUR-WEBSITE-ID"></script>
+
+  Both record the referrer and utm_* parameters of each visit. The form below also
+  copies them into hidden fields, so each signup can be attributed to a source.
+-->
+<style>
+:root {
+  --bg: #fbfaf7;
+  --surface: #ffffff;
+  --surface-2: #f1f0ea;
+  --text: #1b1f24;
+  --muted: #4f5b66;
+  --border: #d9d6cc;
+  --accent: #0b6b5d;
+  --accent-text: #ffffff;
+  --accent-soft: #e0f0ec;
+  --bar: #2f6f9f;
+  --warn: #b4361f;
+  --warn-soft: #fbe6e1;
+  --banner-bg: #fff3d6;
+  --banner-border: #e0b84c;
+  --banner-text: #4a3500;
+  --focus: #1a5fd0;
+  --shadow: 0 1px 2px rgba(20, 30, 40, .06), 0 6px 18px rgba(20, 30, 40, .06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1417;
+    --surface: #161d22;
+    --surface-2: #1d262c;
+    --text: #e8edf0;
+    --muted: #a3afb9;
+    --border: #2d3a42;
+    --accent: #4cc9b0;
+    --accent-text: #06201b;
+    --accent-soft: #123a33;
+    --bar: #6fb0e0;
+    --warn: #ff8f75;
+    --warn-soft: #3d1f19;
+    --banner-bg: #2f2711;
+    --banner-border: #8a6d1d;
+    --banner-text: #f3e2b3;
+    --focus: #8ab4ff;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1417; --surface: #161d22; --surface-2: #1d262c; --text: #e8edf0; --muted: #a3afb9;
+  --border: #2d3a42; --accent: #4cc9b0; --accent-text: #06201b; --accent-soft: #123a33;
+  --bar: #6fb0e0; --warn: #ff8f75; --warn-soft: #3d1f19; --banner-bg: #2f2711;
+  --banner-border: #8a6d1d; --banner-text: #f3e2b3; --focus: #8ab4ff; --shadow: none;
+}
+* { box-sizing: border-box; }
+html { color-scheme: light dark; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+.wrap { width: 100%; max-width: 68rem; margin: 0 auto; padding: 0 1rem; }
+h1, h2, h3 { line-height: 1.2; margin: 0 0 .6rem; letter-spacing: -.01em; }
+h1 { font-size: clamp(2rem, 6.2vw, 3.3rem); letter-spacing: -.025em; }
+h2 { font-size: clamp(1.5rem, 4.4vw, 2.1rem); }
+h3 { font-size: 1.15rem; }
+p { margin: 0 0 1rem; }
+a { color: var(--accent); text-underline-offset: .15em; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.skip { position: absolute; left: -999px; top: 0; background: var(--surface); padding: .6rem 1rem; z-index: 10; }
+.skip:focus { left: 0; }
+.muted { color: var(--muted); }
+.small { font-size: .9rem; }
+section { padding: 3rem 0; }
+.eyebrow { font-size: .85rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: .6rem; }
+
+/* header */
+header.site { border-bottom: 1px solid var(--border); }
+header.site .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1.25rem; padding-top: .8rem; padding-bottom: .8rem; }
+.logo { display: inline-flex; align-items: center; gap: .55rem; font-weight: 800; font-size: 1.2rem; color: var(--text); text-decoration: none; }
+.logo svg { width: 1.6rem; height: 1.6rem; }
+nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .25rem 1.1rem; font-size: .95rem; }
+nav a { color: var(--text); text-decoration: none; display: inline-block; padding: .35rem 0; }
+nav a:hover { color: var(--accent); text-decoration: underline; }
+
+/* honest banner */
+.banner { background: var(--banner-bg); color: var(--banner-text); border-bottom: 1px solid var(--banner-border); font-size: .95rem; }
+.banner .wrap { padding-top: .6rem; padding-bottom: .6rem; }
+.banner strong { font-weight: 700; }
+.banner a { color: inherit; }
+
+/* hero */
+.hero { padding: 3.2rem 0 2.4rem; }
+.hero p.lead { font-size: clamp(1.1rem, 2.8vw, 1.3rem); max-width: 40rem; color: var(--muted); }
+.cta-row { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.4rem; }
+.btn { display: inline-block; font: inherit; font-weight: 700; padding: .75rem 1.3rem; border-radius: .5rem; border: 2px solid var(--accent); background: var(--accent); color: var(--accent-text); text-decoration: none; cursor: pointer; min-height: 2.75rem; }
+.btn:hover { filter: brightness(1.08); }
+.btn.secondary { background: transparent; color: var(--accent); }
+.btn[disabled] { opacity: .6; cursor: progress; }
+
+/* cards */
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: .75rem; padding: 1.25rem; box-shadow: var(--shadow); }
+.card .icon { width: 2.4rem; height: 2.4rem; border-radius: .6rem; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin-bottom: .8rem; }
+.card .icon svg { width: 1.3rem; height: 1.3rem; }
+.card p:last-child { margin-bottom: 0; }
+.next { margin-top: 1.25rem; padding: .9rem 1.1rem; border-left: 4px solid var(--accent); background: var(--surface-2); border-radius: 0 .5rem .5rem 0; }
+.next p { margin: 0; }
+
+/* mock dashboard */
+.mock { margin: 1.5rem 0 0; background: var(--surface); border: 1px solid var(--border); border-radius: .9rem; box-shadow: var(--shadow); overflow: hidden; }
+.mock-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .8rem; padding: .65rem 1rem; background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: .9rem; }
+.mock-bar .dots { display: inline-flex; gap: .3rem; }
+.mock-bar .dots i { width: .6rem; height: .6rem; border-radius: 50%; background: var(--border); display: block; }
+.tag { margin-left: auto; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .15rem .55rem; border-radius: 999px; background: var(--banner-bg); color: var(--banner-text); border: 1px solid var(--banner-border); }
+.mock-body { padding: 1rem; display: grid; gap: 1rem; }
+.stats { display: grid; gap: .75rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stat { border: 1px solid var(--border); border-radius: .6rem; padding: .7rem .8rem; }
+.stat b { display: block; font-size: 1.7rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: .82rem; line-height: 1.3; color: var(--muted); display: block; }
+.stat.bad b { color: var(--warn); }
+.panels { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 52rem) { .panels { grid-template-columns: 1.25fr 1fr; } }
+.panel { border: 1px solid var(--border); border-radius: .6rem; padding: .9rem 1rem; }
+.panel h3 { font-size: 1rem; margin-bottom: .1rem; }
+.panel .sub { font-size: .85rem; color: var(--muted); margin-bottom: .8rem; }
+ul.bars, ul.hist { list-style: none; margin: 0; padding: 0; }
+ul.bars li { display: grid; grid-template-columns: 7.2rem 1fr 4.6rem; align-items: center; gap: .5rem; padding: .22rem 0; font-size: .9rem; }
+ul.bars .who { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+ul.bars .track { height: .85rem; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+ul.bars .fill { display: block; height: 100%; width: var(--w); background: var(--bar); border-radius: 999px; position: relative; overflow: hidden; }
+ul.bars .fill i { position: absolute; right: 0; top: 0; bottom: 0; width: var(--o); background: var(--warn); }
+ul.bars .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+ul.bars .n em { font-style: normal; color: var(--warn); font-size: .8rem; }
+.legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; font-size: .8rem; color: var(--muted); margin-top: .7rem; }
+.legend i { display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .3rem; vertical-align: -.05rem; }
+ul.hist { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; align-items: end; height: 10.5rem; }
+ul.hist li { display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; height: 100%; text-align: center; font-size: .78rem; }
+ul.hist .v { font-variant-numeric: tabular-nums; font-weight: 700; font-size: .85rem; }
+ul.hist .col { display: block; height: var(--h); background: var(--bar); border-radius: .3rem .3rem 0 0; margin-top: .15rem; }
+ul.hist .old .col { background: var(--warn); }
+ul.hist .l { color: var(--muted); padding-top: .3rem; border-top: 1px solid var(--border); margin-top: 0; line-height: 1.2; min-height: 2.2em; }
+.mock figcaption { padding: .6rem 1rem .8rem; font-size: .85rem; color: var(--muted); border-top: 1px solid var(--border); }
+
+/* credibility */
+.cred { background: var(--surface-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.cred ul { margin: .5rem 0 1rem; padding-left: 1.2rem; }
+.links { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+/* pricing */
+.price { display: flex; flex-direction: column; }
+.price .amt { font-size: 2rem; font-weight: 800; line-height: 1.1; margin: .2rem 0 .1rem; font-variant-numeric: tabular-nums; }
+.price .amt small { font-size: .95rem; font-weight: 500; color: var(--muted); }
+.price ul { padding-left: 1.1rem; margin: .8rem 0 0; }
+.price li { margin-bottom: .3rem; }
+.price.pop { border: 2px solid var(--accent); }
+
+/* form */
+.formcard { max-width: 40rem; background: var(--surface); border: 1px solid var(--border); border-radius: .9rem; padding: 1.25rem; box-shadow: var(--shadow); }
+.field { margin-bottom: 1.1rem; }
+label, legend { display: block; font-weight: 600; margin-bottom: .3rem; padding: 0; }
+.hint { font-weight: 400; color: var(--muted); font-size: .9rem; }
+input[type=email], input[type=text], select { width: 100%; font: inherit; font-size: 1rem; color: var(--text); background: var(--bg); border: 1.5px solid var(--muted); border-radius: .45rem; padding: .6rem .7rem; min-height: 2.75rem; }
+fieldset { border: 0; margin: 0 0 1.1rem; padding: 0; min-width: 0; }
+.choice { display: flex; align-items: flex-start; gap: .6rem; font-weight: 400; margin: 0; padding: .3rem 0; min-height: 2.5rem; }
+.choice input { width: 1.2rem; height: 1.2rem; margin: .25rem 0 0; accent-color: var(--accent); flex: none; }
+.err { color: var(--warn); font-size: .92rem; margin: .3rem 0 0; font-weight: 600; }
+[aria-invalid=true] { border-color: var(--warn) !important; }
+.status { margin-top: 1rem; padding: .8rem 1rem; border-radius: .5rem; border: 1px solid var(--border); background: var(--surface-2); }
+.status.warn { background: var(--banner-bg); border-color: var(--banner-border); color: var(--banner-text); }
+.status.ok { background: var(--accent-soft); border-color: var(--accent); }
+.status.bad { background: var(--warn-soft); border-color: var(--warn); }
+
+/* footer */
+footer.site { border-top: 1px solid var(--border); padding: 2rem 0 3rem; font-size: .95rem; color: var(--muted); }
+footer.site p { max-width: 46rem; }
+footer.site ul { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; }
+
+@media (max-width: 30rem) {
+  section { padding: 2.2rem 0; }
+  .hero { padding-top: 2.2rem; }
+  ul.bars li { grid-template-columns: 6.7rem 1fr 3.5rem; gap: .35rem; font-size: .85rem; }
+  .panel { padding: .8rem .75rem; }
+  .stats { gap: .5rem; }
+  .stat b { font-size: 1.4rem; }
+  .btn { width: 100%; text-align: center; }
+  .tag { margin-left: 0; }
+}
+</style>
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Back to top">
+      <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="7" fill="var(--accent)"/><path d="M9 10h14M9 16h9M9 22h5" stroke="var(--accent-text)" stroke-width="3" stroke-linecap="round" fill="none"/></svg>
+      <span data-brand>Fragmo</span>
+    </a>
+    <nav aria-label="Page sections">
+      <ul>
+        <li><a href="#benefits">Benefits</a></li>
+        <li><a href="#dashboard">Dashboard</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#waitlist">Waitlist</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<div class="banner" role="note">
+  <div class="wrap">
+    <strong>Early draft, not built yet.</strong>
+    <span data-brand>Fragmo</span> is a planned hosted product. The waitlist is for early access and to help decide what to build.
+    The <a href="https://github.com/ashu-tosh-kumar/todo_notifier">open-source CLI it grows from</a> is real and usable today.
+  </div>
+</div>
+
+<main id="main">
+
+<section class="hero" aria-labelledby="h-hero">
+  <div class="wrap">
+    <p class="eyebrow">For engineering managers and tech leads</p>
+    <h1 id="h-hero">Track your technical debt before it tracks you.</h1>
+    <p class="lead">Start with every TODO across your GitHub org, with owners, deadlines and a weekly Slack digest. Other kinds of debt come next.</p>
+    <div class="cta-row">
+      <a class="btn" href="#waitlist">Join the waitlist</a>
+      <a class="btn secondary" href="#dashboard">See the planned dashboard</a>
+    </div>
+    <p class="muted small" style="margin-top:1rem">No product to sign up for yet. We will write to you when early access opens.</p>
+  </div>
+</section>
+
+<section id="benefits" aria-labelledby="h-benefits" style="padding-top:1rem">
+  <div class="wrap">
+    <h2 id="h-benefits">Debt that has a name and a date on it</h2>
+    <p class="muted">Most teams already write down their debt, in comments, and then lose it. <span data-brand>Fragmo</span> is meant to make that visible to the people who plan the work.</p>
+    <div class="grid">
+      <article class="card">
+        <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <h3>Owner and age tracking</h3>
+        <p>Every item gets an owner and an age in days from git history, so nothing sits in a file for three years with nobody's name on it.</p>
+      </article>
+      <article class="card">
+        <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div>
+        <h3>Weekly digests per person</h3>
+        <p>Each developer gets one short message with their own overdue and soon-due items. You get the team roll-up, in Slack or email.</p>
+      </article>
+      <article class="card">
+        <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 8.5v7M8.5 6H13a3 3 0 0 1 3 3v.5"/></svg></div>
+        <h3>PR checks</h3>
+        <p>A check on the pull request flags new debt that has no owner or no deadline, before it merges instead of after it ages.</p>
+      </article>
+    </div>
+    <div class="next">
+      <p><strong>Coming next:</strong> other debt sources, such as lint suppressions, skipped tests and outdated dependencies. Tell us which one you want first in the waitlist form below.</p>
+    </div>
+  </div>
+</section>
+
+<section id="dashboard" aria-labelledby="h-dash">
+  <div class="wrap">
+    <h2 id="h-dash">What the dashboard could look like</h2>
+    <p class="muted">A static design, built to test whether this is the view a manager wants on Monday morning. The numbers are made up.</p>
+
+    <figure class="mock" aria-label="Mock dashboard with illustrative data: 214 open items, 37 overdue, 58 stale, by owner and by age">
+      <div class="mock-bar">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>acme-shop / all repos</span>
+        <span class="tag">Illustrative data</span>
+      </div>
+      <div class="mock-body">
+        <div class="stats">
+          <div class="stat"><b>214</b><span>Open debt items</span></div>
+          <div class="stat bad"><b>37</b><span>Overdue</span></div>
+          <div class="stat bad"><b>58</b><span>Stale (over 180 days)</span></div>
+        </div>
+        <div class="panels">
+          <div class="panel">
+            <h3>Debt items by owner</h3>
+            <p class="sub">Open items; the red part is overdue</p>
+            <ul class="bars">
+              <li><span class="who">Priya Nair</span><span class="track"><span class="fill" style="--w:100%;--o:22%"><i></i></span></span><span class="n">41 <em>(9)</em></span></li>
+              <li><span class="who">Rahul Mehta</span><span class="track"><span class="fill" style="--w:88%;--o:22%"><i></i></span></span><span class="n">36 <em>(8)</em></span></li>
+              <li><span class="who">Ananya Iyer</span><span class="track"><span class="fill" style="--w:80%;--o:18%"><i></i></span></span><span class="n">33 <em>(6)</em></span></li>
+              <li><span class="who">Vikram Rao</span><span class="track"><span class="fill" style="--w:71%;--o:17%"><i></i></span></span><span class="n">29 <em>(5)</em></span></li>
+              <li><span class="who">Sneha Kulkarni</span><span class="track"><span class="fill" style="--w:58%;--o:17%"><i></i></span></span><span class="n">24 <em>(4)</em></span></li>
+              <li><span class="who">Arjun Das</span><span class="track"><span class="fill" style="--w:46%;--o:11%"><i></i></span></span><span class="n">19 <em>(2)</em></span></li>
+              <li><span class="who">No owner</span><span class="track"><span class="fill" style="--w:78%;--o:9%"><i></i></span></span><span class="n">32 <em>(3)</em></span></li>
+            </ul>
+            <div class="legend"><span><i style="background:var(--bar)"></i>Open</span><span><i style="background:var(--warn)"></i>Overdue (count in brackets)</span></div>
+          </div>
+          <div class="panel">
+            <h3>Age of open items</h3>
+            <p class="sub">Items by days since the line was written</p>
+            <ul class="hist">
+              <li><span class="v">61</span><span class="col" style="--h:100%"></span><span class="l">0 to 30</span></li>
+              <li><span class="v">52</span><span class="col" style="--h:85%"></span><span class="l">31 to 90</span></li>
+              <li><span class="v">43</span><span class="col" style="--h:70%"></span><span class="l">91 to 180</span></li>
+              <li class="old"><span class="v">36</span><span class="col" style="--h:59%"></span><span class="l">181 to 365</span></li>
+              <li class="old"><span class="v">22</span><span class="col" style="--h:36%"></span><span class="l">Over a year</span></li>
+            </ul>
+            <div class="legend"><span><i style="background:var(--warn)"></i>Stale: over 180 days</span></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Illustrative: fake names, fake repositories, fake numbers. No customer data exists, because there are no customers yet.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="cred" aria-labelledby="h-cred">
+  <div class="wrap">
+    <h2 id="h-cred">Built by the maintainer of todonotifier, the open-source CLI</h2>
+    <p>The scanning engine is not a promise. <strong>todonotifier</strong> is an MIT-licensed Python tool you can run on your own repositories today:</p>
+    <ul>
+      <li>finds TODO-style comments and ignores strings and docstrings</li>
+      <li>works out the owner and age of each item from git blame</li>
+      <li>runs as a command, a pre-commit hook or a GitHub Action, and can post to Slack, Teams or a webhook</li>
+    </ul>
+    <div class="links">
+      <a class="btn secondary" href="https://github.com/ashu-tosh-kumar/todo_notifier">Source on GitHub</a>
+      <a class="btn secondary" href="https://ashu-tosh-kumar.github.io/todo_notifier/">Read the docs</a>
+    </div>
+    <p class="muted small" style="margin-top:1rem">The hosted product is separate and not built yet. The open-source tool stays free and keeps working without it.</p>
+  </div>
+</section>
+
+<section id="pricing" aria-labelledby="h-price">
+  <div class="wrap">
+    <h2 id="h-price">Pricing sketch</h2>
+    <p class="muted"><strong>Illustrative, founding-member pricing for waitlist.</strong> These numbers are a test of what is reasonable, not an offer. Nothing can be bought yet, and what each plan includes is still open.</p>
+    <div class="grid">
+      <article class="card price">
+        <h3>Free</h3>
+        <p class="amt">₹0</p>
+        <p class="muted small">For trying it on one project</p>
+        <ul>
+          <li>1 repository</li>
+          <li>Owner and age tracking</li>
+          <li>PR check</li>
+        </ul>
+      </article>
+      <article class="card price pop">
+        <h3>Team</h3>
+        <p class="amt">₹1,499 <small>/ month</small></p>
+        <p class="muted small">For one engineering team</p>
+        <ul>
+          <li>Several repositories (limit not decided)</li>
+          <li>Weekly digest per person</li>
+          <li>Team dashboard</li>
+        </ul>
+      </article>
+      <article class="card price">
+        <h3>Business</h3>
+        <p class="amt">₹4,999 <small>/ month</small></p>
+        <p class="muted small">For several teams</p>
+        <ul>
+          <li>Org-wide roll-up across teams</li>
+          <li>More repositories and people</li>
+          <li>Other debt sources as they ship</li>
+        </ul>
+      </article>
+    </div>
+    <p class="muted small" style="margin-top:1rem"><span data-usd>≈ USD equivalents: to be added by the maintainer before launch.</span> Join the waitlist for founding-member pricing.</p>
+  </div>
+</section>
+
+<section id="waitlist" aria-labelledby="h-wait" class="cred" style="border-bottom:0">
+  <div class="wrap">
+    <h2 id="h-wait">Join the waitlist</h2>
+    <p class="muted" style="max-width:40rem">Early access only: <span data-brand>Fragmo</span> is not built yet. Your answers help decide whether and what to build. It takes about a minute.</p>
+
+    <div class="formcard">
+      <form id="waitlist-form" method="post" novalidate>
+        <input type="hidden" name="utm_source" id="f-utm_source">
+        <input type="hidden" name="utm_medium" id="f-utm_medium">
+        <input type="hidden" name="utm_campaign" id="f-utm_campaign">
+        <input type="hidden" name="referrer" id="f-referrer">
+        <input type="hidden" name="brand" id="f-brand">
+
+        <div class="field">
+          <label for="email">Work email <span class="hint">(required)</span></label>
+          <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required aria-describedby="err-email">
+          <p class="err" id="err-email" hidden>Enter a valid email address, like name@company.com.</p>
+        </div>
+
+        <div class="field">
+          <label for="company_size">Company size <span class="hint">(developers)</span></label>
+          <select id="company_size" name="company_size" required aria-describedby="err-company_size">
+            <option value="">Choose one</option>
+            <option>Just me</option>
+            <option>2 to 10</option>
+            <option>11 to 50</option>
+            <option>51 to 200</option>
+            <option>201 to 1,000</option>
+            <option>More than 1,000</option>
+          </select>
+          <p class="err" id="err-company_size" hidden>Choose a company size.</p>
+        </div>
+
+        <div class="field">
+          <label for="repos">Number of repositories</label>
+          <select id="repos" name="repos" required aria-describedby="err-repos">
+            <option value="">Choose one</option>
+            <option>1</option>
+            <option>2 to 5</option>
+            <option>6 to 20</option>
+            <option>21 to 100</option>
+            <option>More than 100</option>
+          </select>
+          <p class="err" id="err-repos" hidden>Choose a number of repositories.</p>
+        </div>
+
+        <div class="field">
+          <label for="current_tool">How do you track technical debt today? <span class="hint">(optional)</span></label>
+          <input type="text" id="current_tool" name="current_tool" maxlength="200" autocomplete="off" placeholder="e.g. Jira, SonarQube, grep, none">
+        </div>
+
+        <fieldset aria-describedby="err-pay_intent">
+          <legend>Would you pay for this?</legend>
+          <label class="choice"><input type="radio" name="pay_intent" value="yes" required> Yes</label>
+          <label class="choice"><input type="radio" name="pay_intent" value="maybe"> Maybe</label>
+          <label class="choice"><input type="radio" name="pay_intent" value="no"> No</label>
+          <p class="err" id="err-pay_intent" hidden>Choose yes, maybe or no. "No" is a useful answer.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Which debt source should come next? <span class="hint">(optional, pick any)</span></legend>
+          <label class="choice"><input type="checkbox" name="next_source" value="lint suppressions"> Lint suppressions</label>
+          <label class="choice"><input type="checkbox" name="next_source" value="skipped tests"> Skipped tests</label>
+          <label class="choice"><input type="checkbox" name="next_source" value="outdated dependencies"> Outdated dependencies</label>
+        </fieldset>
+
+        <button class="btn" type="submit" id="submit-btn">Join the waitlist</button>
+        <div id="form-status" class="status" role="status" aria-live="polite" hidden></div>
+        <noscript><p class="err">The form needs JavaScript to work.</p></noscript>
+
+        <p class="muted small" style="margin:1rem 0 0"><strong>Privacy:</strong> we use your email only to tell you about early access and, if you agree, to ask a few questions about how you manage technical debt. We also note which link brought you here (the referrer and utm_ tags) to see where signups come from. We do not sell or share your data. To be removed, reply to any email we send.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <ul>
+      <li><a href="https://github.com/ashu-tosh-kumar/todo_notifier">GitHub</a></li>
+      <li><a href="https://ashu-tosh-kumar.github.io/todo_notifier/">Documentation</a></li>
+      <li><a href="https://pypi.org/project/todonotifier/">PyPI</a></li>
+      <li><a href="#top">Back to top</a></li>
+    </ul>
+    <p><strong>Not built yet.</strong> <span data-brand>Fragmo</span> is an idea being tested, not a product you can buy or sign in to. The waitlist is for early access. The dashboard above is a design with illustrative data, and the prices are a sketch.</p>
+    <p>Built by the maintainer of todonotifier, the open-source CLI (MIT licence).</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* Brand: change this one value (or run the sed one-liner in README.md). */
+  var BRAND = 'Fragmo';
+
+  /* Where the form posts. Leave empty until a Google Apps Script web app, Formspree
+     or similar endpoint exists. Empty means the form validates, then says it is not wired up. */
+  var FORM_ENDPOINT = '';
+
+  /* Brand swap: every [data-brand] element, the title and the meta tags. */
+  var i, nodes = document.querySelectorAll('[data-brand]');
+  for (i = 0; i < nodes.length; i++) { nodes[i].textContent = BRAND; }
+  document.title = BRAND + ': track technical debt, starting with every TODO';
+  var templated = document.querySelectorAll('[data-template]');
+  for (i = 0; i < templated.length; i++) {
+    templated[i].setAttribute('content', templated[i].getAttribute('data-template').split('{brand}').join(BRAND));
+  }
+
+  /* Attribution: copy utm_* parameters and the referrer into hidden fields. Nothing is stored. */
+  function clip(value, max) { return String(value || '').slice(0, max); }
+  var query = new URLSearchParams(window.location.search);
+  ['utm_source', 'utm_medium', 'utm_campaign'].forEach(function (name) {
+    document.getElementById('f-' + name).value = clip(query.get(name), 200);
+  });
+  document.getElementById('f-referrer').value = clip(document.referrer, 500);
+  document.getElementById('f-brand').value = BRAND;
+
+  /* Form. */
+  var form = document.getElementById('waitlist-form');
+  var statusBox = document.getElementById('form-status');
+  var button = document.getElementById('submit-btn');
+
+  function say(kind, text) {
+    statusBox.className = 'status ' + kind;
+    statusBox.textContent = text;
+    statusBox.hidden = false;
+  }
+
+  function setError(controls, errId, bad) {
+    document.getElementById(errId).hidden = !bad;
+    controls.forEach(function (c) {
+      if (bad) { c.setAttribute('aria-invalid', 'true'); } else { c.removeAttribute('aria-invalid'); }
+    });
+  }
+
+  function validate() {
+    var checks = [
+      { id: 'email', err: 'err-email', ok: function () { return form.elements.email.checkValidity(); }, controls: [form.elements.email] },
+      { id: 'company_size', err: 'err-company_size', ok: function () { return form.elements.company_size.value !== ''; }, controls: [form.elements.company_size] },
+      { id: 'repos', err: 'err-repos', ok: function () { return form.elements.repos.value !== ''; }, controls: [form.elements.repos] },
+      { id: 'pay_intent', err: 'err-pay_intent', ok: function () { return form.elements.pay_intent.value !== ''; }, controls: Array.prototype.slice.call(form.querySelectorAll('input[name=pay_intent]')) }
+    ];
+    var firstBad = null;
+    checks.forEach(function (c) {
+      var good = c.ok();
+      setError(c.controls, c.err, !good);
+      if (!good && !firstBad) { firstBad = c.controls[0]; }
+    });
+    if (firstBad) { firstBad.focus(); }
+    return !firstBad;
+  }
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    statusBox.hidden = true;
+    if (!validate()) {
+      say('bad', 'Please fix the highlighted fields and try again.');
+      return;
+    }
+    if (!FORM_ENDPOINT) {
+      say('warn', 'Not wired up yet: this is a draft page, so nothing was sent or saved. Thanks for trying it.');
+      return;
+    }
+    button.disabled = true;
+    /* no-cors: the response is opaque, so a resolved request is shown as success. */
+    fetch(FORM_ENDPOINT, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(new FormData(form)) })
+      .then(function () {
+        form.reset();
+        say('ok', "You're on the list. We will write to you when early access opens.");
+      })
+      .catch(function () {
+        say('bad', 'Could not send that. Check your connection and try again.');
+      })
+      .then(function () { button.disabled = false; });
+  });
+}());
+</script>
+</body>
+</html>
