@@ -138,7 +138,7 @@ and `utm_` tags that go into the form. If you add analytics, mention it there.
 - [ ] **Live before 1.5 launches:** hosted (section 2), HTTPS works, the page opens at 360 px
       and in dark mode.
 - [ ] **Signups arrive in a sheet you can see:** `FORM_ENDPOINT` set (section 3), a test
-      submission created a row with all columns, including `pay_intent` and `next_source`.
+      submission created a row with all columns, including `pay_intent`, `next_source` and `interview_ok` (`yes` when the box was ticked, `no` otherwise).
 - [ ] **Analytics record visits by source:** snippet enabled (section 4), a visit to
       `/?utm_source=test` shows up with that source, a test signup shows `utm_source=test`
       in the sheet.

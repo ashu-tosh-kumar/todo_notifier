@@ -52,9 +52,126 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | [#181](https://github.com/ashu-tosh-kumar/todo_notifier/pull/181) | ✅ done | Draft ready; hosting, form and analytics are maintainer steps. See [landing-page/README.md](landing-page/README.md) |
 | 2.2 | Interview kit | `roadmap/2.2-interviews` | [#182](https://github.com/ashu-tosh-kumar/todo_notifier/pull/182) | ✅ kit ready; interviews are a maintainer step | See "Notes per workstream" below |
 | 2.3 | GO / NO-GO decision template | `roadmap/2.3-decision` | [#183](https://github.com/ashu-tosh-kumar/todo_notifier/pull/183) | ✅ done | Template ready in [decision-saas.md](decision-saas.md); the decision is the maintainer's, 4 to 6 weeks after launch |
-| P2 | Phase 2 review + final review | `roadmap/final-review` | | 🟡 in progress | |
+| P2 | Phase 2 review + final review | `roadmap/final-review` | | ✅ done | [Phase 2 review](#phase-2-review) (audit table, 3 issues fixed) and the [final review and maintainer action list](#final-review-and-maintainer-action-list): fresh-user journey, library compatibility, all checks on Python 3.10 to 3.14, 2 more fixes (decisions A102 to A104) |
 
 Legend: ✅ done · 🟡 in progress · ⬜ todo · ⛔ blocked (needs the maintainer)
+
+## Final review and maintainer action list
+
+**What was delivered.** Phases 0, 1 and 2 of the roadmap, as 19 stacked pull requests (#165 to #183, plus the final review) on `development`. The library is now also a tool: `todonotifier`
+(`scan`, `report`, `notify`, `init`) with a zero-config scan that is comment-aware in 37 file extensions, owners and ages from `git blame`, default due dates that make old TODOs *stale* without
+failing a build, `--fail-on`, `--since`, five output formats, a config file, and Slack, Teams, webhook and email digests. It ships as `v2.1.0` (prepared, not tagged), together with a pre-commit hook, a GitHub
+Action (built in `integrations/github-action/`, decision A3), a MkDocs docs site with a 5-minute Quickstart, PyPI metadata, launch drafts and a metrics baseline. Phase 2 produced the research and the
+templates (name and brand research that recommends dropping Mendo, a landing page with a waitlist form, an interview kit with a tally script, and a GO / NO-GO template). The old `driver.run` API is unchanged and
+tested against the pre-2.1 code. 857 tests pass at 100% line coverage on Python 3.10 to 3.14, and `black`, `isort`, `flake8`, `pre-commit`, `mkdocs build --strict`, `gen_docs_reference.py --check`, `actionlint`,
+`poetry check` and the self-scan are clean. What remains is publishing, settings and the human parts of validation: the checklist below.
+
+### Exit criteria
+
+"Maintainer step" means it cannot be done or verified without the maintainer (a tag, a GitHub setting, a person). Sources: the [Phase 0 review](#phase-0-review), the [Phase 1 review](#phase-1-review) and the [Phase 2 review](#phase-2-review).
+
+| Phase | Exit criterion | Final status | Where |
+|---|---|---|---|
+| 0 | `todonotifier scan .` works on any git repo with zero configuration | met | Phase 0 review; run again in the final review on a fresh repository from the built wheel |
+| 0 | `todonotifier scan --fail-on expired` can gate CI | met | exit 1 with the message, 0 for none; this repository's own CI step exits 0 |
+| 0 | Settings can live in `[tool.todonotifier]` in `pyproject.toml` | met | this repository does; `init` writes it |
+| 0 | TODOs without `@user` get an owner from `git blame` | met | final review sample: `alice` and `bob` from two commits |
+| 0 | The known false-positive defects are fixed | met | Phase 0 review, 0.4 tests |
+| 0 | `v2.1.0` is published on PyPI | maintainer step | tag and publish are A4, see "Release v2.1.0" below |
+| 1 | The GitHub Action is listed on the Marketplace | maintainer step | needs the `todonotifier-action` repo (D2, A3), see "Action repo and Marketplace" |
+| 1 | The pre-commit hook is usable from this repo | met | `pre-commit try-repo` run again in the final review; `rev: v2.1.0` resolves after the tag |
+| 1 | The docs site has a 5-minute quickstart | met | `mkdocs build --strict` clean; the page's commands run on a fresh sample; it deploys from `main` after the release |
+| 1 | PyPI metadata and the README are optimized | met in the package, visible on PyPI after the release | METADATA of the built wheel read in the final review |
+| 1 | The launch posts are out, and baseline metrics were recorded before launch | partly | baseline met (`metrics.md`); the posts are drafts, posting is a maintainer step |
+| 2 | A written GO / NO-GO decision (`decision-saas.md`) backed by interview notes and the 1.5 metrics | maintainer step | the template is ready; it needs the launch plus 4 to 6 weeks of data and 10 or more interviews |
+
+### Maintainer action list
+
+One ordered list, without duplicates, gathered from every workstream note. Do the groups in this order. The link on each line goes to the note it came from.
+
+#### Review and merge the stack (bottom-up, #165 → #183)
+
+- [ ] Open the pull request for `roadmap/final-review` (the P2 row has no PR number yet) and push it with the rest of the stack. [How the work is laid out](#how-the-work-is-laid-out)
+- [ ] Read the "please review" [decisions table](#decisions-made-without-the-maintainer-please-review), starting with the ids listed below, and veto what you disagree with. [Decisions](#decisions-made-without-the-maintainer-please-review)
+- [ ] Merge the PRs bottom-up into `development` (#165, then #166 to #183; GitHub retargets a child PR to `development` when its parent branch is merged and deleted, otherwise retarget it by hand). A1 stacks them on `development`, not `main`. [How the work is laid out](#how-the-work-is-laid-out), A1
+- [ ] Check the first CI run of the stack on Python 3.10 to 3.14: 3.14 resolves every locked dependency, `pipx install poetry` plus `poetry env use` picks the matrix interpreter, and drop `cache: poetry` if it misbehaves. [0.7 follow-ups](#07-release-prep-v210-and-housekeeping)
+- [ ] Check that the "Action self-test" workflow and the docs build are green on the merged `development`. [1.1](#11-github-action), [Phase 1 review](#phase-1-review)
+
+#### Release v2.1.0
+
+- [ ] On PyPI, add the trusted publisher for the `todonotifier` project: owner `ashu-tosh-kumar`, repository `todo_notifier`, workflow `release.yml`, environment `pypi`. [0.7](#07-release-prep-v210-and-housekeeping), [RELEASING.md](../RELEASING.md)
+- [ ] In GitHub, Settings, Environments, create `pypi` (optionally with a required reviewer). [0.7](#07-release-prep-v210-and-housekeeping)
+- [ ] Merge `development` into `main` soon after the stack merge (the docs deploy, the README GIF and the tag all live on `main`). A87, [RELEASING.md](../RELEASING.md)
+- [ ] Tag the merge commit on `main` as `v2.1.0` and push the tag (tag only `main`; the workflow runs for any `v*` tag). A4, A91, [RELEASING.md](../RELEASING.md)
+- [ ] Watch the Release workflow, approve the `pypi` environment, then check `pipx install todonotifier==2.1.0 && todonotifier --version` and the GitHub Release notes. [RELEASING.md](../RELEASING.md)
+- [ ] Delete the "release status" notes: `grep -rn release-note README.md site_src integrations/github-action/README.md`. A86, [RELEASING.md](../RELEASING.md)
+- [ ] Run the Quickstart once on a real project against the published package (the Action and the hook with `v2.1.0`), and check the PyPI page: README rendering, project links, the Python 3.10+ badge. [1.3](#13-documentation-and-the-5-minute-guide), [1.4](#14-discoverability-quick-wins)
+
+#### Repository settings
+
+- [ ] About box: website `https://ashu-tosh-kumar.github.io/todo_notifier/`, the description, and the 12 topics (drop `github-actions` and `pre-commit` only if you want them strictly true before release). [1.4](#14-discoverability-quick-wins)
+- [ ] Upload a 1280 x 640 social preview image (Settings, General, Social preview). [1.4](#14-discoverability-quick-wins)
+- [ ] Turn on Discussions and create "Q&A", "Ideas" and "Show and tell" (the issue chooser and the README link to it). [1.4](#14-discoverability-quick-wins)
+- [ ] Create the labels (`good first issue`, `enhancement`, `bug`, `documentation`, `detection`, `cli`, `notifications`, `owners`, plus `feedback` and `launch`) and file the 9 issues of `roadmap/good-first-issues.md`. [1.4](#14-discoverability-quick-wins), [1.5](#15-launch-and-community)
+- [ ] Check that "Private vulnerability reporting" is on (the issue chooser links to the security policy). [1.4](#14-discoverability-quick-wins)
+- [ ] Decide which branch visitors should see: the default branch is `development`, while the docs, the README GIF and releases use `main`. [1.5 findings](#15-launch-and-community), A87, A91
+- [ ] Optional: register for the OpenSSF Best Practices badge and enable the commented badge line. [1.4](#14-discoverability-quick-wins)
+
+#### Action repo and Marketplace
+
+- [ ] Create the public `todonotifier-action` repository and copy `integrations/github-action/` to its root (steps in the Action README, "Moving to the todonotifier-action repo"). A3, D2, [1.1](#11-github-action)
+- [ ] Tag `v1.0.0` and `v1` there, and give the repo its own Dependabot entry and a copy of the self-test. [1.1 follow-ups](#11-github-action), [Phase 1 review](#phase-1-review)
+- [ ] Check that the name "TODO Notifier" is free on the Marketplace, accept the Developer Agreement, pick the categories and publish the listing. [1.1 follow-ups](#11-github-action)
+- [ ] If the Action moved, update every `uses:` line in the docs, the README and the launch drafts (they point at `integrations/github-action@v2.1.0`). A82, [1.5](#15-launch-and-community)
+- [ ] Run the Action once on a real pull request (annotations, `fail-on`) and once with `workflow_dispatch` against a Slack test webhook. [Phase 1 review](#phase-1-review), 1.1 acceptance rows
+
+#### Docs site
+
+- [ ] Settings, Pages: set the source to "GitHub Actions"; if the first deploy from `main` is rejected, add `main` to the deployment branches of the `github-pages` environment. A91, [1.3](#13-documentation-and-the-5-minute-guide), [RELEASING.md](../RELEASING.md)
+- [ ] Add the Slack and Teams screenshots (`site_src/assets/slack-digest.png`, `teams-digest.png`) in place of the two placeholders in `site_src/notifications.md`. [1.3](#13-documentation-and-the-5-minute-guide)
+- [ ] Verify the Teams Workflows payload (and how the look-alike characters render) in a real tenant. [0.5](#05-chat-and-webhook-notifiers-plus-the-digest), A51
+- [ ] Edit the Medium article to link to the docs. [1.3](#13-documentation-and-the-5-minute-guide), A77
+
+#### Launch
+
+- [ ] Review and edit every draft in `roadmap/launch/` and check each ⚠️ rule (subreddits, Hacker News, newsletters, curated lists). [1.5](#15-launch-and-community)
+- [ ] Publish `v2.1.0` and deploy the docs first, then post in the order of `launch-week-checklist.md`; reply to every comment within 24 hours and ship one visible fix in launch week (good first issue 3). [1.5](#15-launch-and-community), A84
+- [ ] Fill in dependents and Insights, Traffic in `roadmap/metrics.md` (GitHub keeps 14 days), then add one row per week for 6 weeks. [1.5](#15-launch-and-community), A81
+
+#### Validation (Phase 2)
+
+- [ ] Decide the name: read `decision-name.md`, drop Mendo (recommended), and run its section 8 (manual handles, `fragmo.com` and `.app`, register searches, language check, recall test, attorney). [2.0](#20-name-and-brand-checks), [decision-name.md](decision-name.md#8-remaining-maintainer-steps-in-order), A93
+- [ ] After the decision: fill sections 9 and 10 of `decision-name.md`, replace the "Mendo" placeholder across `roadmap/` (README D6, phase files, `mendo-cloud`) and mark D6 as ✅. [2.0 follow-ups](#20-name-and-brand-checks)
+- [ ] Brand swap on the landing page, pick the host and domain (a separate public repo is recommended), create the Sheet with the `interview_ok` column and the Apps Script (or Formspree), set `FORM_ENDPOINT`, enable analytics, fill or delete the USD line, set a real contact address for removals, and check a test row. [2.1](#21-landing-page-and-waitlist-draft), [landing-page/README.md](landing-page/README.md#6-pre-launch-checklist-acceptance-criteria-of-21)
+- [ ] Go live before the launch posts, then add the "join the waitlist" line with a `utm_source` tag to the README, the docs and the Action README. [2.1](#21-landing-page-and-waitlist-draft), A98
+- [ ] Practise the interview script on two friendly engineers, set up the private tracking sheet, send the outreach, run 10 to 15 interviews, write each note within 24 hours, and ask for a recording only after a clear yes. [2.2](#22-customer-discovery-interviews-kit), [interviews/README.md](interviews/README.md), A99 to A101
+- [ ] Run `tally_interviews.py`, write `interviews/synthesis.md` from the template and link it from `decision-saas.md`. [2.2](#22-customer-discovery-interviews-kit)
+- [ ] Four to six weeks after the launch, fill in `decision-saas.md` (GO, PIVOT or NO-GO) and follow its consequence list. [2.3](#23-go--no-go-decision-template)
+
+### Decisions that most need the maintainer's eyes
+
+- **A1**: the stack targets `development`, not `main`; the merge order and the second merge into `main` follow from it.
+- **A3**: the Action lives in `integrations/github-action/` of this repository, not in the `todonotifier-action` repo that D2 asks for.
+- **A4**: no tag, no PyPI upload and no GitHub Release was made; all publishing is yours.
+- **A8, A22**: the CLI defaults (90-day default due date, `require_comment` on) decide what a first scan shows; the library defaults are untouched.
+- **A46**: 2.0.0 was never published, so the v2.1.0 changelog carries 2.0.0's breaking changes, and 3.9 users stay on 1.4.0.
+- **A47**: the HTML reports and emails ignore default due dates, so "Expired" lists only explicit dates.
+- **A55, A56**: the "Production/Stable" classifier and keeping the classic `[tool.poetry]` layout.
+- **A65, A88**: the Action's `pr` mode counts only changed lines, and a config `fail_on` is ignored by the Action.
+- **A87, A91**: absolute README URLs on `main` and docs deployed from `main` while the default branch is `development`.
+- **A93**: drop Mendo (a funded company with that name exists) and take Fragmo forward provisionally.
+- **A100, A102**: the interview commitment ladder, and that waitlist signups are contacted only when they ticked the interview box.
+
+### Known limitations accepted on purpose
+
+- **Detection:** the comment detector is a heuristic (nested block comments, Ruby `=begin`, heredocs, `<script>` in HTML); TODOs in docstrings are not reported with `require_comment`; `{1}` or `{may}` parse as dates (dateutil is lenient); a lone `\r` shifts line numbers for blame and `--since`; `DEFAULT_EXCLUDE_DIRS` skips tracked directories named `build`, `dist`, `migrations` and similar.
+- **Owners and dates:** `@alice` and `Alice` (blame) are two owners unless aliased; created dates are UTC; submodules and nested repositories are not blamed with their own history; the table's DUE column does not mark a not-yet-due default date (good first issue 3).
+- **Performance and robustness:** blame costs about 2.2x on tiny files (one process per TODO file); `git ls-files` failures fall back to walking the tree; `KeyboardInterrupt` prints a traceback; `report` writes `.report/` into the project; raw URLs in a TODO message are auto-linked by Slack, Teams and Markdown.
+- **Not verified here:** the Teams payload against a real tenant, SARIF against the official schema, Windows and macOS (the code handles drives and separators but nothing ran there), real GitHub runs of the Action beyond the CI of PR #176, and every ⚠️ item in the launch drafts, the name research and the landing-page hosting notes.
+- **Action:** a config `fail_on` is not used; a config-file notifier (for example email) is used only together with a webhook input; the sticky comment is found by a hidden marker, so a quoted copy can confuse it; `safe.directory` stays in the global git config of a self-hosted runner; only `ubuntu-latest` is tested.
+- **Packaging:** `poetry check` prints Poetry 2 deprecation warnings for the `[tool.poetry]` layout; the `Homepage` project URL points to PyPI; Python 3.10 reaches end of life in October 2026, so raising the minimum to 3.11 belongs in the next major release (D1).
+- **Phase 2:** the pricing, the tiers and the GO thresholds are illustrative; the research is a web search, not trademark or domain clearance; the interviews, the waitlist and the decision do not exist until the maintainer runs them.
+
 
 ## Decisions made without the maintainer (please review)
 
@@ -163,7 +280,10 @@ product and engineering basis. Each one is easy to reverse.
 | A98 | Analytics is a commented-out Plausible or Umami slot (marked ⚠️ check current pricing and the current snippet). Source attribution does not depend on it: `utm_source`, `utm_medium`, `utm_campaign` and `document.referrer` go into hidden form fields (plus `brand`), and nothing is stored in the browser. The library README, docs and Action README were **not** changed (no URL yet); the links are a follow-up in `landing-page/README.md`. The mock dashboard numbers are internally consistent (owners sum to 214 open and 37 overdue, age buckets sum to 214 and 58 stale) and labelled illustrative. | Covers "analytics record visits by source" without choosing a vendor for the maintainer, and keeps the page honest (no fake logos, quotes or counts). |
 | A99 | The kit lives in `roadmap/interviews/` (README, outreach, script, notes template, synthesis template, `scripts/tally_interviews.py`, `notes/`). The tally reads a `key: value` front matter block (`pain`, `recurring`, `would_pay`, `amount_inr`, `commitment`, `region`, `company_size`, `example`) from every `notes/*.md` and prints the 2.3 counts (pain 4 or more with a recurring problem, would pay = yes, any commitment, and "would pay or commit" against the 5 needed) plus region and company-size breakdowns. Notes marked `example: true`, or whose file name starts with `example`, are skipped unless `--include-examples` is given. | The 2.3 GO criteria need countable evidence; a plain front matter block keeps the notes readable and the script standard-library only. The script sits under `roadmap/`, not `scripts/`, because it belongs to the roadmap, not to the library. |
 | A100 | The script is 25 minutes: intro and consent, their world, how they handle it today, the last time it hurt, what they tried, ownership and spend, and only in the last 5 minutes the landing page, the willingness to pay (the interviewee names a number before seeing the ₹1,499 and ₹4,999 anchors) and the commitment ladder (paid pilot, then pre-order, then LOI). A commitment counts only with a concrete next step; no payment or signature is taken during the call. | Matches the 2.3 criterion "commit to a paid pilot, pre-order or LOI" and keeps polite yeses out of the count. Nothing can be bought yet, so the money step is a written follow-up. |
-| A101 | Privacy: the tracking table (names, contact details) is kept outside the repository; committed notes use the alias `INT-NNN` and no names, employers or repository names; audio is recorded only after a clear yes and deleted after the notes are written. Waitlist signups are emailed once, because the form has no interview-contact checkbox. | The notes should be shareable in the synthesis without personal data, and the waitlist consent covers early access, not research calls. ⚠️ Not legal advice; the README says to check the DPDP Act and the GDPR. |
+| A101 | Privacy: the tracking table (names, contact details) is kept outside the repository; committed notes use the alias `INT-NNN` and no names, employers or repository names; audio is recorded only after a clear yes and deleted after the notes are written. Waitlist signups are emailed once, because the form has no interview-contact checkbox (superseded by A102). | The notes should be shareable in the synthesis without personal data, and the waitlist consent covers early access, not research calls. ⚠️ Not legal advice; the README says to check the DPDP Act and the GDPR. |
+| A102 | The landing page form has an optional checkbox "OK to contact me for a 20-minute interview" (`interview_ok`, value `yes` only when ticked; the Apps Script writes `no` otherwise). The interview kit contacts waitlist signups **only** if they ticked it (README, outreach message 3). The privacy line says so. | The known follow-up of 2.1 and 2.2. A waitlist signup agreed to early access emails, not to research calls, so a separate, optional consent is the honest way to use the waitlist as a recruiting source. |
+| A103 | `--format sarif` percent-encodes the file path in `artifactLocation.uri` (`urllib.parse.quote`, `/` kept). The `github` format and the other outputs keep raw paths. | A SARIF `uri` is a URI reference: `#` in a file name started a fragment and a space is not valid, so GitHub code scanning could show a wrong location. Found by scanning a file named `sub dir/naïve file.py` in the final review. |
+| A104 | The roadmap keeps "Mendo" as its placeholder until the maintainer decides, but D6, the Phase 2 shortlist and the Phase 3 positioning now each carry one note pointing to `decision-name.md` (Mendo is taken, Fragmo is provisional). The D1 text says that 3.9 users stay on 1.4.0 (A46). | A reader of the roadmap alone would otherwise never see that the placeholder is known to be bad. The decision itself (D6) is not changed. |
 
 ## Notes per workstream
 
@@ -756,7 +876,7 @@ to fix the GIF and says the docs deploy from `main`.
 **Follow-ups:**
 - After the page has a URL, add "Team dashboard coming soon: join the waitlist" to `README.md`, the docs and `integrations/github-action/README.md` (use `utm_source=readme|docs|action`). Not done now on purpose.
 - 1.5 launch posts may link the page once it is live (A85 says to add one line only if so).
-- 2.2 can use the waitlist as a recruiting source; the form has no "can we contact you for an interview" checkbox, which could be added if interviews need it.
+- 2.2 can use the waitlist as a recruiting source; the form has no "can we contact you for an interview" checkbox, which could be added if interviews need it. (Done in the final review, A102.)
 - The free-tier limits, pricing and UIs of GitHub Pages, Cloudflare Pages, Google Apps Script, Formspree, Tally, Plausible and Umami are ⚠️ unchecked.
 
 ### 2.2 Customer discovery interviews (kit)
@@ -768,7 +888,7 @@ to fix the GIF and says the docs deploy from `main`.
 **Not done (maintainer steps):** run the interviews, fill `notes/`, write `synthesis.md` from the template and link it from `decision-saas.md` (2.3). The brand is not named in the kit (`[Brand]`, "the product"), so the name decision (2.0) needs no changes here.
 
 **Follow-ups:**
-- Add an optional "may we contact you for a short interview" checkbox to the landing page form before launch (2.1).
+- Add an optional "may we contact you for a short interview" checkbox to the landing page form before launch (2.1). (Done in the final review, A102.)
 - The thresholds (5 who would pay or commit, 3 with pain 4 or more) are the 2.3 rules of thumb, not benchmarks; the tally prints them as "needed" and does not decide anything.
 - The tally counts one interview per team; two people from one team have to be merged by hand.
 
@@ -779,3 +899,121 @@ Built: `roadmap/decision-saas.md`. It has an inputs checklist that links metrics
 Written by the orchestrator directly, with no sub-agent, because it is a short template.
 
 Maintainer step: fill it in 4 to 6 weeks after the launch (1.5).
+
+### Phase 2 review
+
+Reviewer: the final review agent, branch `roadmap/final-review` (on top of Phase 0, Phase 1 and 2.0 to 2.3). Method: read every Phase 2 deliverable against
+[phase-2-validation.md](phase-2-validation.md) and its acceptance criteria; compared the three brand names, every price and every waitlist question across
+`roadmap/` with `grep`; opened the landing page in headless Chromium (Playwright, 375 px and 1280 px, light and dark, screenshots not committed); ran the
+interview tally; then the final end-to-end review of the whole stack (below).
+
+#### Requirements audit
+
+Status: met / partly / not met / maintainer step. Phase 2 is mostly human work, so "maintainer step" is the honest status for most acceptance criteria.
+
+| # | Requirement | Status | Evidence |
+|---|---|---|---|
+| 2.0 | Deliverable `decision-name.md`: evidence per check, tagline, a recommendation | met | [decision-name.md](decision-name.md): side-by-side tables for Mendo and Fragmo (domains by RDAP, PyPI and npm, trademark and product search), a lighter pass for Paydown and Mora, tagline candidates, recommendation (A93) |
+| 2.0 | The chosen name, the domains and handles **registered** | maintainer step | Nothing is bought or registered, by design. Sections 9 and 10 of `decision-name.md` are empty templates |
+| 2.0 | Scope 1 trademark search (IP India, USPTO, WIPO, classes 9 and 42) | partly | A web search only (no register search was possible from here, the kit is section 5). An attorney check is a maintainer step |
+| 2.0 | Scope 2 domains (`.com`, `.dev`, `.io`, `.app`, `get<name>.com`, `<name>hq.com`) with prices in INR | partly | Registered or free from registry answers; `.io` is manual (A95); the price column is empty on purpose (no source) |
+| 2.0 | Scope 3 handles (GitHub, PyPI, npm, X, LinkedIn, Marketplace) | partly | PyPI and npm checked; GitHub, X, LinkedIn and Marketplace are manual with URLs (A94) |
+| 2.0 | Scope 4 language check (5 people) and scope 5 recall test (5 developers) | maintainer step | Kits and results tables in sections 6 and 7 |
+| 2.0 | Run every check on both Mendo and Fragmo | met | Section 2 compares both; the recommendation is to drop Mendo |
+| 2.0 | Replace the "Mendo" placeholder across `roadmap/` | maintainer step (by design) | Must wait for the final decision. Review fix: D6, the Phase 2 shortlist and Phase 3 now say where the research stands (see "Consistency across files") |
+| 2.1 | Scope 1 page aimed at managers: headline, three benefits, "coming next" line asking which source, mock dashboard, INR pricing sketch, waitlist form (email, size, repos, tool, pay yes/maybe/no) | met | [index.html](landing-page/index.html): every element is there with the spec's wording. Rendered in Chromium: no console errors, no horizontal scroll at 375 px, light and dark both fine |
+| 2.1 | Scope 4 the page is honest that the product is not built | met | "Early draft, not built yet" banner, footer note, "Illustrative data" labels on the dashboard and prices, no logos, quotes or counts |
+| 2.1 | Scope 2 stack: static HTML, a form that ends in a sheet, privacy-friendly analytics | partly | Static page, Apps Script and Formspree wiring documented in [landing-page/README.md](landing-page/README.md), a commented Plausible/Umami slot. Hosting, the sheet, the endpoint and the analytics are maintainer steps |
+| 2.1 | Scope 3 link it from the README, the docs and the Action README | maintainer step | No URL yet (A98). The wording and UTM tags are in `landing-page/README.md` section 7 |
+| 2.1 | AC: live before 1.5 launches, signups arrive in a sheet, analytics record visits by source | maintainer step | Pre-launch checklist in `landing-page/README.md` section 6. Source attribution already travels in hidden fields (`utm_*`, referrer, brand) |
+| 2.1 | Known follow-up: an optional interview checkbox, and a reference from the interview kit | met (fixed in this review) | `interview_ok` checkbox "OK to contact me for a 20-minute interview" (optional, in the privacy line, the sheet columns and the Apps Script); [interviews/README.md](interviews/README.md) lists it as a recruiting source and [outreach.md](interviews/outreach.md) message 3 is for people who ticked it. Chromium at 375 px and 1280 px, light and dark: the box and its "(optional)" hint read as one sentence (the first version put the hint at the far right, fixed); no horizontal scroll; a stubbed endpoint received `interview_ok=yes` when ticked and no field when not (A102) |
+| 2.2 | Scope 3: outreach message, problem-first script with the spec's questions, notes template | met | [outreach.md](interviews/outreach.md) (five channels, each with one nudge), [script.md](interviews/script.md) (25 minutes, the five spec questions, landing page and price only at the end), [notes-template.md](interviews/notes-template.md) (role, size, process, pain 1 to 5, willingness to pay, quotes) |
+| 2.2 | Scope 4: synthesis (themes, counts, quotes, ranked pains) | met as a template | [synthesis-template.md](interviews/synthesis-template.md) and `scripts/tally_interviews.py` (15 tests in `tests/test_tally_interviews.py`, run again here on the fake example) |
+| 2.2 | Scope 2: recruiting sources (waitlist, launch commenters, LinkedIn, r/developersIndia, meetups) | met | `interviews/README.md` |
+| 2.2 | AC: at least 10 interviews with notes in the template | maintainer step | `notes/` holds only the marked fake example |
+| 2.2 | AC: a synthesis with themes, counts and quotes, linked from `decision-saas.md` | maintainer step | `decision-saas.md` links the template, the tally and the future `synthesis.md` |
+| 2.3 | Deliverable `decision-saas.md`: the decision, the evidence, Phase 3 scope changes | met as a template | [decision-saas.md](decision-saas.md): inputs checklist, one evidence row per GO criterion (the four signals of the spec, the waitlist one as two rows), a "Threshold used" column, GO/PIVOT/NO-GO guidance and consequence lists |
+| 2.3 | Exit: a written GO / NO-GO decision backed by interview notes and the 1.5 metrics | maintainer step | Needs the launch and 4 to 6 weeks of data |
+
+Totals: 9 met, 4 partly, 8 maintainer steps (21 rows). Nothing in Phase 2 can be "done" by an agent beyond the drafts; the drafts are complete.
+
+#### Consistency across files
+
+- **Brand.** Three names appear, each with a reason where it appears. *Mendo* is the roadmap's placeholder (D6, Phase 2 shortlist, Phase 3 positioning and the `mendo-cloud` repo name):
+  the 2.0 research recommends dropping it, but the decision is the maintainer's, so the placeholder stays. Before this review none of these three places said so, and a reader of
+  `roadmap/README.md` D6 would never learn that Mendo is taken; each now carries one note that points to [decision-name.md](decision-name.md) (A104). *Fragmo* is the provisional
+  brand on the landing page only, behind one constant, with a visible HTML comment and a README that explains the swap (A96). The interview kit says `[Brand]` or "the product"
+  (A99). `grep -ri mendo` finds it only in `roadmap/` files; the library, README, docs and the Action never mention either name.
+- **INR pricing** is the same everywhere: Free ₹0 (1 repository), Team ₹1,499 per month, Business ₹4,999 per month in the spec, `index.html`, `interviews/script.md`,
+  `notes-template.md` and `synthesis-template.md`. No file has a USD number (the landing page has one visible "USD equivalents: to be added" line).
+- **Waitlist questions** match across the landing page form, the spec, the sheet columns and the Apps Script (`email, company_size, repos, current_tool, pay_intent, next_source`, plus
+  `interview_ok` since this review), the 2.3 template (`Share of signups answering "yes" to paying` is `pay_intent = yes`; "Most-requested next debt source" is `next_source`) and the
+  interview kit (source `waitlist`; the interview script asks the same "how do you track it today" and "would you pay" in the interviewee's own words, before showing prices).
+- **Privacy.** The landing page privacy line, the interview README and outreach message 3 now agree: a waitlist signup is contacted for an interview only if they ticked the box.
+  A101 said "emailed once because the form has no checkbox"; A102 supersedes it.
+
+#### Issues found and fixed (Phase 2)
+
+1. The interview checkbox was missing (the known follow-up of 2.1 and 2.2): added, with the README, the sheet columns, the Apps Script and the interview kit changes (A102). The first version
+   rendered "(optional)" at the far right of the row because a `label` that is a flex container turned the hint into a separate flex item; the text is one `span` now.
+2. D6 in `roadmap/README.md`, the Phase 2 shortlist and Phase 3 still said "working name Mendo" with no hint that 2.0 found a funded company of that name (A104).
+3. `roadmap/README.md` still said "3.9 users stay on `2.0.x`" and "non-breaking minor release", which A46 had overtaken (2.0.0 was never published; its breaking changes ship in v2.1.0): reworded.
+
+#### Left unfixed on purpose (Phase 2)
+
+- The pricing, tiers, thresholds and free-tier limits of the hosting and form tools are rules of thumb or ⚠️ unchecked, as the files say.
+- The tally counts one interview per team by hand; the synthesis is empty until interviews exist.
+- `interview_ok` is only as good as the sheet wiring: the page cannot confirm delivery (`no-cors`), so the first test submission must be checked in the sheet (the README says so).
+
+#### Final end-to-end review (stack tip, Python 3.10 to 3.14)
+
+**Fresh-user journey** (clean Python 3.10 venv, `poetry build`, the wheel installed, a new sample repository: two authors with commits in January and October 2026, dated and undated TODOs,
+a gitignored `node_modules` with a TODO in it, a Latin-1 file, a Markdown file with prose): `todonotifier --version` prints `todonotifier 2.1.0`; `scan` finds 5 TODOs (the `node_modules` one and the
+Markdown prose are skipped, the Latin-1 file is read with a replacement character), owners and ages from blame, `1 overdue, 2 stale`; `--fail-on expired|stale|incomplete|any` exit 1 with the messages
+the docs show, `none` exits 0; `--format json` has the documented fields, `github` prints `::error/::warning/::notice` with repository-relative paths, `markdown` is the digest, `sarif` is 2.1.0 with 5
+results; `report` writes the three HTML files and prints their paths; `init` creates `.todonotifier.toml`, a second `init` changes nothing, a scan after `init` (also with `--ignore-case --no-require-comment`,
+and for a `pyproject.toml`) reports nothing from the starter; `notify` with `--webhook-url-env` and `--slack-webhook-env` pointing at a local HTTP server delivered both payloads (`http://localhost` allowed,
+`http://example.com` rejected with exit 2, an unset variable is exit 2 that names the variable, no notifier is exit 2 with the hint, a dead endpoint is exit 3 after 3 attempts and `--fail-on` wins with 1);
+`--since HEAD~1` reports the one TODO of the last commit, also with an explicit file (a changed file gives the item, an unchanged one none), from a subdirectory and with a config `paths`;
+`python -m todonotifier` behaves the same; a config file `fail_on = "stale"` makes `scan` and `report` and `notify` exit 1, `--fail-on none` overrides it. `pre-commit try-repo <this repo> todonotifier
+--files ...` gives `Failed` for an overdue explicit date (with `-` owners, as the docs say) and `Passed` for a clean file; `todonotifier-strict` fails for an item without an owner or date. Every output matched
+`README.md`, `site_src/quickstart.md` and `site_src/cli.md`; the one mismatch found was the SARIF path encoding below. The sample repository, the venvs and `dist/` live in the session scratchpad.
+
+**Library backward compatibility.** `driver.run` with `DefaultConfig(save_html_reports=True, ignore_todo_case=True)` and `ConnectMethod.DRY_RUN_DIR`, `ConnectMethod.DRY_RUN_FILE` and `ConnectMethod.LOCAL` on the
+sample repository writes the three reports each time (`.report/` under the current directory). Against the unmodified `origin/development` code, the "Expired" report of `DRY_RUN_DIR` and `DRY_RUN_FILE` is byte-identical
+and the module-wise report of `DRY_RUN_FILE` too; for `DRY_RUN_DIR` the new one differs only because the old code crashed on the Latin-1 file and so listed fewer files (it is the 0.4 fix).
+`examples/python_api_example.py` still imports and uses the old API.
+
+**Checks** (run after the last code change). Tests with coverage on each Python, from a throw-away venv per version with the package installed in editable mode (the Action tests run `python -I`, so the package must be installed):
+
+| Python | Tests | Coverage (`fail_under = 100`) |
+|---|---|---|
+| 3.10 (the Poetry env) | 857 passed | 100% (2584 statements) |
+| 3.11 | 857 passed, 207 subtests | 100% (2584) |
+| 3.12 | 857 passed, 207 subtests | 100% (2584) |
+| 3.13 | 857 passed, 207 subtests | 100% (2584) |
+| 3.14 | 857 passed, 207 subtests | 100% (2563: the other TOML import branch is excluded) |
+
+On Python 3.10 also: `black --check .`, `isort --check-only .`, `flake8 . --config ./tox.ini` and `pre-commit run --all-files` are clean (the hooks change nothing); `mkdocs build --strict` passes (`poetry install --with dev,docs`, `site/`
+deleted afterwards); `scripts/gen_docs_reference.py --check` exits 0; `todonotifier scan . --fail-on expired --format github` on this repository prints `0 TODOs` (exit 0); `poetry check` exits 0 (deprecation warnings only, A56);
+`actionlint` (`~/go/bin/actionlint`) is clean for all of `.github/workflows/`; `poetry build` gives the wheel and sdist. Not run here: the GitHub workflows themselves. (The first run of the 3.11 to 3.14 venvs failed three Action tests
+because the package was not installed in them; that was the venv, not the code.)
+
+#### Issues found and fixed (final end-to-end review)
+
+4. **SARIF locations were not valid URI references.** `--format sarif` wrote the raw file path as `artifactLocation.uri`, so a file name with `#` (read as a fragment) or a space produced a wrong or broken
+   location in GitHub code scanning (A103). Paths are percent-encoded now; test `test_formatters.py::TestSarif::test_paths_are_percent_encoded_because_a_sarif_uri_is_a_uri_reference`.
+5. `utils.store_html` documented the default folder as `.reports`; it is `.report`.
+
+#### Checked and fine (final review)
+
+- The interactions the brief names: a config `fail_on` loses to `--fail-on` (also `none`), applies to `scan`, `report` and `notify`, and is deliberately ignored by the Action (it scans with `--fail-on none`, applies its own
+  `fail-on` input last, and its digest `notify` step passes `--fail-on none`); `require_comment` is on in the CLI and the starter file says so, a scan after `init` reports nothing from the starter; `--since` with
+  explicit files keeps only the TODOs on changed lines (and a new untracked file counts in full), from any directory, and `--fail-on` is judged after it; `notify --since` sends nothing when no TODO is on a
+  changed line and always sends otherwise; the pre-commit hooks pass only `--no-blame`, `--fail-on` and the file list, which `cli.py` accepts; a file with a space or non-ASCII characters in its name works in the table, the `github`
+  format and SARIF.
+- No `3.9` support claims remain (the only hits are the "3.9 users stay on 1.x" notes and the v1.3.2 changelog line), `user_driver.py` is mentioned only in the changelog line about its move, `.report/` is not tracked,
+  there are no secrets (the only `hooks.slack.com/services/...` strings are test placeholders such as `T000/B000/TOPSECRET`), and `git diff --stat origin/development...HEAD` shows no stray files (the tracked binary is `assets/demo.gif`).
+- `pyproject.toml`: version 2.1.0, `Requires-Python >=3.10,<4.0`, 14 classifiers, 5 project URLs, runtime dependencies `gitpython`, `jinja2`, `python-dateutil`, and `tomli` on 3.10 only (read from the built wheel's METADATA);
+  the wheel holds the templates and the JSON Schema and no tests. AGENTS.md, CONTRIBUTING.md and RELEASING.md were compared with the code, the workflows and the commands above: no mismatch. The README changelog `### v2.1.0` has
+  one bullet per workstream and per review with no duplicates; this review added one line.
