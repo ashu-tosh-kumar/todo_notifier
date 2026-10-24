@@ -34,8 +34,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | # | Workstream | Branch | PR | Status | Notes |
 |---|---|---|---|---|---|
 | - | Roadmap docs + progress file | `claude/serene-hopper-qkult2` | [#165](https://github.com/ashu-tosh-kumar/todo_notifier/pull/165) | ✅ done | Merged latest `development` |
-| 0.1 | Foundation | `roadmap/0.1-foundation` | | ✅ done | See "Notes per workstream" below |
-| 0.2 | Config file | `roadmap/0.2-config-file` | | ⬜ todo | |
+| 0.1 | Foundation | `roadmap/0.1-foundation` | [#166](https://github.com/ashu-tosh-kumar/todo_notifier/pull/166) | ✅ done | See "Notes per workstream" below |
+| 0.2 | Config file | `roadmap/0.2-config-file` | | ✅ done | See "Notes per workstream" below |
 | 0.3 | Git blame ownership and age | `roadmap/0.3-git-blame` | | ⬜ todo | |
 | 0.4 | Tags, languages, detection accuracy | `roadmap/0.4-detection` | | ⬜ todo | |
 | 0.5 | Chat and webhook notifiers + digest | `roadmap/0.5-notifiers` | | ⬜ todo | |
@@ -69,6 +69,16 @@ product and engineering basis. Each one is easy to reverse.
 | A4 | 0.7 prepares the release (version bump, changelog, CI, release workflow) but does not tag or publish. | Publishing to PyPI and creating tags are irreversible, outward-facing actions, and PyPI Trusted Publishing must first be configured by the maintainer. |
 | A5 | Phase 2 deliverables that are not library code (name research, landing page draft, interview kit, decision template) live under `roadmap/`. | D3: nothing SaaS-specific goes into the library. Keeping them in `roadmap/` keeps them reviewable without touching the package. |
 | A6 | Development and tests run on Python 3.10 (the new minimum, D1). | Catches accidental use of 3.11+ features, and exercises the `tomli` fallback path. |
+| A7 | 0.2 API: `find_config_file(start)`, `load_config(config_path, start)`, `resolve_settings(cli_overrides, config_path, start)` and `resolve_project_config(...)` (returns `ProjectConfig` with `settings`, `fail_on`, `notify`, `source`), in `settings_file.py`. Precedence: CLI overrides > file > CLI/config-file defaults > `ScanSettings` defaults; a `None` override means "not given". Errors are `ConfigError`. | The roadmap signature plus what the 0.6 CLI needs (`fail_on`, `notify`). |
+| A8 | `CLI_DEFAULTS` (one dict in `settings_file.py`): `default_due_days=90`, `extensions="common"`, `tags=[TODO, FIXME, HACK, XXX]`, `respect_gitignore=True`, `use_git_blame=True`. Library defaults are unchanged. | D4/D5, without changing the library API. |
+| A9 | `languages.py` with `COMMON_EXTENSIONS` and `expand_extensions` (`"common"` as a string or list element; de-duplicated, ordered, dots stripped). | 0.4 extends this module with comment markers. |
+| A10 | Accepted keys are all `ScanSettings` fields except `author_aliases`, plus `fail_on`, `notify`, `authors`. Config-file `paths` are relative to the config file; CLI paths are left as given. | Matches how people read a config file. |
+| A11 | `[tool.todonotifier.authors]` (email to handle) fills the new `ScanSettings.author_aliases`. Emails are lower-cased on load. | 0.3 uses it; it must look emails up lower-case. |
+| A12 | Notifier schema under `[tool.todonotifier.notify.<name>]` for `slack`, `teams`, `webhook`, `email` (keys listed in the `settings_file.py` docstring and the README). `*_env` keys name env vars (validated as variable names; values are never read, stored or echoed). Literal-secret keys are rejected with a hint. Every table has `enabled` (default true), added to the validated dict. | Shared with 0.5. |
+| A13 | `tomli = { version = "^2.0", python = "<3.11" }`; `tomllib` on 3.11+. | Decision 7 of the 0.2 brief; the lock only moved `tomli` into the main group. |
+| A14 | `default_due_days = 0` means "off" (stored as `None`), because TOML has no null. | `ScanSettings.default_due_days=None` needs a config spelling. |
+| A15 | `exclude_dirs` / `exclude_files` in the file or CLI overrides are **added** to the built-in exclusions (tables `name`, `pattern`, `abs_path`, any case), never replacing them. | Replacing would silently re-scan `venv` and friends. |
+| A16 | An explicit `--config` path to a `pyproject.toml` without `[tool.todonotifier]` is an error; any other explicit file name is read with top-level keys. A broken `pyproject.toml` met during discovery is an error too. | Fail loudly rather than silently ignore the user's file. |
 
 ## Notes per workstream
 
@@ -100,3 +110,17 @@ Follow-ups:
 - 0.4: `tags`, `require_comment` and `respect_gitignore` are accepted by `ScanSettings` but not acted on yet; `from_legacy` takes a `tag`
   argument for when the parser reports the matched tag. `.git` is not in `DEFAULT_EXCLUDE_DIRS` (harmless for `.py`, but relevant for other extensions).
 - 0.7: CI matrix and docs workflow still on 3.9; README badge row bug is for 1.4.
+
+### 0.2 Config file
+
+Built: `todonotifier/settings_file.py` (`find_config_file`, `load_config`, `resolve_settings`, `resolve_project_config`, `ProjectConfig`,
+`ConfigError`, `CLI_DEFAULTS`), `todonotifier/languages.py` (`COMMON_EXTENSIONS`, `expand_extensions`), `ScanSettings.author_aliases`, the
+`tomli` conditional dependency, the README "Configuration file" section and changelog bullet. Decisions A7 to A16 above. 100% line coverage
+of the new modules; the `tomllib` branch was also run once on Python 3.13 (all new tests pass there).
+
+Follow-ups:
+- 0.6: call `resolve_project_config(cli_overrides, config_path, start=<first scan path>)`; map `ConfigError` to exit code 2; pass `fail_on` from
+  `ProjectConfig.fail_on` (CLI `--fail-on` goes in the overrides as `fail_on`). Leave relative CLI `paths` as given.
+- 0.5: consume `ProjectConfig.notify` (validated dicts with `enabled` always present; read the env vars named by `*_env` yourself, at send time). Extend `_NOTIFIER_SCHEMA` in `settings_file.py` if a notifier needs more keys.
+- 0.3: look up `ScanSettings.author_aliases` with the lower-cased git email.
+- 0.4: `require_comment`, `ignore_case`, `respect_gitignore` and `tags` are now settable from the file but still ignored by the scanner until 0.4.

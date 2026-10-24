@@ -258,6 +258,97 @@ C++, etc.)
 - **Summary Generators**: Pluggable report generators with HTML output
 - **Notification System**: Extensible notification framework (Email included)
 
+## Configuration file
+
+Scan options can live in your project instead of on the command line. TODO Notifier reads
+`[tool.todonotifier]` from `pyproject.toml`, or a `.todonotifier.toml` file with the same
+keys at the top level (drop the `tool.todonotifier` prefix from the table names).
+
+**Discovery:** starting at the scan path (its directory, if it is a file), it walks up to
+the git root (or the filesystem root). In each directory `.todonotifier.toml` is checked
+first, then `pyproject.toml` (only if it has a `[tool.todonotifier]` table). The first file
+found wins. An explicit path overrides discovery. With no file, the defaults apply.
+
+**Precedence**, highest first: command line flags, config file, the command line and config
+file defaults (shown below), then the `ScanSettings` defaults. The library API (`ScanSettings()`,
+`DefaultConfig`) keeps its own, more conservative defaults.
+
+Unknown keys and wrong types fail with a message naming the key and the file, for example
+`Unknown key 'tagz' in pyproject.toml [tool.todonotifier]. Did you mean 'tags'?`.
+
+```toml
+# pyproject.toml. Every key is optional; the values shown are the defaults of the command
+# line and the config file, unless a comment says otherwise.
+[tool.todonotifier]
+# Files and directories to scan, relative to THIS file. (ScanSettings default: ["."])
+paths = ["src", "tests"]
+# File extensions without the dot. "common" expands to py, js, jsx, ts, tsx, java, kt, go,
+# rs, rb, php, c, h, cpp, hpp, cs, swift, scala, sh, sql, yaml, yml, toml, html, css, scss
+# and md. It can be mixed with others: extensions = ["common", "proto"]
+extensions = "common"
+# Tags to look for.
+tags = ["TODO", "FIXME", "HACK", "XXX"]
+# Match tags case insensitively. (default: false)
+ignore_case = false
+# Count a tag only when it is inside a comment. (default: false)
+require_comment = false
+# Skip files ignored by git.
+respect_gitignore = true
+# Fill missing authors and creation dates from git blame.
+use_git_blame = true
+# An undated TODO becomes stale this many days after it was added. 0 turns this off.
+default_due_days = 90
+# With commit_sha, builds links to each TODO in the report. (default: unset)
+repo_web_url = "https://github.com/your-org/your-repo"
+commit_sha = "0123456789abcdef"
+# When the command line should exit non-zero: "none", "expired", "stale" or "any".
+fail_on = "none"
+
+# Exclusions are ADDED to the built-in ones (DEFAULT_EXCLUDE_DIRS / DEFAULT_EXCLUDE_FILES).
+# Each table takes the lists name, pattern (regular expressions) and abs_path.
+[tool.todonotifier.exclude_dirs]
+name = ["generated", "vendor"]
+pattern = [".*_cache"]
+[tool.todonotifier.exclude_files]
+name = ["legacy.py"]
+
+# Maps git author emails to the handle shown in reports.
+[tool.todonotifier.authors]
+"ashu@example.com" = "ashu"
+
+# Notifications. Config files never hold secrets: every `*_env` key is the NAME of an
+# environment variable, and a key such as `webhook`, `url`, `password` or `token` is rejected.
+# Every notifier also takes `enabled` (default: true).
+[tool.todonotifier.notify.slack]
+webhook_env = "TODO_SLACK_WEBHOOK"   # required
+max_items = 20                        # optional
+
+[tool.todonotifier.notify.teams]
+webhook_env = "TODO_TEAMS_WEBHOOK"   # required
+max_items = 20                        # optional
+
+[tool.todonotifier.notify.webhook]
+url_env = "TODO_WEBHOOK_URL"          # required
+headers_env = "TODO_WEBHOOK_HEADERS"  # optional: variable holding a JSON object of extra headers
+
+[tool.todonotifier.notify.email]
+smtp_host = "smtp.example.com"        # required
+smtp_port = 587                       # optional
+sender = "todo@example.com"           # required
+recipients = ["team@example.com"]     # required
+username_env = "TODO_SMTP_USER"       # optional
+password_env = "TODO_SMTP_PASSWORD"   # required
+starttls = true                       # optional
+```
+
+From Python:
+
+```python
+from todonotifier.settings_file import resolve_settings
+
+settings = resolve_settings({"tags": ["TODO"]}, start="src")  # CLI-style overrides win; None means "not given"
+```
+
 ## Customization
 
 ### Custom Summary Generators
@@ -416,6 +507,14 @@ details.
 - Added `BaseSummaryGenerator.reset()` (does nothing by default; the built-in generators
   clear their container). `driver.run` calls it before generating, so reusing a config
   (including the shared `default_config`) across runs no longer duplicates report rows.
+- Added config file support: `[tool.todonotifier]` in `pyproject.toml` or `.todonotifier.toml`,
+  found by walking up from the scan path to the git root
+  (`todonotifier.settings_file.resolve_settings`, see "Configuration file"). Command line
+  flags beat the file, which beats the new command line defaults (all common languages,
+  `TODO`/`FIXME`/`HACK`/`XXX`, git blame and `.gitignore` on, 90-day default due date).
+  Notifier settings reference environment variable names, never secrets. Added
+  `ScanSettings.author_aliases` and `todonotifier.languages` (the `"common"` extension preset).
+  New dependency: `tomli` on Python 3.10 (`tomllib` is used on 3.11+).
 
 ### v2.0.0 (Unreleased)
 
