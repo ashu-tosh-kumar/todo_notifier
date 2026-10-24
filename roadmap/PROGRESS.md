@@ -45,8 +45,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 1.4 | Discoverability quick wins | `roadmap/1.4-discoverability` | [#174](https://github.com/ashu-tosh-kumar/todo_notifier/pull/174) | ✅ done | See "Notes per workstream" (1.4); maintainer GitHub settings checklist there |
 | 1.2 | pre-commit hook | `roadmap/1.2-pre-commit` | [#175](https://github.com/ashu-tosh-kumar/todo_notifier/pull/175) | ✅ done | See "Notes per workstream" (1.2); decisions A60 to A63 |
 | 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | [#176](https://github.com/ashu-tosh-kumar/todo_notifier/pull/176) | ✅ done | See decision A3 and decisions A64 to A71; notes under "Notes per workstream" (1.1); maintainer steps to move it to its own repo are in `integrations/github-action/README.md` |
-| 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | | ✅ done | See decisions A72 to A80 and notes under "Notes per workstream" (1.3); maintainer steps (screenshots, Medium post, Pages setting) are listed there |
-| 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | | ⬜ todo | Posting is a maintainer step |
+| 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | [#177](https://github.com/ashu-tosh-kumar/todo_notifier/pull/177) | ✅ done | See decisions A72 to A80 and notes under "Notes per workstream" (1.3); maintainer steps (screenshots, Medium post, Pages setting) are listed there |
+| 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | | 🟡 in progress | Posting is a maintainer step |
 | P1 | Phase 1 review | | | ⬜ todo | |
 | 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | | ⬜ todo | |
 | 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | | ⬜ todo | |
