@@ -32,12 +32,14 @@ src="https://github.com/ashu-tosh-kumar/todo_notifier/assets/37182127/73f4b642-f
 TODO Notifier helps you **track TODO comments** in a codebase. It is a **TODO deadline reminder** and **FIXME tracker**: it finds `TODO`, `FIXME`,
 `HACK` and `XXX` comments, gives each one an owner (from `@user` or `git blame`) and a due date, flags every **overdue TODO**, and tells your team
 in the terminal, in CI, and by Slack, Teams, webhook or email. Use it as a lightweight **technical debt tracker** that fails the build when a TODO
-has expired. It runs in any CI system today (see [Quick Start](#quick-start)); a dedicated **TODO GitHub Action** is coming soon.
+has expired. It runs in any CI system, and ships a **TODO GitHub Action** ([see below](#github-action)) and a [pre-commit hook](#pre-commit).
 
 ## Features
 
 - **Command Line Tool** - `todonotifier scan .` works with zero config: table, JSON, GitHub
   annotations, SARIF and Markdown output, `--fail-on` for CI and `--since` for pull requests
+- **GitHub Action** - annotations, a job summary and a sticky comment on pull requests, `fail-on` for overdue TODOs, and a weekly digest to
+  Slack, Teams or a webhook ([`integrations/github-action`](integrations/github-action/README.md))
 - **Smart TODO Detection** - Automatically discovers TODO items across your entire
   codebase
 - **Date-based Tracking** - Set completion dates and get notified about overdue items
@@ -149,7 +151,7 @@ Colors are used only when stdout is a terminal, `NO_COLOR` is unset and there is
 |---|---|
 | `todonotifier scan [PATH ...]` | Scan and print the TODOs (default path `.`, or the `paths` of the config file). Paths may be files, e.g. the staged files from pre-commit. |
 | `todonotifier report [PATH ...] [--out DIR]` | Write the HTML reports (module-wise, expired by user, upcoming week) to `DIR` (default `.report`) and print their paths. Same as `scan --format html`. |
-| `todonotifier notify [PATH ...]` | Scan, then send the digest to every notifier of the config file (Slack, Teams, webhook, email, see "Notifications"). All notifiers are tried and every failure is printed. With `--since`, nothing is sent (and the reason is logged at INFO level, see `-v`) if no TODO is on a changed line; without `--since` an empty result is still sent, as an "all clear". |
+| `todonotifier notify [PATH ...]` | Scan, then send the digest to every notifier of the config file (Slack, Teams, webhook, email, see "Notifications") and to those added with `--slack-webhook-env`, `--teams-webhook-env` and `--webhook-url-env` (see below). All notifiers are tried and every failure is printed. With `--since`, nothing is sent (and the reason is logged at INFO level, see `-v`) if no TODO is on a changed line; without `--since` an empty result is still sent, as an "all clear". |
 | `todonotifier init [--pyproject \| --standalone]` | Append a commented `[tool.todonotifier]` section to `pyproject.toml` (if it exists and has none), else create `.todonotifier.toml`. Never overwrites anything. |
 | `todonotifier --version` | Print the version. |
 
@@ -176,6 +178,22 @@ mixed with options (`todonotifier scan a.py --format json b.py`); after a `--` e
 | `--format {table,json,github,markdown,sarif,html}` | Output format (default `table`; `html` for `report`; `notify` prints nothing unless given) |
 | `--output FILE` | Write the result to `FILE` instead of stdout (for `html`: the directory for the report files) |
 | `-q`, `--quiet` / `-v`, `--verbose` | Log errors only / debug logs and tracebacks. Logs go to stderr, results to stdout |
+
+`notify` also takes three flags that add a notifier without a config file, for CI jobs where the webhook is a secret. Each takes the **name** of an environment
+variable that holds the URL (a flag never takes the URL itself, so it cannot end up in a process list or a shell history). They add to the notifiers of the
+config file, and only the variable that is named is read:
+
+| Flag | Meaning |
+|---|---|
+| `--slack-webhook-env NAME` | Also send to the Slack incoming webhook whose URL is in `$NAME` |
+| `--teams-webhook-env NAME` | Also send to the Microsoft Teams webhook whose URL is in `$NAME` |
+| `--webhook-url-env NAME` | Also POST the JSON digest to the URL in `$NAME` |
+
+```bash
+TODO_SLACK_WEBHOOK=https://hooks.slack.com/services/... todonotifier notify . --slack-webhook-env TODO_SLACK_WEBHOOK
+```
+
+A variable that is not set or is empty is a usage error (exit code 2) that names the variable and never shows a value.
 
 ### Output formats
 
@@ -208,7 +226,39 @@ In a GitHub Actions step (`fetch-depth: 0` is needed for `git blame` and `--sinc
 - run: todonotifier scan . --format github --since origin/${{ github.base_ref }} --fail-on expired
 ```
 
-GitHub shows at most 10 error, 10 warning and 10 notice annotations per step, so `--since` keeps pull requests readable.
+GitHub shows at most 10 error, 10 warning and 10 notice annotations per step, so `--since` keeps pull requests readable. The [GitHub Action](#github-action)
+does all of this (and more) for you.
+
+## GitHub Action
+
+The action in [`integrations/github-action`](integrations/github-action/README.md) is for **deadlines, owners and digests**, not for turning TODOs into
+issues. In a pull request it annotates the TODOs the change adds, writes a summary table, can keep one comment up to date and can fail the check when a TODO
+has expired. On a schedule it sends the weekly digest to Slack, Microsoft Teams or a webhook and uploads the HTML reports.
+
+```yaml
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  todos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for git blame and changed lines
+          persist-credentials: false
+      - uses: ashu-tosh-kumar/todo_notifier/integrations/github-action@v2.1.0
+        with:
+          mode: pr
+          fail-on: expired
+```
+
+Set `mode: digest` with `slack-webhook: ${{ secrets.SLACK_WEBHOOK_URL }}` on a `schedule` for the weekly digest. The action README has both workflows, all
+inputs and outputs, and the permissions each mode needs (`contents: read`, plus `pull-requests: write` only for the optional comment). The action will move
+to its own repository, `todonotifier-action`; this folder is written so that it can be copied there as it is.
 
 ## pre-commit
 
@@ -947,6 +997,15 @@ details.
 - Discoverability and contributor on-ramp: richer PyPI metadata (description, keywords, classifiers, Changelog, Documentation and Issue
   Tracker links); a "How it compares" section; fixed badge row (PyPI version and Downloads badges); `CONTRIBUTING.md` (the development setup moved
   there from the README), GitHub issue forms, a pull request template and a Discussions/security contact page.
+
+- Added the GitHub Action (`integrations/github-action`, see "GitHub Action"): a composite action with `mode: pr` (annotations, job summary, outputs, an
+  optional sticky pull request comment, `fail-on`) and `mode: digest` (full scan, Slack, Teams or webhook digest, HTML reports as an artifact). It scans once
+  (`scan --format json`) and renders the annotations, summary, outputs and comment from that JSON with a small script that uses the library; `fail-on` is
+  applied last, with the rule of the command line, so a failing check still has its summary and outputs. Inputs reach scripts through environment
+  variables only, actions are pinned by commit SHA, the shallow-clone warning of `git_meta` becomes a workflow warning, and `safe.directory` is set. A self-test
+  workflow (`.github/workflows/action-selftest.yml`) runs the action on fixtures. New: `todonotifier notify --slack-webhook-env NAME`,
+  `--teams-webhook-env NAME` and `--webhook-url-env NAME` add a notifier from an environment variable without a config file, and
+  `todonotifier.cli.fail_on_message(result, fail_on)` is public (the rule behind `--fail-on`).
 
 ### v1.4.0
 

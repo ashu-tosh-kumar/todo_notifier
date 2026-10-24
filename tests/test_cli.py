@@ -8,7 +8,7 @@ import runpy
 import shutil
 import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any, Optional
 from unittest.mock import patch
 
@@ -22,9 +22,11 @@ from todonotifier.cli import (
     EXIT_OK,
     EXIT_USAGE,
     CliError,
+    _env_var_name,
     _exit_status,
     _use_color,
     _write_stdout,
+    fail_on_message,
     get_version,
     main,
     starter_config,
@@ -35,7 +37,7 @@ from todonotifier.notifier import (
     DigestNotifier,
     NotificationError,
 )
-from todonotifier.results import ScanResult
+from todonotifier.results import ScanResult, TodoItem
 from todonotifier.settings_file import load_config
 
 GIT_AVAILABLE = shutil.which("git") is not None
@@ -58,7 +60,7 @@ webhook_env = "TN_TEAMS"
 @pytest.fixture(autouse=True)
 def clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     """No inherited git configuration, CI variables or color settings"""
-    for name in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_SHA", "NO_COLOR", "TN_SLACK", "TN_TEAMS", "TERM"):
+    for name in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_SHA", "NO_COLOR", "TN_SLACK", "TN_TEAMS", "TN_WEBHOOK", "TERM"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
     monkeypatch.setenv("GIT_CONFIG_SYSTEM", os.devnull)
@@ -1461,6 +1463,171 @@ class TestInit:
 
     def test_the_starter_mentions_the_docs(self):
         assert "github.com/ashu-tosh-kumar/todo_notifier" in starter_config(True)
+
+
+class TestEnvNotifierFlags:
+    """`notify --slack-webhook-env NAME`, `--teams-webhook-env NAME` and `--webhook-url-env NAME`: notifiers from the environment, no config file needed"""
+
+    WEBHOOK_URL = "https://example.com/hooks/TOPSECRET"
+
+    @pytest.fixture
+    def posts(self, monkeypatch):
+        recorded = RecordedPosts()
+
+        def fake_post(url, payload, headers, label, sleep, timeout=10):
+            recorded.append((label, url, payload))
+
+        monkeypatch.setattr("todonotifier.notifier._post_json", fake_post)
+        return recorded
+
+    def test_the_flags_work_without_a_config_file(self, capsys, project, posts, monkeypatch):
+        write(project, "a.py", "# TODO {2020-01-01} @alice late\n")
+        monkeypatch.setenv("TN_SLACK", SLACK_URL)
+        monkeypatch.setenv("TN_TEAMS", TEAMS_URL)
+        monkeypatch.setenv("TN_WEBHOOK", self.WEBHOOK_URL)
+
+        code, out, err = run(
+            capsys, "notify", ".", "--no-blame", "--slack-webhook-env", "TN_SLACK", "--teams-webhook-env", "TN_TEAMS", "--webhook-url-env", "TN_WEBHOOK"
+        )
+
+        assert code == EXIT_OK and out == ""
+        assert [(label, url) for label, url, _ in posts] == [("Slack webhook", SLACK_URL), ("Teams webhook", TEAMS_URL), ("Webhook", self.WEBHOOK_URL)]
+        assert err.splitlines() == ["Notified SlackWebhookNotifier", "Notified TeamsWebhookNotifier", "Notified WebhookNotifier"]
+        assert "TOPSECRET" not in err
+
+    def test_they_add_to_the_notifiers_of_the_config_file(self, capsys, project, posts, monkeypatch):
+        write(project, "pyproject.toml", "[tool.todonotifier]\n" + NOTIFY_CONFIG)
+        write(project, "a.py", "# TODO x\n")
+        monkeypatch.setenv("TN_SLACK", SLACK_URL)
+        monkeypatch.setenv("TN_TEAMS", TEAMS_URL)
+        monkeypatch.setenv("TN_WEBHOOK", self.WEBHOOK_URL)
+
+        code, _, _ = run(capsys, "notify", ".", "--no-blame", "--webhook-url-env", "TN_WEBHOOK")
+
+        assert code == EXIT_OK
+        assert [label for label, _, _ in posts] == ["Slack webhook", "Teams webhook", "Webhook"]
+
+    def test_the_same_kind_in_the_config_and_on_the_command_line_sends_twice(self, capsys, project, posts, monkeypatch):
+        write(project, "pyproject.toml", "[tool.todonotifier]\n" + NOTIFY_CONFIG)
+        write(project, "a.py", "# TODO x\n")
+        monkeypatch.setenv("TN_SLACK", SLACK_URL)
+        monkeypatch.setenv("TN_TEAMS", TEAMS_URL)
+        monkeypatch.setenv("OTHER_SLACK", SLACK_URL + "2")
+
+        assert main(["notify", ".", "--no-blame", "--slack-webhook-env", "OTHER_SLACK"]) == EXIT_OK
+        assert [url for _, url, _ in posts] == [SLACK_URL, TEAMS_URL, SLACK_URL + "2"]
+
+    def test_only_the_named_variable_is_read(self, capsys, project, posts, monkeypatch):
+        write(project, "a.py", "# TODO x\n")
+        monkeypatch.setenv("TN_SLACK", SLACK_URL)
+        monkeypatch.setenv("TN_TEAMS", TEAMS_URL)
+
+        assert main(["notify", ".", "--no-blame", "--slack-webhook-env", "TN_SLACK"]) == EXIT_OK
+        assert [label for label, _, _ in posts] == ["Slack webhook"]
+
+    def test_a_missing_variable_is_a_usage_error_that_names_it(self, capsys, project, posts):
+        write(project, "a.py", "# TODO x\n")
+
+        code, _, err = run(capsys, "notify", ".", "--no-blame", "--slack-webhook-env", "TN_SLACK")
+
+        assert code == EXIT_USAGE
+        assert "TN_SLACK" in err and "not set or is empty" in err and not posts
+
+    def test_an_empty_variable_is_a_usage_error(self, capsys, project, posts, monkeypatch):
+        write(project, "a.py", "# TODO x\n")
+        monkeypatch.setenv("TN_SLACK", "")
+
+        code, _, err = run(capsys, "notify", ".", "--no-blame", "--slack-webhook-env", "TN_SLACK")
+
+        assert code == EXIT_USAGE and "TN_SLACK" in err
+
+    def test_a_value_where_a_name_is_expected_is_rejected_without_echoing_it(self, capsys, project):
+        write(project, "a.py", "# TODO x\n")
+
+        code, out, err = run(capsys, "notify", ".", "--slack-webhook-env", SLACK_URL)
+
+        assert code == EXIT_USAGE and out == ""
+        assert "NAME of an environment variable" in err and "TOPSECRET" not in err
+
+    def test_an_invalid_url_in_the_variable_does_not_leak(self, capsys, project, posts, monkeypatch):
+        write(project, "a.py", "# TODO x\n")
+        monkeypatch.setenv("TN_SLACK", "http://insecure.example.com/TOPSECRET")
+
+        code, _, err = run(capsys, "notify", ".", "--no-blame", "--slack-webhook-env", "TN_SLACK")
+
+        assert code == EXIT_USAGE and "TOPSECRET" not in err
+
+    def test_a_failed_delivery_returns_3_and_the_fail_on_flag_still_applies(self, capsys, project, monkeypatch):
+        write(project, "a.py", "# TODO {2020-01-01} late\n")
+        monkeypatch.setenv("TN_SLACK", SLACK_URL)
+
+        def failing_post(url, payload, headers, label, sleep, timeout=10):
+            raise NotificationError("Slack webhook POST failed with HTTP 500 (attempt 3/3)")
+
+        monkeypatch.setattr("todonotifier.notifier._post_json", failing_post)
+
+        assert main(["notify", ".", "--no-blame", "--slack-webhook-env", "TN_SLACK"]) == EXIT_ERROR
+        assert main(["notify", ".", "--no-blame", "--slack-webhook-env", "TN_SLACK", "--fail-on", "expired"]) == EXIT_FAIL_ON
+
+    def test_the_hint_without_notifiers_mentions_the_flags(self, capsys, project):
+        write(project, "a.py", "# TODO x\n")
+
+        _, _, err = run(capsys, "notify", ".")
+
+        assert "--slack-webhook-env NAME" in err
+
+    def test_the_help_lists_the_flags(self, capsys):
+        _, out, _ = run(capsys, "notify", "--help")
+
+        assert "--slack-webhook-env" in out and "--teams-webhook-env" in out and "--webhook-url-env" in out
+
+    @pytest.mark.parametrize("name", ["TN_SLACK", "_x", "a1"])
+    def test_env_var_name_accepts_variable_names(self, name):
+        assert _env_var_name(name) == name
+
+    @pytest.mark.parametrize("name", ["", "1ABC", "has space", "https://x.example/y", "a-b"])
+    def test_env_var_name_rejects_everything_else(self, name):
+        with pytest.raises(cli.argparse.ArgumentTypeError) as error:
+            _env_var_name(name)
+        assert name not in str(error.value) or name == ""
+
+
+class TestFailOnMessage:
+    """`fail_on_message` is public: the GitHub Action applies the rule of the command line with it"""
+
+    @staticmethod
+    def make_result(*sources: tuple) -> ScanResult:
+        today = date(2026, 6, 1)
+        items = []
+        for number, (due_date, due_source, author_source) in enumerate(sources, start=1):
+            item = TodoItem(
+                file="a.py", line=number, tag="TODO", message="m", author="alice", author_source=author_source, due_date=due_date, due_source=due_source
+            )
+            item.refresh_status(today)
+            items.append(item)
+        return ScanResult(items=items, scanned_files=["a.py"], root="/r", generated_at=datetime(2026, 6, 1, 12, tzinfo=timezone.utc))
+
+    def test_none_is_never_met(self):
+        result = self.make_result((date(2020, 1, 1), "explicit", "annotation"))
+
+        assert fail_on_message(result, "none") is None
+
+    def test_expired_counts_explicit_dates_only(self):
+        assert "1 overdue TODO " in fail_on_message(self.make_result((date(2020, 1, 1), "explicit", "annotation")), "expired")
+        assert fail_on_message(self.make_result((date(2020, 1, 1), "default", "annotation")), "expired") is None
+
+    def test_stale_adds_default_dates(self):
+        message = fail_on_message(self.make_result((date(2020, 1, 1), "default", "annotation"), (date(2020, 1, 1), "explicit", "annotation")), "stale")
+
+        assert message == "1 overdue and 1 stale TODOs"
+
+    def test_any_and_incomplete(self):
+        result = self.make_result((None, "none", "git_blame"))
+
+        assert fail_on_message(result, "any") == "1 TODO found"
+        assert "1 TODO without an owner" in fail_on_message(result, "incomplete")
+        assert fail_on_message(self.make_result((date(2030, 1, 1), "explicit", "annotation")), "incomplete") is None
+        assert fail_on_message(ScanResult(), "any") is None
 
 
 def test_cli_error_is_a_plain_exception():
