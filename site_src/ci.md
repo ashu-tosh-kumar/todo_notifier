@@ -10,7 +10,8 @@ The action in [`integrations/github-action`](https://github.com/ashu-tosh-kumar/
 owners and digests**, not for turning TODOs into issues. It is a thin wrapper around the command line tool, so the config file, tags, owners and default
 due dates all work the same. Pin it to a release tag or, better, a full commit SHA.
 
-It has two modes.
+It has two modes. (`@v2.1.0` and the PyPI release it installs exist once 2.1.0 is published; see the release status note in the
+[Quickstart](quickstart.md).)
 
 ### Pull requests (`mode: pr`)
 
@@ -86,7 +87,7 @@ workflows run on the default branch only, and GitHub pauses them in a public rep
 | `pr` mode, `digest` mode, annotations, summary, `fail-on` | `contents: read` |
 | `pr` mode with `comment: true` | `contents: read` and `pull-requests: write` |
 
-Use `pull_request`, not `pull_request_target`, unless you know why: the latter runs with a write token. The action never writes to the repository, so use
+The action is tested on `ubuntu-latest` only. Use `pull_request`, not `pull_request_target`, unless you know why: the latter runs with a write token. The action never writes to the repository, so use
 `persist-credentials: false` on checkout. All inputs, outputs and troubleshooting tips are in the
 [action README](https://github.com/ashu-tosh-kumar/todo_notifier/blob/main/integrations/github-action/README.md).
 
@@ -99,7 +100,9 @@ The command line does the same on any runner. This fails the job when a pull req
         with:
           fetch-depth: 0
       - run: pipx install todonotifier
-      - run: todonotifier scan . --format github --since origin/${{ github.base_ref }} --fail-on expired
+      - run: todonotifier scan . --format github --since "origin/$BASE_REF" --fail-on expired
+        env:
+          BASE_REF: ${{ github.base_ref }}   # through env, never ${{ }} inside the script: a branch name is not trusted text
 ```
 
 ## GitLab CI

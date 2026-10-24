@@ -208,6 +208,21 @@ class TestHelpers(unittest.TestCase):
             r"\[click\](http://evil) \*bold\* \_i\_ \<b\> a\|b \`c\` \\ \& \# \~", escape_markdown("[click](http://evil) *bold* _i_ <b> a|b `c` \\ & # ~")
         )
 
+    def test_escape_markdown_stops_mentions_but_keeps_other_at_signs(self):
+        """GitHub notifies `@user` and `@org/team` when a comment contains them, so a TODO message in a pull request comment must not form one"""
+        escaped = escape_markdown("ping @everyone, @org/team and a_b@c.d, but not @ alone or @-x or 10@")
+
+        self.assertEqual("ping @&#8203;everyone, @&#8203;org/team and a\\_b@&#8203;c.d, but not @ alone or @-x or 10@", escaped)
+        self.assertNotRegex(escaped, r"@[A-Za-z0-9_]")
+
+    def test_markdown_digest_does_not_mention_users_named_in_a_message(self):
+        item = make_item("a.py", 1, "ask @org/security-team now", author="bob", due=date(2026, 4, 1))
+
+        markdown = render_markdown(build_digest(_result(item), today=TODAY))
+
+        self.assertIn("ask @&#8203;org/security-team now", markdown)
+        self.assertNotRegex(markdown, r"@[A-Za-z0-9_]")
+
     def test_describe_item(self):
         item = DigestItem("a.py", 1, "TODO", "m", days_past_due=1, due_date=date(2026, 5, 3))
 

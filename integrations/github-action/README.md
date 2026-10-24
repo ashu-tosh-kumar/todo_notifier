@@ -15,6 +15,13 @@ tags, `git blame` owners, default due dates) works here too. See the [documentat
 > `uses: ashu-tosh-kumar/todo_notifier/integrations/github-action@<ref>`, where `<ref>` is a release tag or, better, a full commit SHA.
 > The folder is self-contained, see [Moving to the todonotifier-action repo](#moving-to-the-todonotifier-action-repo).
 
+<!-- release-note: delete this block once todonotifier 2.1.0 is on PyPI and v2.1.0 is tagged (RELEASING.md) -->
+> **Release status.** The examples use `@v2.1.0` and install `todonotifier` 2.1.0 from PyPI, which work once that release is published and tagged. Before
+> that, use a commit SHA as `<ref>` and add `package: git+https://github.com/ashu-tosh-kumar/todo_notifier@<the same SHA>`.
+
+> **Runners.** Only `ubuntu-latest` is tested. The scripts need `bash`, `python`, `git`, and (for the comment) `gh` and `jq`, which the Windows and macOS
+> hosted runners also have, so they should work, but nobody has run them there. Please report a problem.
+
 ## Pull requests
 
 Copy this to `.github/workflows/todos.yml`:
@@ -107,7 +114,7 @@ jobs:
 
 The `digest` mode scans the whole repository, writes the job summary, sends the digest to every webhook you give, and uploads the three HTML reports
 (module-wise, expired by user, upcoming week) as the artifact `todonotifier-report` (its folder is the output `report-path`). Without a webhook input
-nothing is sent, you still get the summary and the artifact. If a message cannot be delivered the job fails, after the summary and the artifact are
+nothing is sent and a notice says so (an empty or misspelled secret counts as not set); you still get the summary and the artifact. If a message cannot be delivered the job fails, after the summary and the artifact are
 done. Scheduled workflows run on the default branch only, and GitHub pauses them in a public repository after 60 days without activity.
 
 Use `fail-on` together with `digest` if you want the scheduled run to go red when something is overdue.
@@ -121,8 +128,8 @@ Use `fail-on` together with `digest` if you want the scheduled run to go red whe
 | `package` | | Advanced. A pip requirement that replaces `todonotifier==<version>`, e.g. a path to a checkout or a git URL. The self-test of this repository uses it to install the code under test. |
 | `config` | | Config file (`.todonotifier.toml`, or a `pyproject.toml` with `[tool.todonotifier]`), relative to `working-directory`. Default: the file the tool finds in the repository. |
 | `working-directory` | `.` | Directory to scan, relative to the repository root. |
-| `fail-on` | `none` | Fail the action if such a TODO exists: `none`, `expired` (an explicit `{date}` has passed), `stale` (also default due dates), `any`, `incomplete` (no owner or no explicit date written in the comment). In `pr` mode: on changed lines. |
-| `default-due-days` | `90` | A TODO without a date turns **stale** this many days after `git blame` says it was added. `0` turns this off. |
+| `fail-on` | `none` | Fail the action if such a TODO exists: `none`, `expired` (an explicit `{date}` has passed), `stale` (also default due dates), `any`, `incomplete` (no owner or no explicit date written in the comment). In `pr` mode: on changed lines. This input decides; a `fail_on` in the config file is not used by the action. |
+| `default-due-days` | | A TODO without a date turns **stale** this many days after `git blame` says it was added. `0` turns this off. Default: the config file, else `90`. |
 | `tags` | | Comma separated tags, e.g. `TODO,FIXME`. Default: the config file, else `TODO,FIXME,HACK,XXX`. |
 | `extensions` | | Comma separated extensions without the dot, e.g. `py,js`, or `common`. Default: the config file, else `common`. |
 | `slack-webhook` | | Slack incoming webhook URL (`digest` mode). Pass a secret. |
@@ -173,7 +180,7 @@ Good to know:
 
 - **Injection safety.** The action passes every input and event field to its scripts through environment variables and quotes them; nothing from
   `inputs.*` or `github.event.*` is pasted into a shell script. TODO text from the scanned files is untrusted too: annotations escape it, and the
-  Markdown in the summary and the comment is escaped.
+  Markdown in the summary and the comment is escaped (an `@user` or `@org/team` in a TODO message is defused, so the comment notifies nobody).
 - **Use `pull_request`, not `pull_request_target`,** unless you know why. With `pull_request_target` the workflow runs with a write token, and its default
   checkout is the base branch, not the pull request. The action only reads files and never runs code from the repository, but that is no reason to give
   untrusted pull requests a write token.
@@ -185,7 +192,9 @@ Good to know:
 ## Troubleshooting
 
 - **"The repository is a shallow clone" warning, or all owners are the same person.** Use `fetch-depth: 0` on `actions/checkout` (every example above
-  does). Without full history `git blame` cannot tell who wrote a line or when, and `--since` cannot find the base commit.
+  does). Without full history `git blame` cannot tell who wrote a line or when. In `pr` mode the action fetches the base commit of a shallow checkout
+  by itself (just that commit, so `--since` works), but if that fails (a private repository checked out with `persist-credentials: false`) the scan
+  fails with exit code 2 and a warning "Base commit missing".
 - **`pr` mode scans the whole repository.** The event is not a pull request (there is no base commit), so `since` cannot be used; a notice says so.
 - **Exit code 2 or 3 of the scan.** The action fails with an `::error` that says which, and the message of the tool is in the log of the "Scan" step.
   Typical causes: a `config` path that does not exist, a webhook variable that is empty, or a base commit that is not in the clone.

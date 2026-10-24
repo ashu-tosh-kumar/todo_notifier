@@ -21,8 +21,10 @@ replace the version for later releases.
    in the README changelog (the workflow uses it as the GitHub Release notes). CI must be green. The `version` default in
    [integrations/github-action/action.yml](integrations/github-action/action.yml) must be the same version (a test checks it): the GitHub Action
    installs that release from PyPI, so publish to PyPI before anyone uses the action without `package:`.
-2. Merge the roadmap stack into `development`, then merge `development` into `main`.
-3. Tag the merge commit on `main` and push the tag:
+2. Merge the roadmap stack into `development`, then merge `development` into `main`. Do the second merge soon after the first: GitHub shows `development`
+   (the default branch) to visitors, but the README demo GIF is served from `main`, the docs deploy from `main` (`docs.yml`) and releases are tagged on `main`.
+3. Tag the merge commit on `main` and push the tag. (The release workflow runs for every pushed tag that matches `v*`, whatever branch it is on, so tag
+   only `main`; the `pypi` environment's required reviewer is the safety net.)
 
    ```bash
    git checkout main && git pull
@@ -40,6 +42,17 @@ replace the version for later releases.
    ```
 
    It should print `todonotifier 2.1.0`. Also check that the GitHub Release exists and its notes are right.
+
+## After the release
+
+1. **Remove the "release status" notes** that exist only because the release was not published yet:
+   `grep -rn "release-note" README.md site_src integrations/github-action/README.md` (the Quickstart admonition, a line each in the README and the
+   pre-commit page, and a block in the Action README). Also search the docs for `@v2.1.0` and `rev: v2.1.0` if you released a different version.
+2. **GitHub Pages:** *Settings > Pages > Source* must be "GitHub Actions". The docs workflow deploys on every push to `main`. The `github-pages` environment
+   (*Settings > Environments*) may restrict deployments to the default branch, which is `development` here: if the deploy job is rejected, add `main` to its
+   deployment branches. Check <https://ashu-tosh-kumar.github.io/todo_notifier/> afterwards.
+3. **GitHub Action:** `uses: ashu-tosh-kumar/todo_notifier/integrations/github-action@v2.1.0` resolves to the tag from step 3 of the release steps, and the
+   action installs the same version from PyPI. Run it once in a scratch repository (`mode: pr` and the pre-commit hook; `pre-commit try-repo` works too).
 
 ## If something fails
 

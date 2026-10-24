@@ -24,9 +24,9 @@
 [Python API](https://ashu-tosh-kumar.github.io/todo_notifier/python-api/) •
 [Contributing](#contributing)
 
-<!-- Regenerate the GIF with `vhs assets/demo.tape` (see the header of the tape). On PyPI a relative image path does not render: after the stack is on
-     `main`, point src at https://raw.githubusercontent.com/ashu-tosh-kumar/todo_notifier/main/assets/demo.gif -->
-<img width="720" alt="Terminal recording: todonotifier scan, scan --fail-on expired with its exit code 1, and scan --format github" src="assets/demo.gif">
+<!-- Regenerate the GIF with `vhs assets/demo.tape` (see the header of the tape). PyPI renders neither relative image paths nor relative links, so this
+     README uses absolute URLs for both (the image is served from `main`, the release branch, and shows once a release is merged there). -->
+<img width="720" alt="Terminal recording: todonotifier scan, scan --fail-on expired with its exit code 1, and scan --format github" src="https://raw.githubusercontent.com/ashu-tosh-kumar/todo_notifier/main/assets/demo.gif">
 
 </div>
 
@@ -62,7 +62,7 @@ Undated TODOs get a default due date 90 days after `git blame` says they were ad
 - **Command line tool:** zero config; table, JSON, GitHub annotations, SARIF and Markdown output; `--fail-on` for CI; `--since` for pull requests
 - **Owners and ages from `git blame`,** or written in the comment (`@user`, `TODO(user)`); a default due date for undated TODOs
 - **GitHub Action:** annotations, a job summary, a sticky pull request comment, `fail-on` and a weekly digest
-  ([`integrations/github-action`](integrations/github-action/README.md))
+  ([`integrations/github-action`](https://github.com/ashu-tosh-kumar/todo_notifier/blob/main/integrations/github-action/README.md))
 - **pre-commit hook:** stop a commit that touches an overdue TODO
 - **Slack, Microsoft Teams, webhook and email digests**
 - **Many languages:** comment-aware detection for 37 file extensions, so strings and docstrings are not reported
@@ -97,20 +97,24 @@ pip install todonotifier         # or into the current environment: gives you th
 
 Python 3.10 or newer (3.9 users stay on release 1.x). From a checkout: `pip install .`.
 
+<!-- release-note: delete this line once todonotifier 2.1.0 is on PyPI and v2.1.0 is tagged (RELEASING.md) -->
+> **Release status:** this README describes 2.1.0. Until it is published, `pipx install todonotifier` gives you 1.x, which has no command line tool: use
+> `pipx install git+https://github.com/ashu-tosh-kumar/todo_notifier`, and a commit SHA instead of `v2.1.0` for the hook and the action.
+
 ## Contributing
 
-We welcome contributions: bug reports, ideas, docs and code. The full guide is in [CONTRIBUTING.md](CONTRIBUTING.md): development setup with
+We welcome contributions: bug reports, ideas, docs and code. The full guide is in [CONTRIBUTING.md](https://github.com/ashu-tosh-kumar/todo_notifier/blob/main/CONTRIBUTING.md): development setup with
 Poetry on Python 3.10+, running the checks (tests with 100% coverage, black, isort, flake8, pre-commit hooks), building the docs, commit style, and how
 to add a language's comment syntax or a notifier.
 
 - **Bug reports and feature requests**: [open an issue](https://github.com/ashu-tosh-kumar/todo_notifier/issues/new/choose)
 - **Questions and ideas**: [GitHub Discussions](https://github.com/ashu-tosh-kumar/todo_notifier/discussions)
 - **First contribution**: look for issues labelled [good first issue](https://github.com/ashu-tosh-kumar/todo_notifier/labels/good%20first%20issue)
-- **Security**: see [SECURITY.md](SECURITY.md)
+- **Security**: see [SECURITY.md](https://github.com/ashu-tosh-kumar/todo_notifier/blob/main/SECURITY.md)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/ashu-tosh-kumar/todo_notifier/blob/main/LICENSE) file for details.
 
 ## Links
 
@@ -239,6 +243,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   `/api/`. The configuration and command line references are generated from the code (`scripts/gen_docs_reference.py`), and CI fails when they are
   stale. The README is now a short landing page. `todonotifier init` and its error messages link to the docs instead of the README. The docs are an
   optional Poetry group: `poetry install --with docs`.
+
+- Phase 1 review fixes: the GitHub Action's `default-due-days` no longer overrides `default_due_days` of the config file (its default is empty now, which means
+  "config file, else 90"), fetches the base commit of a shallow pull request checkout, and says when `digest` mode has no webhook to send to; `@user` and
+  `@org/team` in a TODO message no longer notify anyone when the Markdown digest is posted as a pull request comment; scanning a path on another drive than the
+  current directory (Windows) no longer fails; the README uses absolute links and image URL, which PyPI needs.
 
 ### v1.4.0
 

@@ -7,6 +7,9 @@ import json
 import logging
 import os
 import runpy
+import shutil
+import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -394,7 +397,7 @@ class TestActionFiles(unittest.TestCase):
         defaults = {name: spec["default"] for name, spec in action["inputs"].items()}
         self.assertEqual(
             (defaults["mode"], defaults["fail-on"], defaults["default-due-days"], defaults["python-version"], defaults["comment"]),
-            ("pr", "none", "90", "3.12", "false"),
+            ("pr", "none", "", "3.12", "false"),
         )
         for name, spec in action["inputs"].items():
             self.assertIn("description", spec, name)
@@ -442,3 +445,182 @@ class TestActionFiles(unittest.TestCase):
                 self.assertEqual(code, 0)
                 self.assertEqual((len(result.items), len(result.overdue())), (total, overdue))
                 self.assertEqual(cli.fail_on_message(result, "expired") is not None, overdue > 0)
+
+
+@unittest.skipUnless(shutil.which("bash") and shutil.which("git"), "bash and git are needed to run the steps of the action")
+class TestScanStep(unittest.TestCase):
+    """Runs the `run:` script of the "Scan" step of action.yml with bash, the way the runner does (`bash -e -o pipefail`)"""
+
+    def setUp(self) -> None:
+        super().setUp()
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.directory: str = os.path.realpath(temp.name)
+        self.bin: str = os.path.join(self.directory, "bin")
+        os.makedirs(self.bin)
+        self.runner_temp: str = os.path.join(self.directory, "runner")
+        os.makedirs(self.runner_temp)
+        self.github_output: str = os.path.join(self.directory, "github_output")
+        self.script: str = next(step["run"] for step in TestActionFiles.load_yaml("action.yml")["runs"]["steps"] if step.get("name") == "Scan")
+
+    def install_todonotifier(self, body: str) -> None:
+        """Puts a `todonotifier` command on the PATH of the step"""
+        path: str = os.path.join(self.bin, "todonotifier")
+        with open(path, "w", encoding="utf-8") as file:
+            file.write("#!/bin/sh\n" + body + "\n")
+        os.chmod(path, os.stat(path).st_mode | stat.S_IEXEC)
+
+    def git(self, cwd: str, *args: str) -> str:
+        env: dict[str, str] = {
+            **os.environ,
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_SYSTEM": os.devnull,
+            "GIT_AUTHOR_NAME": "A",
+            "GIT_AUTHOR_EMAIL": "a@example.com",
+            "GIT_COMMITTER_NAME": "A",
+            "GIT_COMMITTER_EMAIL": "a@example.com",
+        }
+        return subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True, text=True).stdout.strip()
+
+    def run_step(self, cwd: str, **inputs: str) -> subprocess.CompletedProcess:
+        env: dict[str, str] = {
+            **os.environ,
+            "PATH": self.bin + os.pathsep + os.environ["PATH"],
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_SYSTEM": os.devnull,
+            "RUNNER_TEMP": self.runner_temp,
+            "GITHUB_OUTPUT": self.github_output,
+            "MODE": "pr",
+            "FAIL_ON": "none",
+            "CONFIG": "",
+            "DEFAULT_DUE_DAYS": "",
+            "TAGS": "",
+            "EXTENSIONS": "",
+            "BASE_SHA": "",
+            **inputs,
+        }
+        return subprocess.run(["bash", "-e", "-o", "pipefail", "-c", self.script], cwd=cwd, env=env, capture_output=True, text=True)
+
+    def run_notify_step(self, **inputs: str) -> subprocess.CompletedProcess:
+        script: str = next(step["run"] for step in TestActionFiles.load_yaml("action.yml")["runs"]["steps"] if step.get("name") == "Notify")
+        env: dict[str, str] = {
+            **os.environ,
+            "PATH": self.bin + os.pathsep + os.environ["PATH"],
+            "GITHUB_OUTPUT": self.github_output,
+            "TODONOTIFIER_SLACK_WEBHOOK": "",
+            "TODONOTIFIER_TEAMS_WEBHOOK": "",
+            "TODONOTIFIER_WEBHOOK_URL": "",
+            "CONFIG": "",
+            "DEFAULT_DUE_DAYS": "",
+            "TAGS": "",
+            "EXTENSIONS": "",
+            **inputs,
+        }
+        return subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script], cwd=self.directory, env=env, capture_output=True, text=True)
+
+    def two_commit_repository(self) -> tuple[str, str]:
+        """A repository whose first commit is the base of a "pull request" and whose second commit adds a TODO. Returns the path and the base SHA"""
+        source: str = os.path.join(self.directory, "source")
+        os.makedirs(source)
+        self.git(source, "init", "-q")
+        with open(os.path.join(source, "a.py"), "w", encoding="utf-8") as file:
+            file.write("x = 1\n")
+        self.git(source, "add", "-A")
+        self.git(source, "commit", "-q", "-m", "base")
+        base: str = self.git(source, "rev-parse", "HEAD")
+        with open(os.path.join(source, "a.py"), "a", encoding="utf-8") as file:
+            file.write("# TODO {2020-01-01} @bob added by the pull request\n")
+        self.git(source, "commit", "-q", "-am", "pr")
+        return source, base
+
+    def test_a_base_commit_missing_from_a_shallow_checkout_is_fetched(self) -> None:
+        """The default `actions/checkout` of a pull request is a depth 1 clone; `--since` needs the base commit, so the step fetches it"""
+        source, base = self.two_commit_repository()
+        checkout: str = os.path.join(self.directory, "checkout")
+        self.git(self.directory, "clone", "-q", "--depth", "1", "file://" + source, checkout)
+        self.assertNotEqual(subprocess.run(["git", "cat-file", "-e", base + "^{commit}"], cwd=checkout, capture_output=True).returncode, 0)  # Not there yet
+        self.install_todonotifier(f'exec "{sys.executable}" -m todonotifier "$@"')
+
+        result = self.run_step(checkout, BASE_SHA=base)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with open(self.github_output, encoding="utf-8") as file:
+            self.assertEqual(file.read(), "exit-code=0\n")
+        with open(os.path.join(self.runner_temp, "todonotifier.json"), encoding="utf-8") as file:
+            items = json.load(file)["items"]
+        self.assertEqual([(item["file"], item["line"]) for item in items], [("a.py", 2)])
+
+    def test_an_unfetchable_base_commit_is_a_warning_and_the_scan_reports_the_exit_code(self) -> None:
+        checkout: str = self.two_commit_repository()[0]
+        self.install_todonotifier(f'exec "{sys.executable}" -m todonotifier "$@"')
+
+        result = self.run_step(checkout, BASE_SHA="0123456789abcdef0123456789abcdef01234567")
+
+        self.assertEqual(result.returncode, 0, result.stderr)  # The check step decides, not this one
+        self.assertIn("::warning title=Base commit missing::", result.stdout)
+        with open(self.github_output, encoding="utf-8") as file:
+            self.assertEqual(file.read(), "exit-code=2\n")
+
+    def test_an_empty_default_due_days_leaves_the_choice_to_the_config_file(self) -> None:
+        """A fixed `--default-due-days 90` would override `default_due_days` of the config file (the command line beats the file)"""
+        calls: str = os.path.join(self.directory, "calls")
+        self.install_todonotifier(f'echo "$@" >> "{calls}"')
+        checkout: str = self.two_commit_repository()[0]
+
+        for days, expected in (
+            ("", "scan --format json --output {out} --fail-on none"),
+            ("30", "scan --format json --output {out} --fail-on none --default-due-days 30"),
+        ):
+            with self.subTest(days=days):
+                self.assertEqual(self.run_step(checkout, MODE="digest", DEFAULT_DUE_DAYS=days).returncode, 0)
+                with open(calls, encoding="utf-8") as file:
+                    self.assertEqual(file.read().splitlines()[-1], expected.format(out=os.path.join(self.runner_temp, "todonotifier.json")))
+
+    def test_a_default_due_days_that_is_not_a_number_is_rejected(self) -> None:
+        checkout: str = self.two_commit_repository()[0]
+        self.install_todonotifier("exit 0")
+
+        result = self.run_step(checkout, DEFAULT_DUE_DAYS="30; touch pwned")
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("default-due-days must be a whole number", result.stdout)
+        self.assertFalse(os.path.exists(os.path.join(checkout, "pwned")))
+
+    def test_notify_without_a_webhook_says_that_nothing_is_sent_and_does_not_run_the_tool(self) -> None:
+        """A misspelled secret is an empty input: the digest must not look as if it was sent"""
+        calls: str = os.path.join(self.directory, "calls")
+        self.install_todonotifier(f'echo "$@" >> "{calls}"')
+
+        result = self.run_notify_step()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("::notice title=No digest sent::", result.stdout)
+        self.assertFalse(os.path.exists(calls))
+        self.assertFalse(os.path.exists(self.github_output))
+
+    def test_notify_reads_each_webhook_from_the_environment_and_masks_it(self) -> None:
+        calls: str = os.path.join(self.directory, "calls")
+        self.install_todonotifier(f'echo "$@" >> "{calls}"')
+        url: str = "https://hooks.slack.com/services/T000/B000/TOPSECRET"
+
+        result = self.run_notify_step(TODONOTIFIER_SLACK_WEBHOOK=url, TODONOTIFIER_WEBHOOK_URL="https://example.com/hook", DEFAULT_DUE_DAYS="30")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f"::add-mask::{url}", result.stdout)
+        with open(calls, encoding="utf-8") as file:
+            command: str = file.read().strip()
+        self.assertEqual(
+            command, "notify --fail-on none --default-due-days 30 --slack-webhook-env TODONOTIFIER_SLACK_WEBHOOK --webhook-url-env TODONOTIFIER_WEBHOOK_URL"
+        )
+        self.assertNotIn("TOPSECRET", command)  # Only the NAME of the variable is on the command line
+        with open(self.github_output, encoding="utf-8") as file:
+            self.assertEqual(file.read(), "exit-code=0\n")
+
+    def test_a_failed_notification_is_kept_for_the_last_step(self) -> None:
+        self.install_todonotifier("exit 3")
+
+        result = self.run_notify_step(TODONOTIFIER_TEAMS_WEBHOOK="https://example.com/teams")
+
+        self.assertEqual(result.returncode, 0, result.stderr)  # The check step fails the action, after the reports are uploaded
+        with open(self.github_output, encoding="utf-8") as file:
+            self.assertEqual(file.read(), "exit-code=3\n")

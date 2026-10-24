@@ -660,6 +660,21 @@ class TestExplicitFiles:
 
         assert [item["tag"] for item in json.loads(out)["items"]] == ["NOTE"]
 
+    def test_a_path_on_another_drive_is_outside_the_current_directory(self, capsys, project):
+        # On Windows os.path.commonpath raises ValueError for paths on different drives (here: whenever the current directory is compared with a path);
+        # that must not crash the scan
+        write(project, "a.py", "# TODO {2020-01-01} old\n")
+        real_commonpath = os.path.commonpath
+
+        def other_drive(paths):
+            if len(paths) == 2 and paths[0] == os.getcwd():  # the [current directory, path] form
+                raise ValueError("Paths don't have the same drive")
+            return real_commonpath(paths)
+
+        with patch("todonotifier.cli.os.path.commonpath", side_effect=other_drive):
+            assert cli._config_start(["a.py"]) == "a.py"
+            assert main(["scan", "a.py", "--no-blame", "--fail-on", "expired"]) == EXIT_FAIL_ON
+
     def test_exclude_dirs_and_exclude_files_of_the_config_apply_to_named_files(self, capsys, project):
         write(project, "pyproject.toml", '[tool.todonotifier.exclude_dirs]\nname = ["tests"]\n[tool.todonotifier.exclude_files]\nname = ["skip.py"]\n')
         for path in ("tests/t.py", "tests/deep/d.py", "src/skip.py", "src/keep.py", "build/b.py"):

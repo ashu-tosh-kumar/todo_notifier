@@ -33,6 +33,8 @@ MAX_MESSAGE_LENGTH: int = 200
 UNOWNED_LABEL: str = "Unowned"
 
 _MARKDOWN_SPECIAL: re.Pattern = re.compile(r"([\\`*_\[\]<>|~&#])")
+# An "@" that starts a name: GitHub turns "@user" and "@org/team" in a comment into a mention that notifies them
+_MENTION: re.Pattern = re.compile(r"@(?=[A-Za-z0-9_])")
 _UNSAFE_URL_CHARS: re.Pattern = re.compile(r"[\s<>|\"\\]")
 
 
@@ -257,13 +259,16 @@ def safe_url(url: Optional[str]) -> Optional[str]:
 def escape_markdown(text: str) -> str:
     """Escapes the characters of `text` that Markdown would interpret, so that untrusted text cannot inject links or formatting
 
+    An "@" that starts a name gets an invisible zero width space after it (`&#8203;`), because a backslash does not stop GitHub from turning `@user` or
+    `@org/team` into a mention, and a pull request comment that mentions people notifies them.
+
     Args:
         text (str): Text such as the message of a TODO
 
     Returns:
         str: Text for use in Markdown
     """
-    return _MARKDOWN_SPECIAL.sub(r"\\\1", text)
+    return _MENTION.sub("@&#8203;", _MARKDOWN_SPECIAL.sub(r"\\\1", text))
 
 
 def describe_item(section_key: str, item: DigestItem) -> str:

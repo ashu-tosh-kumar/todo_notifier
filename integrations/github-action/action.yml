@@ -40,9 +40,11 @@ inputs:
     required: false
     default: none
   default-due-days:
-    description: A TODO without a date turns stale this many days after git blame says it was added. 0 turns this off.
+    description: >-
+      A TODO without a date turns stale this many days after git blame says it was added. 0 turns this off.
+      Default: the value in the config file, else 90.
     required: false
-    default: "90"
+    default: ""
   tags:
     description: Comma separated tags to look for, for example "TODO,FIXME". Default is the tags of the config, else TODO,FIXME,HACK,XXX.
     required: false
@@ -162,16 +164,24 @@ runs:
           *) echo "::error title=Invalid input::fail-on must be none, expired, stale, any or incomplete"; exit 1 ;;
         esac
         case "$DEFAULT_DUE_DAYS" in
-          ''|*[!0-9]*) echo "::error title=Invalid input::default-due-days must be a whole number"; exit 1 ;;
+          *[!0-9]*) echo "::error title=Invalid input::default-due-days must be a whole number"; exit 1 ;;
         esac
 
         rm -f "$RUNNER_TEMP/todonotifier.json"
-        args=(scan --format json --output "$RUNNER_TEMP/todonotifier.json" --fail-on none --default-due-days "$DEFAULT_DUE_DAYS")
+        args=(scan --format json --output "$RUNNER_TEMP/todonotifier.json" --fail-on none)
+        # An empty default-due-days leaves the choice to the config file (else 90), like tags and extensions
+        if [ -n "$DEFAULT_DUE_DAYS" ]; then args+=(--default-due-days "$DEFAULT_DUE_DAYS"); fi
         if [ -n "$CONFIG" ]; then args+=(--config "$CONFIG"); fi
         if [ -n "$TAGS" ]; then args+=(--tags "$TAGS"); fi
         if [ -n "$EXTENSIONS" ]; then args+=(--ext "$EXTENSIONS"); fi
         if [ "$MODE" = "pr" ]; then
           if [ -n "$BASE_SHA" ]; then
+            # The default checkout of a pull request is shallow and lacks the base commit, which --since needs. Fetch just that commit (it is
+            # enough for the diff; owners and ages still need fetch-depth: 0, see the shallow-clone warning above).
+            if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+              GIT_TERMINAL_PROMPT=0 git fetch --no-tags --depth=1 --quiet origin "$BASE_SHA" 2>/dev/null \
+                || echo "::warning title=Base commit missing::The base commit of the pull request is not in the checkout and could not be fetched. Use fetch-depth: 0 on actions/checkout."
+            fi
             args+=(--since "$BASE_SHA")
           else
             echo "::notice title=Not a pull request::There is no pull request base commit, so the whole repository is scanned (pull_request events have one)."
@@ -227,7 +237,7 @@ runs:
 
     - name: Notify
       id: notify
-      if: steps.render.outcome == 'success' && inputs.mode == 'digest' && (inputs.slack-webhook != '' || inputs.teams-webhook != '' || inputs.webhook-url != '')
+      if: steps.render.outcome == 'success' && inputs.mode == 'digest'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
@@ -239,12 +249,19 @@ runs:
         TAGS: ${{ inputs.tags }}
         EXTENSIONS: ${{ inputs.extensions }}
       run: |
+        # A misspelled secret name is an empty string, and would otherwise look like a digest that was sent
+        if [ -z "$TODONOTIFIER_SLACK_WEBHOOK" ] && [ -z "$TODONOTIFIER_TEAMS_WEBHOOK" ] && [ -z "$TODONOTIFIER_WEBHOOK_URL" ]; then
+          echo "::notice title=No digest sent::None of slack-webhook, teams-webhook and webhook-url is set (an empty secret counts as not set), so no digest is sent. The summary and the reports are still written."
+          exit 0
+        fi
+
         # Secrets are masked by GitHub already; this covers values that were not passed as a secret. The values are only ever read from the environment.
         for name in TODONOTIFIER_SLACK_WEBHOOK TODONOTIFIER_TEAMS_WEBHOOK TODONOTIFIER_WEBHOOK_URL; do
           if [ -n "${!name}" ]; then echo "::add-mask::${!name}"; fi
         done
 
-        args=(notify --fail-on none --default-due-days "$DEFAULT_DUE_DAYS")
+        args=(notify --fail-on none)
+        if [ -n "$DEFAULT_DUE_DAYS" ]; then args+=(--default-due-days "$DEFAULT_DUE_DAYS"); fi
         if [ -n "$CONFIG" ]; then args+=(--config "$CONFIG"); fi
         if [ -n "$TAGS" ]; then args+=(--tags "$TAGS"); fi
         if [ -n "$EXTENSIONS" ]; then args+=(--ext "$EXTENSIONS"); fi

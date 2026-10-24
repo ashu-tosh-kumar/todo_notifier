@@ -29,7 +29,7 @@ If your CI cannot fetch the history, use `--no-blame` and rely on `{date}`s writ
 
 ## Performance
 
-A scan of this repository (about 90 files, 78 TODOs, blame on) takes about 0.3 s. Blame costs about 2 ms per file *that contains a TODO*, because one
+A scan of this repository (about 130 files, 80 TODOs, blame on) takes about 0.3 s. Blame costs about 2 ms per file *that contains a TODO*, because one
 `git blame` runs per such file (restricted to the TODO lines, in parallel). Files without TODOs cost no git call, and neither do files git ignores.
 Files over 10 MB are read line by line, binary files are skipped, and a minified one-line bundle or a file with tens of thousands of TODOs is scanned in
 linear time. If a very large repository is slow:
@@ -68,6 +68,7 @@ network call. The only network traffic is what you set up yourself:
 
 - a Slack, Teams or webhook URL you configure, which receives the digest (TODO texts, file names and owners);
 - an SMTP server you configure, for email;
+- a repository URL that you hand to the Python API to clone (`ConnectMethod.GIT_CLONE`; the command line never clones);
 - your CI system, if you run it there.
 
 Webhook URLs and passwords are never stored in config files: you name an environment variable. They are never written to logs or error messages either.

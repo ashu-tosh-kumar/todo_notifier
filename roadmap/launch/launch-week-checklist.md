@@ -19,9 +19,10 @@ Do not post until every box that is marked "must" is checked. Posting a link to 
   repository (decision D2: `todonotifier-action`) and published it on the Marketplace, update the `uses:` line in the posts, the docs (`site_src/ci.md`, `site_src/quickstart.md`) and
   `curated-lists.md` first, and set the "Action Marketplace usage" row of `roadmap/metrics.md`.
 - [ ] **The docs are deployed.** <https://ashu-tosh-kumar.github.io/todo_notifier/> loads, the Quickstart and the comparison page open, and no page still says "coming soon". Check
-  the GitHub Pages setting (Settings -> Pages -> Source: GitHub Actions) and the latest `docs` workflow run on the default branch.
-- [ ] **The README renders on GitHub and on PyPI**, including the GIF. On PyPI a relative image path does not render: see the comment next to the GIF in `README.md` and point it at the
-  raw GitHub URL once the files are on the default branch.
+  the GitHub Pages setting (Settings -> Pages -> Source: GitHub Actions) and the latest `docs` workflow run on `main` (the docs deploy from `main`, not from the default branch
+  `development`; see "After the release" in [RELEASING.md](../../RELEASING.md)). Also delete the "release status" notes (`grep -rn release-note README.md site_src integrations/github-action/README.md`).
+- [ ] **The README renders on GitHub and on PyPI**, including the GIF. The README uses absolute URLs for the GIF (served from `main`) and its links, because PyPI resolves no relative
+  ones: check that `main` has `assets/demo.gif` (the release merge from `development` brings it), and look at the PyPI project page after the release.
 - [ ] **Metrics are recorded.** The baseline in [`roadmap/metrics.md`](../metrics.md) is from 2026-10-24. If more than a week has passed, redo it, and fill in the two manual rows:
   Used-by dependents, and Insights -> Traffic (GitHub keeps only 14 days, so a late reading loses data).
 - [ ] **The posts are proof-read** and every command in them still works. The terminal outputs in the drafts were made on 2026-10-24 from a sample project; the days in the DUE column
