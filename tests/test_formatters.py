@@ -295,6 +295,13 @@ class TestSarif(unittest.TestCase):
 
         self.assertEqual("src/app.py", sarif["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"])
 
+    def test_paths_are_percent_encoded_because_a_sarif_uri_is_a_uri_reference(self):
+        result = _result(make_item("c#/sub dir/naïve file.py", 3, "m"))
+
+        sarif = json.loads(format_result(result, "sarif"))
+
+        self.assertEqual("c%23/sub%20dir/na%C3%AFve%20file.py", sarif["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"])
+
 
 class TestMarkdown(unittest.TestCase):
     def test_should_be_the_markdown_digest(self):
