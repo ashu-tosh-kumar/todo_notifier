@@ -1,4 +1,4 @@
-# Hooks for https://pre-commit.com. Add this repository to your .pre-commit-config.yaml (see "pre-commit" in the README).
+# Hooks for https://pre-commit.com. Add this repository to your .pre-commit-config.yaml (see https://ashu-tosh-kumar.github.io/todo_notifier/pre-commit/).
 #
 # pre-commit appends `args` from the consumer's config to `entry`, and then the staged files. A later --fail-on beats an earlier one, and --blame
 # beats an earlier --no-blame, so a consumer can change either with `args`.

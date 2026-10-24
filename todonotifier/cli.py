@@ -66,8 +66,8 @@ EXIT_FAIL_ON: int = 1
 EXIT_USAGE: int = 2
 EXIT_ERROR: int = 3
 
-README_URL: str = "https://github.com/ashu-tosh-kumar/todo_notifier#readme"
-NOTIFICATIONS_URL: str = "https://github.com/ashu-tosh-kumar/todo_notifier#notifications"
+DOCS_URL: str = "https://ashu-tosh-kumar.github.io/todo_notifier/"
+NOTIFICATIONS_URL: str = DOCS_URL + "notifications/"
 
 EXIT_CODES_HELP: str = """\
 exit codes:
@@ -76,7 +76,7 @@ exit codes:
   2  usage or config error (bad flag, bad config file, missing path, unknown --since ref, no notifier configured)
   3  unexpected runtime error, or a notification could not be delivered (add -v for the traceback)
 
-Results go to stdout (or --output), logs and errors to stderr. Docs: """ + README_URL
+Results go to stdout (or --output), logs and errors to stderr. Docs: """ + DOCS_URL
 
 _STARTER_HEADER: str = """\
 # todonotifier configuration. Docs: {url}
@@ -89,7 +89,7 @@ _STARTER_BODY: str = """\
 # paths = ["."]
 # File extensions without the dot. "common" covers py, js, ts, java, go, rb, rs, c, cpp, sh, sql, yaml, md and more.
 # extensions = "common"
-# Tags to look for: a list of words. The default is the four usual ones (see the README), so only set this to look for other words.
+# Tags to look for: a list of words. The default is the four usual ones (see the docs), so only set this to look for other words.
 # tags = ["MYTAG", "REVIEW"]
 # Match tags case insensitively.
 # ignore_case = false
@@ -650,7 +650,7 @@ def starter_config(pyproject: bool) -> str:
         str: TOML text that loads cleanly, with every option as a comment
     """
     prefix: str = "tool.todonotifier." if pyproject else ""
-    header: str = _STARTER_HEADER.format(url=README_URL) + ("[tool.todonotifier]\n" if pyproject else "")
+    header: str = _STARTER_HEADER.format(url=DOCS_URL) + ("[tool.todonotifier]\n" if pyproject else "")
     return header + _STARTER_BODY.format(prefix=prefix)
 
 
@@ -694,7 +694,7 @@ def _command_init(args: argparse.Namespace) -> int:
     except OSError as error:
         raise CliError(f"Cannot write the config file: {error.strerror or error}") from error
 
-    print("Next: run 'todonotifier scan .' to see your TODOs, and see the README to set up notifications: " + README_URL)
+    print("Next: run 'todonotifier scan .' to see your TODOs, and see the docs to set up notifications: " + NOTIFICATIONS_URL)
     return EXIT_OK
 
 

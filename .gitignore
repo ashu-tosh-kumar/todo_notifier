@@ -139,6 +139,8 @@ dmypy.json
 .local/
 .scannerwork/
 .sonarlint/
+# Built documentation site (mkdocs -> site/, pdoc -> site/api/). docs/ was the old pdoc output folder.
+site/
 docs/
 .todo
 

@@ -43,6 +43,30 @@ To fix formatting instead of only checking it: `poetry run black .` and `poetry 
 
 `pre-commit install` (see above) runs black, isort, flake8 and a few hygiene hooks (a `requirements.txt` fixer, leftover debug statements, AWS credentials and private keys) on the files you commit. `poetry run pre-commit run --all-files` runs them on everything. The hooks pin the same black, flake8 and isort versions as `poetry.lock`, so they should never change a file that CI accepts. If you bump one of those tools, bump both places.
 
+### Building the docs
+
+The documentation site is MkDocs Material, with sources in `site_src/` and its config in `mkdocs.yml`. The docs tools are an optional Poetry group:
+
+```bash
+poetry install --with dev,docs
+poetry run mkdocs serve                                                   # live preview at http://127.0.0.1:8000
+poetry run mkdocs build --strict                                          # what CI runs: a broken link or page fails the build
+poetry run pdoc -o site/api --docformat google todonotifier/              # the API reference, served under /api/ (run after mkdocs build)
+```
+
+`site/` is git-ignored. Three pages under `site_src/reference/` are **generated from the code** (the config keys from `ScanSettings`, the flags from the
+argparse parser, the languages table from `languages.py`). After you change `ScanSettings`, a CLI flag, a notifier key or a language, regenerate them and
+commit the result, or CI (and `tests/test_docs_reference.py`) fails:
+
+```bash
+poetry run python scripts/gen_docs_reference.py          # write site_src/reference/*.md
+poetry run python scripts/gen_docs_reference.py --check  # what CI runs: exit 1 if they are stale
+```
+
+Write the descriptions of `ScanSettings` fields in the "Attributes" section of its docstring: that is the single source of the configuration reference.
+The other pages are written by hand. The changelog page includes the changelog of the README, so edit it there. When you paste a command output into a page,
+run the command and paste what it printed.
+
 ### Tests and coverage
 
 - Tests live in `tests/` as `unittest.TestCase` classes and run with pytest. A new module gets a `tests/test_<module>.py`.
@@ -70,7 +94,7 @@ Open pull requests against the `development` branch (`main` only receives releas
 The `require_comment` option (on by default in the command line tool) counts a tag only when it sits inside a comment. The syntax of each language is in `todonotifier/languages.py`.
 
 1. Add the extension, without the dot, to `COMMENT_SYNTAX` with a `CommentSyntax`: `line_markers` (for example `("//",)`), `block_comments` as `(open, close)` pairs, `multiline_strings` for string literals that can span lines, and `spaced_line_markers=True` when `#` only starts a comment after whitespace (YAML and shell). Reuse the shared values such as `_HASH` or `_C_LIKE` when they fit.
-2. If the language should be scanned by default, add the extension to `COMMON_EXTENSIONS` and to the `common` list in the README's configuration section.
+2. If the language should be scanned by default, add the extension to `COMMON_EXTENSIONS` (the generated [configuration reference](https://ashu-tosh-kumar.github.io/todo_notifier/reference/configuration/) lists it after you regenerate the docs, see "Building the docs").
 3. Add `tests/fixtures/languages/sample.<ext>` with real TODOs in comments **and decoys** (a tag in a string, in a URL, in prose). The fixture's TODOs are asserted by line number, so add its expected items to `EXPECTED_FIXTURE_ITEMS` in `tests/test_languages.py`.
 4. Update the list of known limits in the module docstring of `languages.py` if the new syntax has quirks the lexer does not handle.
 5. Run the full checks, and note the new language in the README changelog.
@@ -84,10 +108,10 @@ Notifiers receive the scan result and send it somewhere. They live in `todonotif
 1. Subclass `DigestNotifier` (or `_HttpNotifier` when you only POST JSON to a URL) and override `notify_result(result, reports)`. Build the message from `self.make_digest(result)` so every channel shows the same sections. For an HTTP service, set `label` and implement `_result_payload` and `_reports_payload`, and the retries, timeouts and secret handling come for free.
 2. Escape untrusted text (TODO messages and file names) for your channel.
 3. Never let a secret reach a log message, an exception message or `repr()`. Raise `NotificationError` for delivery failures and `NotifierConfigError` for bad settings.
-4. To make it configurable from the config file: add an entry to `_NOTIFIER_SCHEMA` in `todonotifier/settings_file.py` (secrets are only ever the *names* of environment variables, with keys ending in `_env`) and build it in `build_notifiers` in `notifier.py`. Document the table in the README's "Notifications" section.
+4. To make it configurable from the config file: add an entry to `_NOTIFIER_SCHEMA` in `todonotifier/settings_file.py` (secrets are only ever the *names* of environment variables, with keys ending in `_env`) and build it in `build_notifiers` in `notifier.py`. Document the table in `site_src/notifications.md` and add the descriptions of its keys to `NOTIFIER_HELP` in `scripts/gen_docs_reference.py`, then regenerate the docs (see "Building the docs").
 5. Test it in `tests/test_notifier.py` with the network mocked, add a snapshot under `tests/snapshots/` if it has a payload, and add a test that the secret does not appear in logs or errors (see `TestNoSecretsInLogsOrErrors`).
 
-Anyone can also write a private notifier without touching this repository: subclass `BaseNotifier` and pass an instance in a custom config (see "Custom notifiers" in the README).
+Anyone can also write a private notifier without touching this repository: subclass `BaseNotifier` and pass an instance in a custom config (see "Custom notifiers" in the [Python API docs](https://ashu-tosh-kumar.github.io/todo_notifier/python-api/#custom-notifiers)).
 
 ## License
 
