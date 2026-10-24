@@ -37,15 +37,16 @@ class ScanSettings:
     Attributes:
         paths (list[str]): Directories and/or individual files to scan. Defaults to ["."]
         extensions (list[str]): File extensions to scan, without the leading dot (a leading dot is stripped). Defaults to ["py"]
-        tags (list[str]): Tags to look for. Defaults to ["TODO"]. Reserved: only "TODO" is detected until the detection workstream lands
+        tags (list[str]): Tags to look for. Defaults to ["TODO"]. Tags are matched on word boundaries, longest first
         ignore_case (bool): Whether to match tags case insensitively. Defaults to False
         exclude_dirs (dict[str, list[str]]): Directories to skip, with the same shape as `BaseConfig.exclude_dirs`. Defaults to `DEFAULT_EXCLUDE_DIRS`
         exclude_files (dict[str, list[str]]): Files to skip, with the same shape as `BaseConfig.exclude_files`. Defaults to `DEFAULT_EXCLUDE_FILES`
-        require_comment (bool): Whether a tag must be inside a comment to count. Defaults to False. Reserved for the detection workstream
+        require_comment (bool): Whether a tag must be inside a comment to count. Defaults to False. Which files have which comment
+            syntax is defined in `todonotifier.languages`; files of unknown types are matched anywhere
         use_git_blame (bool): Whether to fill missing authors and dates from git blame. Defaults to False
         default_due_days (int | None): Days after the creation date (from git blame, so it needs `use_git_blame`) at which an undated TODO
             becomes stale. None or 0 disables default due dates. Defaults to None
-        respect_gitignore (bool): Whether to skip files ignored by git. Defaults to False. Reserved for the detection workstream
+        respect_gitignore (bool): Whether to skip files ignored by git (`.gitignore`), inside a git repository. Defaults to False
         repo_web_url (str | None): Web URL of the repository (e.g. https://github.com/org/repo), used with `commit_sha` to build deep links.
             Defaults to None, in which case it is detected from the environment or the `origin` remote when `use_git_blame` is on
         commit_sha (str | None): Commit the scanned tree corresponds to, used with `repo_web_url` to build deep links.

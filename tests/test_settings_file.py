@@ -53,6 +53,7 @@ class TestPrecedence(ConfigTestCase):
                 "tags": ["TODO", "FIXME", "HACK", "XXX"],
                 "respect_gitignore": True,
                 "use_git_blame": True,
+                "require_comment": True,
             },
             CLI_DEFAULTS,
         )
@@ -65,10 +66,10 @@ class TestPrecedence(ConfigTestCase):
         self.assertEqual(["TODO", "FIXME", "HACK", "XXX"], settings.tags)
         self.assertTrue(settings.respect_gitignore)
         self.assertTrue(settings.use_git_blame)
+        self.assertTrue(settings.require_comment)
         # Not part of CLI_DEFAULTS: the ScanSettings defaults apply
         self.assertEqual(["."], settings.paths)
         self.assertFalse(settings.ignore_case)
-        self.assertFalse(settings.require_comment)
         self.assertEqual(DEFAULT_EXCLUDE_DIRS, settings.exclude_dirs)
         self.assertIsNone(settings.repo_web_url)
         self.assertEqual({}, settings.author_aliases)
@@ -78,6 +79,7 @@ class TestPrecedence(ConfigTestCase):
 
         self.assertEqual(["TODO"], ScanSettings().tags)
         self.assertEqual(["py"], ScanSettings().extensions)
+        self.assertFalse(ScanSettings().require_comment)
         self.assertEqual(["TODO", "FIXME", "HACK", "XXX"], CLI_DEFAULTS["tags"])
 
     def test_file_only_should_override_cli_defaults(self):

@@ -14,7 +14,7 @@ from typing import TypeVar
 
 from dateutil import parser
 
-from todonotifier.constants import DEFAULT_COMPLETION_DATE
+from todonotifier.constants import DEFAULT_COMPLETION_DATE, DEFAULT_TAG
 from todonotifier.log import get_logger
 
 logger = get_logger(__name__)
@@ -84,6 +84,7 @@ class TODO:
         completion_date_str: str,
         module: str,
         position: POSITION,
+        tag: str = DEFAULT_TAG,
     ) -> None:
         """Initializer for `todo.upper()` class
 
@@ -93,6 +94,7 @@ class TODO:
             completion_date_str (str): Date by which the respective `todo` item is supposed to be completed
             module (str): Module in which todo item is present
             position (POSITION): Represents the position of the respective todo
+            tag (str, optional): Tag that was matched, e.g. "TODO" or "FIXME". Defaults to "TODO"
 
         Note:
             If completion_date_str is empty or cannot be parsed, defaults to DEFAULT_COMPLETION_DATE
@@ -112,6 +114,7 @@ class TODO:
             self._completion_date = parser.parse(DEFAULT_COMPLETION_DATE).date()
         self._module = module
         self._position = position
+        self._tag = tag
 
     @property
     def msg(self) -> str:
@@ -157,6 +160,15 @@ class TODO:
             POSITION: Position of respective todo item in code
         """
         return self._position
+
+    @property
+    def tag(self) -> str:
+        """Getter for `tag`
+
+        Returns:
+            str: Tag that was matched, e.g. "TODO"
+        """
+        return self._tag
 
     def __str__(self) -> str:
         """str representation of `todo` object

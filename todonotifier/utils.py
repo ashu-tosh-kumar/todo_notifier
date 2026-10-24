@@ -108,7 +108,7 @@ def compute_file_line_no_to_chars_map(file: str) -> Dict[int, int]:
         dict: Dictionary mapping line no. ot no. of characters in that line in `file`
     """
     line_no_to_chars_map = {}
-    with open(file, "r") as f:
+    with open(file, "r", encoding="utf-8", errors="replace") as f:
         for line_no, line in enumerate(f.readlines()):
             line_no_to_chars_map[line_no + 1] = len(line)
 

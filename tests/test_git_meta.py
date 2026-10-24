@@ -22,6 +22,7 @@ from todonotifier.git_meta import (
     enrich_with_git,
     find_git_root,
     is_shallow_repository,
+    list_git_files,
     normalize_remote_url,
     parse_blame_porcelain,
 )
@@ -248,6 +249,57 @@ class TestGitHelpers(GitTestCase):
         completed = subprocess.CompletedProcess(["git"], 0, stdout=b"\n", stderr=b"")
         with patch("todonotifier.git_meta.subprocess.run", return_value=completed):
             self.assertIsNone(find_git_root(self.tmp))
+
+    def test_list_git_files_should_list_tracked_and_untracked_but_not_ignored_files(self):
+        self.init_repo()
+        self.write(".gitignore", "ignored/\n")
+        tracked = self.write("a.py", "x = 1\n")
+        self.write("ignored/b.py", "x = 2\n")
+        untracked = self.write("sub/c.py", "x = 3\n")
+        run_git(self.tmp, "add", "a.py")
+
+        files = list_git_files(self.tmp)
+
+        self.assertEqual(sorted([os.path.join(self.tmp, ".gitignore"), tracked, untracked]), files)
+
+    def test_list_git_files_should_list_only_below_the_directory_and_handle_odd_names(self):
+        self.init_repo()
+        odd = self.write("sub/na\u00efve name\n.py", "x = 1\n")
+        self.write("other.py", "x = 2\n")
+
+        self.assertEqual([odd], list_git_files(os.path.join(self.tmp, "sub")))
+
+    def test_list_git_files_should_accept_a_pathspec(self):
+        self.init_repo()
+        wanted = self.write("a.py", "x = 1\n")
+        self.write("b.py", "x = 2\n")
+
+        self.assertEqual([wanted], list_git_files(self.tmp, pathspec="a.py"))
+        self.assertEqual([], list_git_files(self.tmp, pathspec="missing.py"))
+
+    def test_list_git_files_should_skip_files_deleted_from_disk(self):
+        self.init_repo()
+        path = self.write("a.py", "x = 1\n")
+        run_git(self.tmp, "add", "a.py")
+        os.remove(path)
+
+        self.assertEqual([], list_git_files(self.tmp))
+
+    def test_list_git_files_should_return_none_outside_a_repository(self):
+        with tempfile.TemporaryDirectory() as outside, patch.dict(os.environ, {"GIT_CEILING_DIRECTORIES": os.path.dirname(os.path.realpath(outside))}):
+            self.assertIsNone(list_git_files(outside))
+
+    def test_list_git_files_should_return_none_if_git_is_missing_or_fails(self):
+        with patch("todonotifier.git_meta.subprocess.run", side_effect=FileNotFoundError):
+            self.assertIsNone(list_git_files(self.tmp))
+
+        self.init_repo()
+        with patch("todonotifier.git_meta._run_git", side_effect=[subprocess.CompletedProcess(["git"], 0, stdout=self.tmp.encode(), stderr=b""), None]):
+            self.assertIsNone(list_git_files(self.tmp))
+
+        failed = subprocess.CompletedProcess(["git"], 128, stdout=b"", stderr=b"fatal")
+        with patch("todonotifier.git_meta._run_git", side_effect=[subprocess.CompletedProcess(["git"], 0, stdout=self.tmp.encode(), stderr=b""), failed]):
+            self.assertIsNone(list_git_files(self.tmp))
 
     def test_is_shallow_repository(self):
         self.init_repo()

@@ -61,6 +61,7 @@ CLI_DEFAULTS: dict[str, Any] = {
     "default_due_days": 90,
     "extensions": "common",
     "tags": ["TODO", "FIXME", "HACK", "XXX"],
+    "require_comment": True,
     "respect_gitignore": True,
     "use_git_blame": True,
 }

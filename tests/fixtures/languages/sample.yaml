@@ -1,0 +1,6 @@
+# TODO: plain tag with a colon
+name: "TODO list"
+url: http://example.com/#TODO
+key: value # FIXME(alice) {2030-01-02} trailing comment
+todonotifier: true
+# HACK @bob

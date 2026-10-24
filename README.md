@@ -223,8 +223,16 @@ TODO Notifier supports a flexible format for TODO items in your code:
 # Date only
 # TODO {2024-12-31} Add error handling
 
-# User only  
+# User only
 # TODO @jane_smith Review this logic
+
+# Owner in parentheses (Google style), the same as @user
+# TODO(jane_smith): Review this logic
+# FIXME(jane_smith) {2024-12-31} Handle the empty case
+
+# Other tags work the same way
+# FIXME: Crashes on empty input
+# HACK @john_doe {2024-12-31} Remove after the migration
 
 # Simple TODO
 # TODO Fix this bug
@@ -232,14 +240,31 @@ TODO Notifier supports a flexible format for TODO items in your code:
 
 **Format Components:**
 
-- `TODO` - The keyword (case-insensitive option available)
+- `TODO` - The tag. `TODO` by default; set `tags` (for example `["TODO", "FIXME", "HACK", "XXX"]`)
+  to look for more. Tags are matched as whole words, so `TODO_LIST`, `TODOS` and `todonotifier`
+  are not tags, but `TODO:` and `TODO(` are. `ignore_case` also matches `todo` and `Todo`.
+- `(owner)` - Optional owner right after the tag, the same as `@owner`
 - `{YYYY-MM-DD}` - Optional completion date
 - `@username` - Optional assignee
+- `:` - One optional colon after the tag, owner, date or user is dropped from the message,
+  so `# TODO: fix this` has the message `fix this`
 - `message` - Optional description
 
+`scan()` (and the command line) read the full format above. `driver.run` keeps the original
+format, in which `TODO(owner)` and the colon stay part of the message. Only the word-boundary
+fix applies to both.
+
 **Supported Languages:**
-Works with any programming language that supports comments (Python, JavaScript, Java,
-C++, etc.)
+Works with any programming language that supports comments. With `require_comment` a tag counts
+only when it is inside a comment, which TODO Notifier knows for these extensions: `py`, `sh`, `rb`,
+`yaml`, `yml`, `toml` (`#`), `js`, `jsx`, `ts`, `tsx`, `java`, `kt`, `go`, `c`, `h`, `cpp`, `hpp`, `cs`,
+`swift`, `rs`, `php`, `scala`, `scss` (`//` and `/* */`), `css` (`/* */`), `sql`, `lua` (`--`) and
+`html`, `md` (`<!-- -->`). Files with another extension are searched everywhere.
+
+`require_comment` is a heuristic, not a parser (see the `todonotifier.languages` docstring for the
+limits). A tag in a string, such as `print("TODO list")`, is ignored; so is a tag in a docstring,
+since a docstring is a string. Code fences in Markdown are skipped. It is on by default in the
+command line and config file, and off in the library (`ScanSettings`, `DefaultConfig`).
 
 ## 🔧 Architecture
 
@@ -290,9 +315,10 @@ extensions = "common"
 tags = ["TODO", "FIXME", "HACK", "XXX"]
 # Match tags case insensitively. (default: false)
 ignore_case = false
-# Count a tag only when it is inside a comment. (default: false)
-require_comment = false
-# Skip files ignored by git.
+# Count a tag only when it is inside a comment (see "TODO Format"). (ScanSettings default: false)
+require_comment = true
+# Skip files ignored by git (inside a git repository, the files are listed with
+# `git ls-files --cached --others --exclude-standard`; elsewhere the tree is walked).
 respect_gitignore = true
 # Fill missing authors and creation dates from git blame.
 use_git_blame = true
@@ -525,6 +551,20 @@ details.
   `GITHUB_SHA` or the `origin` remote (credentials are always stripped). If `git` is missing, the
   path is not a repository or the clone is shallow, the scan still works and logs one warning
   (for shallow clones: use `fetch-depth: 0`). Uncommitted lines have no author and are dated today.
+
+- Fixed false positives in the TODO parser (it affects `driver.run` too). A tag is now matched on
+  word boundaries, so `from todonotifier.config import X` with `ignore_todo_case=True` and
+  `TODO_REGEX_PATTERN = ...` are no longer reported as TODOs.
+- Added configurable tags, language-aware comment detection and `.gitignore` support to `scan()`:
+  `ScanSettings.tags` (`TODO` by default, `FIXME`/`HACK`/`XXX` on the command line), reported in
+  `TodoItem.tag` (and the new `models.TODO.tag`, default `"TODO"`);
+  `ScanSettings.require_comment` (a tag must come after a comment marker of the file's language, or
+  be inside a block comment; `todonotifier.languages.COMMENT_SYNTAX`; on by default in the command
+  line and config file) and `ScanSettings.respect_gitignore` (`git ls-files` inside a git repository).
+  `parse_files_for_todo_items` takes optional `tags` and `require_comment`. `TAG(owner)` is accepted
+  as an owner and one colon after the tag, owner, date or user is dropped (`# TODO(ashu): fix`).
+  Binary files are skipped, text is read as UTF-8 with `errors="replace"`, and `.git` is excluded by
+  default.
 
 ### v2.0.0 (Unreleased)
 

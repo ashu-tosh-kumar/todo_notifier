@@ -15,7 +15,11 @@ from urllib.parse import quote
 
 from dateutil import parser
 
-from todonotifier.constants import DEFAULT_COMPLETION_DATE, UNKNOWN_USER_NAME
+from todonotifier.constants import (
+    DEFAULT_COMPLETION_DATE,
+    DEFAULT_TAG,
+    UNKNOWN_USER_NAME,
+)
 from todonotifier.models import POSITION, TODO, USER
 
 SCHEMA_VERSION = 1
@@ -27,8 +31,6 @@ AUTHOR_SOURCE_UNKNOWN = "unknown"
 DUE_SOURCE_EXPLICIT = "explicit"
 DUE_SOURCE_DEFAULT = "default"
 DUE_SOURCE_NONE = "none"
-
-DEFAULT_TAG = "TODO"
 
 _LEGACY_NO_DATE: date = parser.parse(DEFAULT_COMPLETION_DATE).date()
 
@@ -166,7 +168,7 @@ class TodoItem:
         cls,
         todo: TODO,
         today: Optional[date] = None,
-        tag: str = DEFAULT_TAG,
+        tag: Optional[str] = None,
         repo_web_url: Optional[str] = None,
         commit_sha: Optional[str] = None,
     ) -> "TodoItem":
@@ -178,7 +180,7 @@ class TodoItem:
         Args:
             todo (TODO): Legacy object
             today (date | None, optional): Reference day for the status fields. Defaults to the current local date
-            tag (str, optional): Tag that was matched. Defaults to "TODO"
+            tag (str | None, optional): Tag that was matched. Defaults to None, which uses `todo.tag`
             repo_web_url (str | None, optional): Repository web URL, used with `commit_sha` to build `web_url`. Defaults to None
             commit_sha (str | None, optional): Commit of the scanned tree, used with `repo_web_url` to build `web_url`. Defaults to None
 
@@ -193,7 +195,7 @@ class TodoItem:
         item = cls(
             file=file,
             line=todo.position.line_no,
-            tag=tag,
+            tag=tag or todo.tag,
             message=todo.msg,
             author=user_name if has_author else None,
             author_source=AUTHOR_SOURCE_ANNOTATION if has_author else AUTHOR_SOURCE_UNKNOWN,
@@ -218,6 +220,7 @@ class TodoItem:
             completion_date_str=self.due_date.isoformat() if self.due_date else "",
             module=self.file,
             position=POSITION(self.line),
+            tag=self.tag,
         )
 
 

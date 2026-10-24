@@ -13,6 +13,9 @@ class TestDefaultExcludeDirs(unittest.TestCase):
     def test_DEFAULT_EXCLUDE_DIRS_should_exist(self):
         self.assertIsNotNone(DEFAULT_EXCLUDE_DIRS)
 
+    def test_DEFAULT_EXCLUDE_DIRS_should_exclude_the_git_directory(self):
+        self.assertIn(".git", DEFAULT_EXCLUDE_DIRS["NAME"])
+
 
 class TestDefaultExcludeFiles(unittest.TestCase):
     def test_DEFAULT_EXCLUDE_FILES_should_exist(self):
