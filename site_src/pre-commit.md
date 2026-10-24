@@ -12,6 +12,9 @@ repos:
       # - id: todonotifier-strict  # fails if a staged file has a TODO without an owner or an explicit {date}
 ```
 
+<!-- release-note: delete this line once v2.1.0 is tagged (RELEASING.md) -->
+`rev: v2.1.0` exists once the release is tagged; until then use a commit SHA of this repository.
+
 | Hook | Runs | Fails the commit when |
 |---|---|---|
 | `todonotifier` | `todonotifier scan --fail-on expired --no-blame <staged files>` | a staged file has a TODO whose explicit `{date}` has passed |
@@ -22,6 +25,9 @@ unknown extension are skipped, and so is anything your config excludes (`exclude
 root (`[tool.todonotifier]` in `pyproject.toml`, or `.todonotifier.toml`) applies as usual, so `tags`, `extensions` and `require_comment` work in the hooks
 too. The first run installs the tool in a pre-commit environment; after that the hook takes about 0.4 s for a commit of 10 files (measured with
 `pre-commit run`, blame off). Only the TODOs in the staged files are looked at, but the whole file counts, not only the lines you changed.
+
+The hook environment needs Python 3.10 or newer. If the `python3` that pre-commit finds is older, name a newer one at the top of your
+`.pre-commit-config.yaml`: `default_language_version: {python: python3.12}`.
 
 ## What a stopped commit looks like
 

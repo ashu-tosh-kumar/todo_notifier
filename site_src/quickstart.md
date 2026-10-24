@@ -6,6 +6,13 @@ one. You need Python 3.10 or newer and git.
 Every output below was captured by running the command on the small sample project shown next. Your project will print different TODOs, and the
 numbers of days depend on the day you run the commands.
 
+<!-- release-note: delete this admonition once todonotifier 2.1.0 is on PyPI and v2.1.0 is tagged (RELEASING.md) -->
+!!! note "Release status"
+    This guide is for TODO Notifier 2.1.0. If `pipx install todonotifier` does not give you a `todonotifier` command, or `rev: v2.1.0` or `@v2.1.0` is
+    not found, 2.1.0 is not published yet. Until it is, install from the repository with
+    `pipx install git+https://github.com/ashu-tosh-kumar/todo_notifier`, and use a commit SHA instead of `v2.1.0` for the hook and the action (the
+    action also needs `package: git+https://github.com/ashu-tosh-kumar/todo_notifier@<that SHA>`).
+
 ??? note "No project at hand? Create the sample project"
 
     ```bash
