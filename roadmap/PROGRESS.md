@@ -47,8 +47,8 @@ Implementation agents follow [AGENT-BRIEF.md](AGENT-BRIEF.md).
 | 1.1 | GitHub Action (seed in this repo) | `roadmap/1.1-github-action` | [#176](https://github.com/ashu-tosh-kumar/todo_notifier/pull/176) | ✅ done | See decision A3 and decisions A64 to A71; notes under "Notes per workstream" (1.1); maintainer steps to move it to its own repo are in `integrations/github-action/README.md` |
 | 1.3 | Docs site and 5-minute guide | `roadmap/1.3-docs` | [#177](https://github.com/ashu-tosh-kumar/todo_notifier/pull/177) | ✅ done | See decisions A72 to A80 and notes under "Notes per workstream" (1.3); maintainer steps (screenshots, Medium post, Pages setting) are listed there |
 | 1.5 | Launch content drafts + metrics baseline | `roadmap/1.5-launch` | [#178](https://github.com/ashu-tosh-kumar/todo_notifier/pull/178) | ✅ done | Drafts ready, posting is a maintainer step. Drafts in `roadmap/launch/` (index: `roadmap/launch/README.md`), baseline in `roadmap/metrics.md`; decisions A81 to A85 and notes under "Notes per workstream" (1.5) |
-| P1 | Phase 1 review | `roadmap/p1-review` | | ✅ done | [Phase 1 review notes](#phase-1-review): requirement table, 7 issues fixed (decisions A86 to A92), what was left |
-| 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | | ⬜ todo | |
+| P1 | Phase 1 review | `roadmap/p1-review` | [#179](https://github.com/ashu-tosh-kumar/todo_notifier/pull/179) | ✅ done | [Phase 1 review notes](#phase-1-review): requirement table, 7 issues fixed (decisions A86 to A92), what was left |
+| 2.0 | Name and brand checks (automatable part) | `roadmap/2.0-name-checks` | | 🟡 in progress | |
 | 2.1 | Landing page and waitlist (draft) | `roadmap/2.1-landing-page` | | ⬜ todo | |
 | 2.2 | Interview kit | `roadmap/2.2-interviews` | | ⬜ todo | |
 | 2.3 | GO / NO-GO decision template | `roadmap/2.3-decision` | | ⬜ todo | Decision is the maintainer's |
